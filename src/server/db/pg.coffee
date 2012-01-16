@@ -133,9 +133,10 @@ module.exports = (options) ->
       SELECT *
       FROM "#{options.operations_table}"
       WHERE "version" BETWEEN $1 AND $2
+      AND "#{options.document_name_column}" = $3
       ORDER BY "version" ASC
     """
-    values = [start, end]
+    values = [start, end, docName]
     @client.query sql, values, (error, result) ->
       if !error?
         data = result.rows.map (row) -> {
