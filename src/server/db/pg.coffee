@@ -33,11 +33,11 @@ defaultOptions =
 
 module.exports = PgDb = (options) ->
   return new Db if !(this instanceof PgDb)
-  
+
   options ?= {}
   options[k] ?= v for k, v of defaultOptions
-  
-  client = new pg.Client options.uri
+
+  client = new pg.Client options
   client.connect()
 
   snapshot_table = "#{options.schema}.#{options.snapshot_table}"
