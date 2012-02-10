@@ -70,18 +70,27 @@ router = (app, createClient, options) ->
         sendError res, error
 
   # GET returns the document snapshot. The version and type are sent as headers.
+  # if metthod is HEAD, no body is returned.
   # I'm not sure what to do with document metadata - it is inaccessable for now.
   app.get '/doc/:name', auth, (req, res) ->
     req._client.getSnapshot req.params.name, (error, doc) ->
       if doc
-        res.setHeader 'X-OT-Type', doc.type.name
-        res.setHeader 'X-OT-Version', doc.v
-        if typeof doc.snapshot == 'string'
-          send200 res, doc.snapshot
+        if req.method == "HEAD"
+          res.writeHead 200, {}
+          res.end ""
         else
-          sendJSON res, doc.snapshot
+          res.setHeader 'X-OT-Type', doc.type.name
+          res.setHeader 'X-OT-Version', doc.v
+          if typeof doc.snapshot == 'string'
+            send200 res, doc.snapshot
+          else
+            sendJSON res, doc.snapshot
       else
-        sendError res, error
+        if req.method == "HEAD"
+          res.writeHead 404, {}
+          res.end ""
+        else
+          sendError res, error 
   
   # Put is used to create a document. The contents are a JSON object with {type:TYPENAME, meta:{...}}
   app.put '/doc/:name', auth, (req, res) ->
