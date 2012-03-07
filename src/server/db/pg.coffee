@@ -83,7 +83,7 @@ module.exports = PgDb = (options) ->
   @create = (docName, docData, callback) ->
     sql = """
       INSERT INTO #{snapshot_table} ("doc", "v", "snapshot", "meta", "type", "created_at")
-        VALUES ($1, $2, $3, $4, $5, now())
+        VALUES ($1, $2, $3, $4, $5, now() at time zone 'UTC')
     """
     values = [docName, docData.v, JSON.stringify(docData.snapshot), JSON.stringify(docData.meta), docData.type]
     client.query sql, values, (error, result) ->
@@ -145,7 +145,7 @@ module.exports = PgDb = (options) ->
     sql = if options.keep_snapshots
       """
         INSERT INTO #{snapshot_table} ("doc", "v", "snapshot", "meta", "type", "created_at")
-        VALUES ($1, $2, $3, $4, $5, now())
+        VALUES ($1, $2, $3, $4, $5, now() at time zone 'UTC')
       """
     else
       """
