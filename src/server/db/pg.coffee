@@ -23,7 +23,7 @@
 #
 # You can run bin/setup_pg to create the SQL tables initially.
 
-pg = require('pg').native
+pg = require('pg')
 
 defaultOptions =
   schema: 'sharejs'
