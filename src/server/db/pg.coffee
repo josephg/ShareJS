@@ -31,6 +31,7 @@ defaultOptions =
   operations_table: 'ops'
   snapshot_table: 'snapshots'
   keep_snapshots: false
+  keep_operations: false
 
 module.exports = PgDb = (options) ->
   return new Db if !(this instanceof PgDb)
@@ -141,7 +142,7 @@ module.exports = PgDb = (options) ->
       else
         callback? error?.message
 
-  @writeSnapshot = (docName, docData, dbMeta, callback) ->
+  @writeSnapshot = (docName, docData, dbMeta, callback) =>
     sql = if options.keep_snapshots
       """
         INSERT INTO #{snapshot_table} ("doc", "v", "snapshot", "meta", "type", "created_at")
@@ -154,6 +155,23 @@ module.exports = PgDb = (options) ->
         WHERE "doc" = $1
       """
     values = [docName, docData.v, JSON.stringify(docData.snapshot), JSON.stringify(docData.meta), docData.type]
+    client.query sql, values, (error, result) =>
+      if !error?
+        if options.keep_operations
+          callback?()
+        else
+          @deleteOps docName, docData, dbMeta, callback
+      else
+        callback? error?.message
+
+  @deleteOps = (docName, docData, dbMeta, callback) ->
+    sql = """
+      DELETE FROM #{operations_table}
+      WHERE "doc" = $1
+      AND v < $2
+      RETURNING *
+    """
+    values = [docName, docData.v]
     client.query sql, values, (error, result) ->
       if !error?
         callback?()
