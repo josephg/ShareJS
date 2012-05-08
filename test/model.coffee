@@ -21,6 +21,9 @@ newTestId = do -> num = 0; -> "test #{num++}"
 # Model tests
 genTests = (async) -> testCase
   setUp: (callback) ->
+    @realDateNow = Date.now
+    Date.now = -> 321
+
     @name = newDocName()
 
     # Set up db mocks. I wonder if I should use a mocking library for this..?
@@ -63,6 +66,7 @@ genTests = (async) -> testCase
     callback()
 
   tearDown: (callback) ->
+    Date.now = @realDateNow
     if @db
       # During cleanup, the database calls writeSnapshot on all still-open documents.
       @db.close = ->
@@ -73,9 +77,10 @@ genTests = (async) -> testCase
   # *** Tests for create
 
   'create creates in the DB': (test) ->
+    start = Date.now()
     @db.create = (docName, data, callback) =>
       test.strictEqual docName, @name
-      test.deepEqual data, {snapshot:{str:''}, type:'simple', meta:{}, v:0}
+      test.deepEqual data, {snapshot:{str:''}, type:'simple', meta:{ctime:321, mtime:321}, v:0}
       callback null, {'metablag': true} # <-- dbMeta
 
     @model.create @name, 'simple', {}, (error) ->
@@ -86,7 +91,7 @@ genTests = (async) -> testCase
   'create without a meta argument works': (test) ->
     @db.create = (docName, data, callback) =>
       test.strictEqual docName, @name
-      test.deepEqual data, {snapshot:{str:''}, type:'simple', meta:{}, v:0}
+      test.deepEqual data, {snapshot:{str:''}, type:'simple', meta:{ctime:321, mtime:321}, v:0}
       callback()
 
     @model.create @name, 'simple', (error) ->
@@ -97,7 +102,7 @@ genTests = (async) -> testCase
   'create with a type literal works': (test) ->
     @db.create = (docName, data, callback) =>
       test.strictEqual docName, @name
-      test.deepEqual data, {snapshot:{str:''}, type:'simple', meta:{}, v:0}
+      test.deepEqual data, {snapshot:{str:''}, type:'simple', meta:{ctime:321, mtime:321}, v:0}
       callback()
 
     @model.create @name, types.simple, (error) ->
@@ -125,7 +130,7 @@ genTests = (async) -> testCase
 
     @model.create @name, 'simple', {}, (error) =>
       @model.getSnapshot @name, (error, data) =>
-        test.deepEqual data, {snapshot:{str:''}, type:types.simple, meta:{}, v:0}
+        test.deepEqual data, {snapshot:{str:''}, type:types.simple, meta:{ctime:321, mtime:321, sessions:{}}, v:0}
 
         @model.getVersion @name, (error, version) ->
           test.strictEqual version, 0
@@ -136,20 +141,20 @@ genTests = (async) -> testCase
 
     @model.create @name, 'simple', {}, (error) =>
       @model.getSnapshot @name, (error, data) =>
-        test.deepEqual data, {snapshot:{str:''}, type:types.simple, meta:{}, v:0}
+        test.deepEqual data, {snapshot:{str:''}, type:types.simple, meta:{ctime:321, mtime:321, sessions:{}}, v:0}
         test.done()
   
   "if there is an error in db.create, the document isn't cached": (test) ->
     @db.create = (docName, data, callback) =>
       callback 'invalid tubes!'
     @db.getSnapshot = (docName, callback) =>
-      callback null, {snapshot:{str:'hi'}, type:'simple', meta:{}, v:0}
+      callback null, {snapshot:{str:'hi'}, type:'simple', meta:{ctime:321, mtime:321}, v:0}
     @db.getOps = (docName, start, end, callback) -> callback null, []
 
     @model.create @name, 'simple', {}, (error) =>
       @model.getSnapshot @name, (error, data) ->
         test.equal error, null
-        test.deepEqual data, {snapshot:{str:'hi'}, type:types.simple, meta:{}, v:0}
+        test.deepEqual data, {snapshot:{str:'hi'}, type:types.simple, meta:{ctime:321, mtime:321, sessions:{}}, v:0}
         test.done()
 
   "If create is given a type name that doesn't exist, it sends an error": (test) ->
@@ -176,7 +181,8 @@ genTests = (async) -> testCase
 
     @model.getSnapshot @name, (error, data) ->
       test.equal error, null
-      test.deepEqual data, {snapshot:{str:'hi'}, type:types.simple, meta:{foo:5}, v:100}
+      # This is sort of dodgy. The metadata returned maybe should probably have ctime added to it automatically...
+      test.deepEqual data, {snapshot:{str:'hi'}, type:types.simple, meta:{foo:5, sessions:{}}, v:100}
       test.done()
 
   "getSnapshot() propogates errors from the database": (test) ->
@@ -198,12 +204,12 @@ genTests = (async) -> testCase
 
       # The next call should succeed.
       @db.getSnapshot = (docName, callback) =>
-        callback null, {snapshot:{str:'hi'}, type:'simple', meta:{foo:5}, v:100}
+        callback null, {snapshot:{str:'hi'}, type:'simple', meta:{ctime:100, mtime:100}, v:100}
       @db.getOps = (docName, start, end, callback) -> callback null, []
 
       @model.getSnapshot @name, (error, data) ->
         test.equal error, null
-        test.deepEqual data, {snapshot:{str:'hi'}, type:types.simple, meta:{foo:5}, v:100}
+        test.deepEqual data, {snapshot:{str:'hi'}, type:types.simple, meta:{ctime:100, mtime:100, sessions:{}}, v:100}
         test.done()
 
   "If getSnapshot() returns a type name that doesn't exist, we return an error": (test) ->
@@ -241,7 +247,7 @@ genTests = (async) -> testCase
   'Multiple simultaneous calls to getSnapshot and getVersion only result in one getSnapshot call on the database': (test) ->
     @db.getSnapshot = (docName, callback) =>
       @db.getSnapshot = -> throw new Error 'getSnapshot should only be called once'
-      callback null, {snapshot:{str:'hi'}, type:'simple', meta:{foo:5}, v:100}
+      callback null, {snapshot:{str:'hi'}, type:'simple', meta:{ctime:5}, v:100}
 
     @db.getOps = (docName, start, end, callback) =>
       @db.getOps = -> throw new Error 'getOps should only be called once'
@@ -253,7 +259,7 @@ genTests = (async) -> testCase
       passPart()
 
     # This code can use the nice syntax once coffeescript >1.1.2 lands.
-    @model.getSnapshot @name, check({snapshot:{str:'hi'}, type:types.simple, meta:{foo:5}, v:100}) for __ignored in [1..5]
+    @model.getSnapshot @name, check({snapshot:{str:'hi'}, type:types.simple, meta:{ctime:5, sessions:{}}, v:100}) for __ignored in [1..5]
     @model.getVersion @name, check(100) for __ignored in [1..5]
 
   'if create is passed a type literal and theres no database, getSnapshot still returns type literals': (test) ->
@@ -262,14 +268,14 @@ genTests = (async) -> testCase
 
     @model.create @name, types.simple, (error) =>
       @model.getSnapshot @name, (error, data) ->
-        test.deepEqual data, {snapshot:{str:''}, type:types.simple, meta:{}, v:0}
+        test.deepEqual data, {snapshot:{str:''}, type:types.simple, meta:{ctime:321, mtime:321, sessions:{}}, v:0}
         test.done()
 
   'getSnapshot catches up the document with all recent ops': (test) ->
     # The database might contain an old snapshot. Calling getSnapshot() on the model calls getOps()
     # in the database and does catchup before returning.
     @db.getSnapshot = (docName, callback) =>
-      callback null, {snapshot:{str:'hi'}, type:'simple', meta:{foo:5}, v:1}
+      callback null, {snapshot:{str:'hi'}, type:'simple', meta:{ctime:5}, v:1}
 
     @db.getOps = (docName, start, end, callback) =>
       test.strictEqual docName, @name
@@ -279,7 +285,7 @@ genTests = (async) -> testCase
 
     @model.getSnapshot @name, (error, data) =>
       test.equal error, null
-      test.deepEqual data, {snapshot:{str:'hi there mum'}, type:types.simple, meta:{foo:5}, v:3}
+      test.deepEqual data, {snapshot:{str:'hi there mum'}, type:types.simple, meta:{ctime:5, sessions:{}}, v:3}
       test.done()
 
   'getVersion passes errors from db.getSnapshot': (test) ->
@@ -375,14 +381,14 @@ genTests = (async) -> testCase
   'applyOp updates the document snapshot': (test) ->
     @db.writeOp = (docName, opData, callback) -> callback()
 
-    @db.getSnapshot = (docName, callback) -> callback null, {snapshot:{str:'hello'}, type:'simple', meta:{}, v:100}
+    @db.getSnapshot = (docName, callback) -> callback null, {snapshot:{str:'hello'}, type:'simple', meta:{ctime:100}, v:100}
     @db.getOps = (docName, start, end, callback) -> callback null, []
 
     @model.applyOp @name, {v:100, op:{position:5, text:' world'}, meta:{}}, (error, v) =>
       test.equal error, null
       test.strictEqual v, 100
       @model.getSnapshot @name, (error, data) ->
-        test.deepEqual data, {snapshot:{str:'hello world'}, type:types.simple, meta:{}, v:101}
+        test.deepEqual data, {snapshot:{str:'hello world'}, type:types.simple, meta:{ctime:100, mtime:321, sessions:{}}, v:101}
         test.done()
 
   'applyOp ignores irrelevant dupIfSource:[...] arguments in op data': (test) ->
@@ -474,7 +480,7 @@ genTests = (async) -> testCase
         test.strictEqual error, 'Invalid position'
         test.equal v, null
         @model.getSnapshot @name, (error, data) ->
-          test.deepEqual data, {snapshot:{str:''}, type:types.simple, meta:{}, v:0}
+          test.deepEqual data, {snapshot:{str:''}, type:types.simple, meta:{ctime:321, mtime:321, sessions:{}}, v:0}
           test.done()
 
   "applyOp propogates errors from writeOp and doesn't cache": (test) ->
@@ -488,7 +494,7 @@ genTests = (async) -> testCase
 
         # The cached snapshot shouldn't have been modified
         @model.getSnapshot @name, (error, data) ->
-          test.deepEqual data, {snapshot:{str:''}, type:types.simple, meta:{}, v:0}
+          test.deepEqual data, {snapshot:{str:''}, type:types.simple, meta:{ctime:321, mtime:321, sessions:{}}, v:0}
           test.done()
 
   "writeSnapshot is called after the specified number of ops are appended": (test) ->
@@ -497,7 +503,7 @@ genTests = (async) -> testCase
     @db.writeOp = (docName, opData, callback) -> callback()
     @db.writeSnapshot = (docName, data, dbMeta, callback) =>
       test.strictEqual docName, @name
-      test.deepEqual data, {snapshot:{str:'ab'}, type:'simple', meta:{}, v:2}
+      test.deepEqual data, {snapshot:{str:'ab'}, type:'simple', meta:{ctime:321, mtime:321}, v:2}
       test.equal dbMeta, null
       callback()
       test.done()
@@ -541,7 +547,7 @@ genTests = (async) -> testCase
     # saved at version 100.
  
     @db.getSnapshot = (docName, callback) ->
-      callback null, {snapshot:{str:'hi'}, type:'simple', meta:{}, v:100}
+      callback null, {snapshot:{str:'hi'}, type:'simple', meta:{ctime:100}, v:100}
     @db.getOps = (docName, start, end, callback) -> callback null, []
 
     @db.writeOp = (docName, opData, callback) -> callback()
@@ -562,7 +568,7 @@ genTests = (async) -> testCase
       @model.applyOp @name, {v:0, op:{position:0, text:'a'}, meta:{}}, (error, v) =>
         @model.applyOp @name, {v:1, op:{position:1, text:'b'}, meta:{}}, (error, v) =>
 
-  "With no database, writing a few ops doesn't make the model freik out or anything": (test) ->
+  "With no database, writing a few ops doesn't make the model freak out or anything": (test) ->
     @setDb null
 
     op = (v) -> {v, op:{position:v, text:"#{v}"}, meta:{}}
@@ -587,12 +593,55 @@ genTests = (async) -> testCase
                 test.done()
 
   # *** Tests for meta ops
-  ###
+
   'New documents have a creation time set': (test) ->
+    @db.create = (docName, data, callback) =>
+      test.deepEqual data, {snapshot:{str:''}, type:'simple', meta:{ctime:321, mtime:321}, v:0}
+      callback()
+
+    @model.create @name, 'simple', (error) =>
+      test.equal error, null
+      @model.getSnapshot @name, (error, data) ->
+        test.deepEqual data.meta, {ctime:321, mtime:321, sessions:{}}
+        test.done()
+
+  "New documents have a creation time set even when there's no db": (test) ->
+    @setDb null
+
+    @model.create @name, 'simple', (error) =>
+      test.equal error, null
+      @model.getSnapshot @name, (error, data) ->
+        test.deepEqual data.meta, {ctime:321, mtime:321, sessions:{}}
+        test.done()
 
   'The last modified time is updated when ops are applied to a document': (test) ->
+    @setDb null
+
+    @model.create @name, 'simple', (error) =>
+      test.equal error, null
+      @model.applyOp @name, {v:0, op:{position:0, text:'hi'}, meta:{ts:400}}, (error, v) =>
+        test.equal error, null
+        @model.getSnapshot @name, (error, data) ->
+          test.deepEqual data.meta, {ctime:321, mtime:400, sessions:{}}
+          test.done()
 
   'Creation time and last modified time are saved in the database': (test) ->
+    @db.create = (docName, data, callback) -> callback null
+    @db.writeOp = (docName, opData, callback) -> callback()
+
+    snapshotWritten = false
+    @db.writeSnapshot = (docName, data, dbMeta, callback) =>
+      test.deepEqual data.meta, {ctime:321, mtime:400}
+      snapshotWritten = true
+      callback()
+
+    @model.create @name, 'simple', (error) =>
+      @model.applyOp @name, {v:0, op:{position:0, text:'hi'}, meta:{ts:400}}, (error) =>
+        @model.flush ->
+          test.strictEqual snapshotWritten, true
+          test.done()
+
+  ###
 
   'New clients are added to the document metadata': (test) ->
 
@@ -705,7 +754,7 @@ genTests = (async) -> testCase
 
   "flush with a document that hasn't been edited does nothing": (test) ->
     @db.getSnapshot = (docName, callback) ->
-      callback null, {snapshot:{str:'hi'}, type:'simple', meta:{}, v:100}
+      callback null, {snapshot:{str:'hi'}, type:'simple', meta:{ctime:100, mtime:100}, v:100}
     @db.getOps = (docName, start, end, callback) -> callback null, []
 
     @model.getSnapshot @name, (error, data) =>
@@ -715,12 +764,11 @@ genTests = (async) -> testCase
   "flush calls writeSnapshot on open, edited documents": (test) ->
     @db.create = (docName, data, callback) -> callback null, {db:'meta'}
     @db.writeOp = (docName, opData, callback) -> callback()
-    @db.getOps = (docName, start, end, callback) -> callback null, []
 
     snapshotWritten = false
     @db.writeSnapshot = (docName, data, dbMeta, callback) =>
       test.strictEqual docName, @name
-      test.deepEqual data, {snapshot:{str:'hi'}, type:'simple', meta:{}, v:1}
+      test.deepEqual data, {snapshot:{str:'hi'}, type:'simple', meta:{ctime:321, mtime:321}, v:1}
       test.deepEqual dbMeta, {db:'meta'}
       snapshotWritten = true
       callback()
@@ -769,12 +817,12 @@ genTests = (async) -> testCase
     called = false
     @db.getSnapshot = (docName, callback) ->
       called = true
-      callback null, {snapshot:{str:'hi'}, type:'simple', meta:{}, v:0}
+      callback null, {snapshot:{str:'hi'}, type:'simple', meta:{ctime:100, mtime:100}, v:0}
 
     @model.create @name, 'simple', {}, (error) =>
       setTimeout =>
           @model.getSnapshot @name, (error, data) ->
-            test.deepEqual data, {snapshot:{str:'hi'}, type:types.simple, meta:{}, v:0}
+            test.deepEqual data, {snapshot:{str:'hi'}, type:types.simple, meta:{ctime:100, mtime:100, sessions:{}}, v:0}
             test.strictEqual called, true
             test.done()
         , 15
@@ -782,12 +830,12 @@ genTests = (async) -> testCase
   'A snapshot is flushed to the database when the document is reaped': (test) ->
     @db.getSnapshot = (docName, callback) ->
       called = true
-      callback null, {snapshot:{str:'hi'}, type:'simple', meta:{}, v:100}, {db:'meta'}
+      callback null, {snapshot:{str:'hi'}, type:'simple', meta:{ctime:100, mtime:100}, v:100}, {db:'meta'}
     @db.getOps = (docName, start, end, callback) -> callback null, []
     @db.writeOp = (docName, opData, callback) -> callback()
     @db.writeSnapshot = (docName, data, dbMeta, callback) =>
       test.strictEqual docName, @name
-      test.deepEqual data, {snapshot:{str:'xhi'}, type:'simple', meta:{}, v:101}
+      test.deepEqual data, {snapshot:{str:'xhi'}, type:'simple', meta:{ctime:100, mtime:321}, v:101}
       test.deepEqual dbMeta, {db:'meta'}
       callback()
 
@@ -809,7 +857,7 @@ genTests = (async) -> testCase
 
         setTimeout =>
             @model.getSnapshot @name, (error, data) ->
-              test.deepEqual data, {snapshot:{str:''}, type:types.simple, meta:{}, v:0}
+              test.deepEqual data, {snapshot:{str:''}, type:types.simple, meta:{ctime:321, mtime:321, sessions:{}}, v:0}
               test.done()
           , 15
 
@@ -820,7 +868,7 @@ genTests = (async) -> testCase
     called = false
     @db.getSnapshot = (docName, callback) ->
       called = true
-      callback null, {snapshot:{str:'hi'}, type:'simple', meta:{}, v:100}
+      callback null, {snapshot:{str:'hi'}, type:'simple', meta:{ctime:100, mtime:100}, v:100}
 
     @model.create @name, 'simple', (error) =>
       listener = ->
@@ -830,7 +878,7 @@ genTests = (async) -> testCase
 
         setTimeout =>
             @model.getSnapshot @name, (error, data) ->
-              test.deepEqual data, {snapshot:{str:'hi'}, type:types.simple, meta:{}, v:100}
+              test.deepEqual data, {snapshot:{str:'hi'}, type:types.simple, meta:{ctime:100, mtime:100, sessions:{}}, v:100}
               test.strictEqual called, true
               test.done()
           , 15
@@ -841,7 +889,7 @@ genTests = (async) -> testCase
     @model.create @name, 'simple', (error) =>
       setTimeout =>
           @model.getSnapshot @name, (error, data) ->
-            test.deepEqual data, {snapshot:{str:''}, type:types.simple, meta:{}, v:0}
+            test.deepEqual data, {snapshot:{str:''}, type:types.simple, meta:{ctime:321, mtime:321, sessions:{}}, v:0}
             test.done()
         , 15
 
@@ -927,6 +975,9 @@ exports['async'] = genTests true
 # point of view. There is some overlap with these tests and the tests above.
 exports['integration'] = testCase
   setUp: (callback) ->
+    @realDateNow = Date.now
+    Date.now = -> 321
+
     @model = server.createModel {db:{type:'none'}}
     # When the test is run, a document exists with @name, and @unused is unused.
     @name = newDocName()
@@ -935,6 +986,10 @@ exports['integration'] = testCase
     @model.create @name, 'simple', (error) ->
       assert.equal error, null
       callback()
+
+  tearDown: (callback) ->
+    Date.now = @realDateNow
+    callback()
 
   'Return null when asked for the snapshot of a new object': (test) ->
     @model.getSnapshot @unused, (error, data) ->
@@ -946,7 +1001,7 @@ exports['integration'] = testCase
     # create() has been called in setUp already.
     @model.getSnapshot @name, (error, data) =>
       test.equal error, null
-      test.deepEqual data, {v:0, type:types.simple, snapshot:{str:''}, meta:{}}
+      test.deepEqual data, {v:0, type:types.simple, snapshot:{str:''}, meta:{ctime:321, mtime:321, sessions:{}}}
       test.done()
   
   'Calling create works with a type literal instead of a string': (test) ->
@@ -954,24 +1009,24 @@ exports['integration'] = testCase
       test.equal error, null
       @model.getSnapshot @name, (error, data) =>
         test.equal error, null
-        test.deepEqual data, {v:0, type:types.simple, snapshot:{str:''}, meta:{}}
+        test.deepEqual data, {v:0, type:types.simple, snapshot:{str:''}, meta:{ctime:321, mtime:321, sessions:{}}}
         test.done()
   
   'Creating a document a second time has no effect': (test) ->
     @model.create @name, types.text, (error) =>
       test.strictEqual error, 'Document already exists'
       @model.getSnapshot @name, (error, data) =>
-        test.deepEqual data, {v:0, type:types.simple, snapshot:{str:''}, meta:{}}
+        test.deepEqual data, {v:0, type:types.simple, snapshot:{str:''}, meta:{ctime:321, mtime:321, sessions:{}}}
         test.done()
   
   'Subsequent calls to getSnapshot work': (test) ->
     # Written in response to a real bug. (!!)
     @model.create @name, types.text, (error) =>
       @model.getSnapshot @name, (error, data) =>
-        test.deepEqual data, {v:0, type:types.simple, snapshot:{str:''}, meta:{}}
+        test.deepEqual data, {v:0, type:types.simple, snapshot:{str:''}, meta:{ctime:321, mtime:321, sessions:{}}}
         @model.getSnapshot @name, (error, data) =>
           test.equal error, null
-          test.deepEqual data, {v:0, type:types.simple, snapshot:{str:''}, meta:{}}
+          test.deepEqual data, {v:0, type:types.simple, snapshot:{str:''}, meta:{ctime:321, mtime:321, sessions:{}}}
           test.done()
   
   "Can't create a document with a slash in the name": (test) ->
@@ -984,7 +1039,7 @@ exports['integration'] = testCase
       test.equal error, null
       test.strictEqual appliedVersion, 0
       @model.getSnapshot @name, (error, data) ->
-        test.deepEqual data, {v:1, type:types.simple, snapshot:{str:'hi'}, meta:{}}
+        test.deepEqual data, {v:1, type:types.simple, snapshot:{str:'hi'}, meta:{ctime:321, mtime:321, sessions:{}}}
         test.done()
 
   'Apply op to future version fails': (test) ->
@@ -1000,7 +1055,7 @@ exports['integration'] = testCase
         {position: 3, text: 'to you '}
       ], (error, data) ->
         test.strictEqual error, null
-        test.deepEqual data, {v:3, type:types.simple, snapshot:{str:'Hi to you mum'}, meta:{}}
+        test.deepEqual data, {v:3, type:types.simple, snapshot:{str:'Hi to you mum'}, meta:{ctime:321, mtime:321, sessions:{}}}
         test.done()
         
   'Apply ops at an old version': (test) ->
@@ -1086,15 +1141,17 @@ exports['integration'] = testCase
         test.done()
   
   'ops submitted have a metadata object added': (test) ->
-    t1 = Date.now()
+    # Date.now will be restored in tearDown() anyway.
+    Date.now = -> 400
     @model.applyOp @name, {op:{position: 0, text: 'hi'}, v:0}, (error, version) =>
       test.ifError error
       @model.getOps @name, 0, 1, (error, data) ->
         test.deepEqual data.length, 1
         d = data[0]
         test.deepEqual d.op, {position: 0, text: 'hi'}
+        console.log d
         test.strictEqual typeof d.meta, 'object'
-        test.ok Date.now() >= d.meta.ts >= t1
+        test.strictEqual d.meta.ts, 400
         test.done()
   
   'metadata is stored': (test) ->

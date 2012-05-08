@@ -37,7 +37,6 @@ checkMop = (meta, mop) ->
     throw new Error "Cannot change property #{mop.p}" if mop.p and mop.p in ['sessions', 'ctime', 'mtime']
     throw new Error "Only the server can change the root document metadata" if mop.source
 
-
 meta =
   name: 'meta'
 
@@ -56,8 +55,10 @@ meta =
 
   # Apply a document operation to the metadata object
   # side is 'left' or 'right'.
-  applyOp: (meta, type, opData, side) ->
-    meta.mtime = opData.meta.ts
+  applyOp: (meta, type, opData, side = 'left') ->
+    if opData.meta?.ts
+      meta.mtime = opData.meta.ts
+      meta.ctime ?= meta.mtime # If an old database has no ctime on documents, add it back in.
 
     if type.transformCursor
       for id, session of meta.sessions

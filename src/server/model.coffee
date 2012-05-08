@@ -7,6 +7,7 @@
 
 queue = require './syncqueue'
 types = require '../types'
+metadata = require '../types/metadata'
 
 isArray = (o) -> Object.prototype.toString.call(o) == '[object Array]'
 
@@ -39,7 +40,7 @@ module.exports = Model = (db, options) ->
   #   type
   #   v
   #   meta
-  #   eventEmitter
+  #   eventEmitter: An event emitter which interested listeners subscribe to
   #   reapTimer
   #   committedVersion: v
   #   snapshotWriteLock: bool to make sure writeSnapshot isn't re-entrant
@@ -90,9 +91,61 @@ module.exports = Model = (db, options) ->
   options.maximumAge ?= 40
 
   # **** Cache API methods
+ 
+  # I would just copy out the db.writeOp function statically (like this):
+  #dbWriteOp = db?.writeOp or (docName, newOpData, callback) -> callback()
+  # ... but we need to be able to change the database methods from the tests.
+  dbWriteOp = (docName, newOpData, callback) ->
+    if db then db.writeOp(docName, newOpData, callback) else callback()
+
+  # Internal wrapper around db.writeOp which sometimes also saves the document snapshot.
+  writeOp = (docName, doc, opData, newSnapshot, callback) ->
+    dbWriteOp docName, opData, (error) ->
+      # Note that no changes are made to the doc object until the op has been committed to the database.
+      # This is important.
+
+      if error
+        # The user should probably know about this.
+        console.warn "Error writing ops to database: #{error}"
+        return callback error
+
+      options.stats?.writeOp?()
+
+      # This is needed when we emit the 'change' event, below.
+      oldSnapshot = doc.snapshot
+
+      # All the heavy lifting is now done. Finally, we'll update the cache with the new data
+      # and (maybe!) save a new document snapshot to the database.
+
+      doc.v = opData.v + 1
+      doc.snapshot = newSnapshot
+      doc.meta = metadata.applyOp doc.meta, doc.type, opData, 'left' # TODO: Left or right??
+
+      doc.ops.push opData
+      doc.ops.shift() if db and doc.ops.length > options.numCachedOps
+
+      model.emit 'applyOp', docName, opData, newSnapshot, oldSnapshot
+      doc.eventEmitter.emit 'op', opData, newSnapshot, oldSnapshot
+
+      # The callback is called with the version of the document at which the op was applied.
+      # This is the op.v after transformation, and its doc.v - 1.
+      callback null, opData.v
+  
+      # I need a decent strategy here for deciding whether or not to save the snapshot.
+      #
+      # The 'right' strategy looks something like "Store the snapshot whenever the snapshot
+      # is smaller than the accumulated op data". For now, I'll just store it every 20
+      # ops or something. (Configurable with doc.committedVersion)
+      if !doc.snapshotWriteLock and doc.committedVersion + options.opsBeforeCommit <= doc.v
+        tryWriteSnapshot docName, (error) ->
+          console.warn "Error writing snapshot #{error}. This is nonfatal" if error
+
 
   # Its important that all ops are applied in order. This helper method creates the op submission queue
   # for a single document. This contains the logic for transforming & applying ops.
+  #
+  # To avoid race conditions with metadata ops, all metadata ops are also passed through this function.
+  # type is either 'op' or 'mop' depending on the type of op that is being applied.
   makeOpQueue = (docName, doc) -> queue (opData, callback) ->
     return callback 'Version missing' unless opData.v >= 0
     return callback 'Op at future version' if opData.v > doc.v
@@ -101,10 +154,15 @@ module.exports = Model = (db, options) ->
     return callback 'Op too old' if opData.v + options.maximumAge < doc.v
 
     opData.meta ||= {}
-    opData.meta.ts = Date.now()
+    opData.meta.ts ?= Date.now()
 
     # We'll need to transform the op to the current version of the document. This
     # calls the callback immediately if opVersion == doc.v.
+    #
+    # This whole get old ops & transform process is unnessary for non-cursor metadata ops. (Except for cursor
+    # changes, Metadata ops are just applied in the order they're received). But those kind of metadata ops
+    # are rare anyway (and getOps usually calls its callback immediately). So its probably not worth the extra
+    # complexity.
     getOps docName, opData.v, doc.v, (error, ops) ->
       return callback error if error
 
@@ -125,17 +183,15 @@ module.exports = Model = (db, options) ->
             if oldOp.meta.source and opData.dupIfSource and oldOp.meta.source in opData.dupIfSource
               return callback 'Op already submitted'
 
-            opData.op = doc.type.transform opData.op, oldOp.op, 'left'
+            if opData.op
+              opData.op = doc.type.transform opData.op, oldOp.op, 'left'
+            else
+              opData.mop = metadata.transform opData.mop, oldOp.op, 'left'
             opData.v++
+
         catch error
           console.error error.stack
           return callback error.message
-
-      try
-        snapshot = doc.type.apply doc.snapshot, opData.op
-      catch error
-        console.error error.stack
-        return callback error.message
 
       # The op data should be at the current version, and the new document data should be at
       # the next version.
@@ -148,44 +204,18 @@ module.exports = Model = (db, options) ->
         console.error "Expecting #{opData.v} == #{doc.v}"
         return callback 'Internal error'
 
-      #newDocData = {snapshot, type:type.name, v:opVersion + 1, meta:docData.meta}
-      writeOp = db?.writeOp or (docName, newOpData, callback) -> callback()
-
-      writeOp docName, opData, (error) ->
-        if error
-          # The user should probably know about this.
-          console.warn "Error writing ops to database: #{error}"
-          return callback error
-
-        options.stats?.writeOp?()
-
-        # This is needed when we emit the 'change' event, below.
-        oldSnapshot = doc.snapshot
-
-        # All the heavy lifting is now done. Finally, we'll update the cache with the new data
-        # and (maybe!) save a new document snapshot to the database.
-
-        doc.v = opData.v + 1
-        doc.snapshot = snapshot
-
-        doc.ops.push opData
-        doc.ops.shift() if db and doc.ops.length > options.numCachedOps
-
-        model.emit 'applyOp', docName, opData, snapshot, oldSnapshot
-        doc.eventEmitter.emit 'op', opData, snapshot, oldSnapshot
-
-        # The callback is called with the version of the document at which the op was applied.
-        # This is the op.v after transformation, and its doc.v - 1.
-        callback null, opData.v
-    
-        # I need a decent strategy here for deciding whether or not to save the snapshot.
-        #
-        # The 'right' strategy looks something like "Store the snapshot whenever the snapshot
-        # is smaller than the accumulated op data". For now, I'll just store it every 20
-        # ops or something. (Configurable with doc.committedVersion)
-        if !doc.snapshotWriteLock and doc.committedVersion + options.opsBeforeCommit <= doc.v
-          tryWriteSnapshot docName, (error) ->
-            console.warn "Error writing snapshot #{error}. This is nonfatal" if error
+      try
+        if opData.op
+          newSnapshot = doc.type.apply doc.snapshot, opData.op
+          writeOp docName, doc, opData, newSnapshot, callback
+        else # Metadata op.
+          doc.meta = applyMop doc.meta, opData.mop
+          doc.eventEmitter.emit 'mop', opData, doc.meta
+          callback()
+          
+      catch error
+        console.error error.stack
+        return callback error.message
 
   # Add the data for the given docName to the cache. The named document shouldn't already
   # exist in the doc set.
@@ -198,6 +228,9 @@ module.exports = Model = (db, options) ->
     if error
       callback error for callback in callbacks if callbacks
     else
+      throw new Error "Doc #{docName} already exists" if docs[docName]
+      throw new Error 'Add should be called with the type object' unless typeof data.type is 'object'
+
       doc = docs[docName] =
         snapshot: data.snapshot
         v: data.v
@@ -219,6 +252,7 @@ module.exports = Model = (db, options) ->
         dbMeta: dbMeta
 
       doc.opQueue = makeOpQueue docName, doc
+      doc.meta.sessions = {}
       
       refreshReapingTimeout docName
       callback null, doc for callback in callbacks if callbacks
@@ -285,6 +319,7 @@ module.exports = Model = (db, options) ->
           try
             for op in ops
               data.snapshot = type.apply data.snapshot, op.op
+              data.meta = metadata.applyOp data.meta, data.type, op # Updates mtime.
               data.v++
           catch e
             # This should never happen - it indicates that whats in the
@@ -345,21 +380,24 @@ module.exports = Model = (db, options) ->
 
     data =
       v: doc.v
-      meta: doc.meta
+      meta: {}
       snapshot: doc.snapshot
       # The database doesn't know about object types.
       type: doc.type.name
+
+    data.meta[k] = v for k, v of doc.meta when k isnt 'sessions'
 
     # Commit snapshot.
     writeSnapshot docName, data, doc.dbMeta, (error, dbMeta) ->
       doc.snapshotWriteLock = false
 
+      return callback? error if error
+
       # We have to use data.v here because the version in the doc could
       # have been updated between the call to writeSnapshot() and now.
       doc.committedVersion = data.v
       doc.dbMeta = dbMeta
-
-      callback? error
+      callback?()
 
   # *** Model interface methods
 
@@ -376,13 +414,18 @@ module.exports = Model = (db, options) ->
     return callback? 'Type not found' unless type
 
     data =
+      v:0
+      meta:metadata.create meta
       snapshot:type.create()
       type:type.name
-      meta:meta or {}
-      v:0
+    # The db doesn't store the empty session list. Sessions are added back in by add().
+    delete data.meta.sessions
 
-    done = (error, dbMeta) ->
-      # dbMeta can be used to cache extra state needed by the database to access the document, like an ID or something.
+    create = db?.create or (docName, data, callback) -> callback()
+
+    create docName, data, (error, dbMeta) ->
+      # dbMeta can be used to cache extra state needed by the database to access the document,
+      # like an ID or something.
       return callback? error if error
 
       # From here on we'll store the object version of the type name.
@@ -390,11 +433,6 @@ module.exports = Model = (db, options) ->
       add docName, null, data, 0, [], dbMeta
       model.emit 'create', docName, data
       callback?()
-
-    if db
-      db.create docName, data, done
-    else
-      done()
 
   # Perminantly deletes the specified document.
   # If listeners are attached, they are removed.
@@ -498,22 +536,13 @@ module.exports = Model = (db, options) ->
   # TODO: store (some) metadata in DB
   # TODO: op and meta should be combineable in the op that gets sent
   @applyMetaOp = (docName, metaOpData, callback) ->
-    {path, value} = metaOpData.meta
-   
-    return callback? "path should be an array" unless isArray path
-
     load docName, (error, doc) ->
-      if error?
-        callback? error
-      else
-        applied = false
-        switch path[0]
-          when 'shout'
-            doc.eventEmitter.emit 'op', metaOpData
-            applied = true
+      return callback error if error
 
-        model.emit 'applyMetaOp', docName, path, value if applied
-        callback? null, doc.v
+      # opQueue disambiguates by looking for opData.op or opData.mop
+      process.nextTick -> doc.opQueue metaOpData, (error) ->
+        refreshReapingTimeout docName
+        callback? error
 
   # Listen to all ops from the specified version. If version is in the past, all
   # ops since that version are sent immediately to the listener.
