@@ -255,6 +255,7 @@ module.exports = Model = (db, options) ->
       doc.meta.sessions = {}
       
       refreshReapingTimeout docName
+      model.emit 'add', docName, data
       callback null, doc for callback in callbacks if callbacks
 
     doc
@@ -327,6 +328,7 @@ module.exports = Model = (db, options) ->
             console.error "Op data invalid for #{docName}: #{e.stack}"
             return callback 'Op data invalid'
 
+        model.emit 'load', docName, data
         add docName, error, data, committedVersion, ops, dbMeta
 
   # This makes sure the cache contains a document. If the doc cache doesn't contain
