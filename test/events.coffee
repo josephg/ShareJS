@@ -16,6 +16,9 @@ module.exports = testCase
     @name = 'testingdoc'
     @unused = 'nonexistantdoc'
 
+    # Mock out Date.now function to make metadata deterministic
+    Date.now = () -> return 0
+
     @model.create @name, 'simple', (error) ->
       assert.fail error if error
       callback()
@@ -23,7 +26,7 @@ module.exports = testCase
   'model emits a create event when a document is created': (test) ->
     @model.on 'create', (name, data) =>
       test.strictEqual name, @unused
-      test.deepEqual data, {v:0, type:types.simple, snapshot:{str:''}, meta:{}}
+      test.deepEqual data, {v:0, type:types.simple, snapshot:{str:''}, meta:{ctime: 0, mtime: 0, sessions: {}}}
 
     @model.create @unused, 'simple', ->
       test.expect 2

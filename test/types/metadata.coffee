@@ -98,6 +98,8 @@ genTests = (type) ->
     meta = expect {p:'hi', v:5}, meta, {ctime:0, mtime:0, sessions:{}, hi:5}
     meta = expect {p:'hi'}, meta, {ctime:0, mtime:0, sessions:{}}
 
+    meta = expect {n:{sessions:{abc: {x:'y'}},ctime:1,mtime:2}}, meta, {ctime:1, mtime:2, sessions:{abc:{x:'y'}}}
+
     test.done()
 
 

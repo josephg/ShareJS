@@ -19,6 +19,7 @@ client = [
 	'types/helpers'
 	'types/text'
 	'types/text-api'
+	'types/metadata'
 	'client/doc'
 	'client/connection'
 	'client/index'

@@ -144,18 +144,33 @@ module.exports = (createAgent, options) ->
         # Skip the op if this socket sent it.
         return if opData.meta.source is agent.sessionId
 
-        opMsg =
-          doc: docName
-          op: opData.op
-          v: opData.v
-          meta: opData.meta
-
-        send opMsg
-      
+        if opData.op
+          opMsg =
+            doc: docName
+            op: opData.op
+            v: opData.v
+            meta: opData.meta
+          send opMsg
+        else if opData.mop
+          mopMsg = 
+            doc: docName,
+            mop: opData.mop,
+            v: opData.v,
+            meta: opData.meta
+          send mopMsg
+        else
+          callback 'Unrecognized op'
+          
       # Tell the socket the doc is open at the requested version
       agent.listen docName, version, listener, (error, v) ->
+
         delete docState[docName].listener if error
         callback error, v
+
+        # Connect agent (after callback is complete)
+        agent.connect docName
+
+
 
     # Close the named document.
     # callback([error])
@@ -168,6 +183,15 @@ module.exports = (createAgent, options) ->
       agent.removeListener docName
       delete docState[docName].listener
       callback()
+
+    sendMetadata = (docName, version, metadata) ->
+      msg = 
+        doc: docName,
+        mop: {
+          n: metadata
+        },
+        v: version
+      send msg
 
     # Handles messages with any combination of the open:true, create:true and snapshot:null parameters
     handleOpenCreateSnapshot = (query, finished) ->
@@ -228,8 +252,9 @@ module.exports = (createAgent, options) ->
 
       # The socket requested a document snapshot
       step2Snapshot = ->
-#        if query.create or query.open or query.snapshot == null
-#          msg.meta = docData.meta
+        # Add metadata to the msg
+        #if docData and (query.create or query.open or query.snapshot == null)
+        #  msg.meta = docData.meta
 
         # Skip inserting a snapshot if the document was just created.
         if query.snapshot != null or msg.create == true
@@ -262,6 +287,11 @@ module.exports = (createAgent, options) ->
           msg.open = true
           msg.v = version
           callback()
+
+          if docData
+            sendMetadata docName, query.v, docData.meta
+          else
+            sendMetadata docName, query.v, null
 
       # Technically, we don't need a snapshot if the user called create but not open or createSnapshot,
       # but no clients do that yet anyway.

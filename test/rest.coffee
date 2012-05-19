@@ -51,6 +51,9 @@ module.exports = testCase
       auth: (agent, action) => @auth agent, action
     }
 
+    # Mock away Date.now function to make metadata deterministic
+    Date.now = () -> return 0
+
     # For some reason, exceptions thrown in setUp() are ignored.
     # At least this way we'll get a stack trace.
     try
@@ -62,6 +65,7 @@ module.exports = testCase
     catch e
       console.log e.stack
       throw e
+
 
   tearDown: (callback) ->
     @server.on 'close', callback
@@ -129,7 +133,7 @@ module.exports = testCase
         test.deepEqual data, {v:0}
 
         @model.getSnapshot @name, (error, doc) ->
-          test.deepEqual doc, {v:1, type:types.simple, snapshot:{str:'Hi'}, meta:{}}
+          test.deepEqual doc, {v:1, type:types.simple, snapshot:{str:'Hi'}, meta:{ctime: 0, mtime: 0, sessions: {}}}
           test.done()
   
   'POST a document setting the version in an HTTP header works': (test) ->
@@ -139,7 +143,7 @@ module.exports = testCase
         test.deepEqual data, {v:0}
 
         @model.getSnapshot @name, (error, doc) ->
-          test.deepEqual doc, {v:1, type:types.simple, snapshot:{str:'Hi'}, meta:{}}
+          test.deepEqual doc, {v:1, type:types.simple, snapshot:{str:'Hi'}, meta:{ctime: 0, mtime: 0, sessions: {}}}
           test.done()
   
   'POST a document with no version returns 400': (test) ->
@@ -252,7 +256,7 @@ module.exports = testCase
 
         # & Check the document is unchanged
         @model.getSnapshot @name, (error, doc) ->
-          test.deepEqual doc, {v:0, type:types.simple, snapshot:{str:''}, meta:{}}
+          test.deepEqual doc, {v:0, type:types.simple, snapshot:{str:''}, meta:{ctime: 0, mtime: 0, sessions: {}}}
           test.done()
 
   'A Forbidden DELETE on a nonexistant document returns 403': (test) ->

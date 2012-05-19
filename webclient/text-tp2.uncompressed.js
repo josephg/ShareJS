@@ -1,10 +1,12 @@
 (function() {
+
   /**
    @const
    @type {boolean}
 */
 var WEB = true;
 ;
+
   var append, appendDoc, appendSkipChars, checkOp, componentLength, exports, makeTake, takeDoc, transformer, type;
 
   exports = window['sharejs'];

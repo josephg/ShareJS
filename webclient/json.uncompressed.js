@@ -1,12 +1,14 @@
 (function() {
+
   /**
    @const
    @type {boolean}
 */
 var WEB = true;
 ;
-  var SubDoc, clone, depath, exports, extendDoc, isArray, json, pathEquals, text, traverse,
-    __slice = Array.prototype.slice;
+
+  var SubDoc, clone, depath, exports, extendDoc, isArray, json, pathEquals, text, traverse;
+  var __slice = Array.prototype.slice;
 
   exports = window['sharejs'];
 
@@ -193,12 +195,12 @@ var WEB = true;
   };
 
   json.normalize = function(op) {
-    var c, newOp, _i, _len;
+    var c, newOp, _i, _len, _ref;
     newOp = [];
     if (!isArray(op)) op = [op];
     for (_i = 0, _len = op.length; _i < _len; _i++) {
       c = op[_i];
-      if (c.p == null) c.p = [];
+      if ((_ref = c.p) == null) c.p = [];
       json.append(newOp, c);
     }
     return newOp;

@@ -89,7 +89,12 @@ meta =
   applyMop: (meta, mop) ->
     checkMop meta, mop
     
-    if mop.as # Add session
+    if mop.n # Initialise new metadata
+      meta.sessions = mop.n.sessions
+      meta.ctime = mop.n.ctime
+      meta.mtime = mop.n.mtime
+
+    else if mop.as # Add session
       meta.sessions[mop.id] = mop.as
 
     else if mop.rs # Remove session

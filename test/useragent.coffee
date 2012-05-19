@@ -406,6 +406,8 @@ genTests = (async) -> testCase
     @model.removeListener = (docName, _listener) =>
       test.strictEqual docName, @name
       test.strictEqual listener, _listener
+    @model.applyMop = (docName, mop, callback) ->
+      callback null, 0
 
     @agent.listen @name, 100, listener, (error, result) =>
       @agent.removeListener @name
