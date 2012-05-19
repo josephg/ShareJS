@@ -209,9 +209,9 @@ module.exports = Model = (db, options) ->
           newSnapshot = doc.type.apply doc.snapshot, opData.op
           writeOp docName, doc, opData, newSnapshot, callback
         else # Metadata op.
-          doc.meta = applyMop doc.meta, opData.mop
+          doc.meta = metadata.applyMop doc.meta, opData.mop
           doc.eventEmitter.emit 'mop', opData, doc.meta
-          callback()
+          callback(null, doc.v)
           
       catch error
         console.error error.stack
@@ -255,6 +255,7 @@ module.exports = Model = (db, options) ->
       doc.meta.sessions = {}
       
       refreshReapingTimeout docName
+      model.emit 'add', docName, data
       callback null, doc for callback in callbacks if callbacks
 
     doc
@@ -327,6 +328,7 @@ module.exports = Model = (db, options) ->
             console.error "Op data invalid for #{docName}: #{e.stack}"
             return callback 'Op data invalid'
 
+        model.emit 'load', docName, data
         add docName, error, data, committedVersion, ops, dbMeta
 
   # This makes sure the cache contains a document. If the doc cache doesn't contain
@@ -527,7 +529,7 @@ module.exports = Model = (db, options) ->
   @applyOp = (docName, opData, callback) ->
     # All the logic for this is in makeOpQueue, above.
     load docName, (error, doc) ->
-      return callback error if error
+      return callback? error if error
 
       process.nextTick -> doc.opQueue opData, (error, newVersion) ->
         refreshReapingTimeout docName
@@ -535,14 +537,17 @@ module.exports = Model = (db, options) ->
 
   # TODO: store (some) metadata in DB
   # TODO: op and meta should be combineable in the op that gets sent
-  @applyMetaOp = (docName, metaOpData, callback) ->
+  @applyMop = (docName, metaOpData, callback) ->
     load docName, (error, doc) ->
       return callback error if error
 
+      # Default to operating on the latest version
+      metaOpData.v = doc.v if !metaOpData.v
+
       # opQueue disambiguates by looking for opData.op or opData.mop
-      process.nextTick -> doc.opQueue metaOpData, (error) ->
+      process.nextTick -> doc.opQueue metaOpData, (error, newVersion) ->
         refreshReapingTimeout docName
-        callback? error
+        callback? error, newVersion
 
   # Listen to all ops from the specified version. If version is in the past, all
   # ops since that version are sent immediately to the listener.
@@ -574,6 +579,8 @@ module.exports = Model = (db, options) ->
           return callback? error if error
 
           doc.eventEmitter.on 'op', listener
+          doc.eventEmitter.on 'mop', listener
+
           callback? null, version
           for op in data
             listener op
@@ -584,6 +591,7 @@ module.exports = Model = (db, options) ->
 
       else # Version is null / undefined. Just add the listener.
         doc.eventEmitter.on 'op', listener
+        doc.eventEmitter.on 'mop', listener
         callback? null, doc.v
 
   # Remove a listener for a particular document.
@@ -597,6 +605,8 @@ module.exports = Model = (db, options) ->
     throw new Error 'removeListener called but document not loaded' unless doc
 
     doc.eventEmitter.removeListener 'op', listener
+    doc.eventEmitter.removeListener 'mop', listener
+
     refreshReapingTimeout docName
 
   # Flush saves all snapshot data to the database. I'm not sure whether or not this is actually needed -

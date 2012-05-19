@@ -51,6 +51,9 @@ module.exports = testCase
       auth: (agent, action) => @auth agent, action
     }
 
+    # Mock away Date.now function to make metadata deterministic
+    Date.now = () -> return 0
+
     # For some reason, exceptions thrown in setUp() are ignored.
     # At least this way we'll get a stack trace.
     try
@@ -63,6 +66,7 @@ module.exports = testCase
       console.log e.stack
       throw e
 
+
   tearDown: (callback) ->
     @server.on 'close', callback
     @server.close()
@@ -71,7 +75,23 @@ module.exports = testCase
     fetch 'GET', @port, "/doc/#{@name}", null, (res, data) ->
       test.strictEqual(res.statusCode, 404)
       test.done()
+      
+   'return 404 and empty body when on HEAD on a nonexistant document': (test) ->
+    fetch 'HEAD', @port, "/doc/#{@name}", null, (res, data) ->
+      test.strictEqual res.statusCode, 404
+      test.strictEqual data, ''
+      test.done()
   
+  'return 200, empty body, version and type when on HEAD on a document': (test) ->
+    @model.create @name, 'simple', =>
+      @model.applyOp @name, {v:0, op:{position: 0, text: 'Hi'}}, =>
+        fetch 'HEAD', @port, "/doc/#{@name}", null, (res, data, headers) ->
+          test.strictEqual res.statusCode, 200
+          test.strictEqual headers['x-ot-version'], '1'
+          test.strictEqual headers['x-ot-type'], 'simple'
+          test.strictEqual data, ''
+          test.done()
+          
   'GET a document returns the document snapshot': (test) ->
     @model.create @name, 'simple', =>
       @model.applyOp @name, {v:0, op:{position: 0, text: 'Hi'}}, =>
@@ -113,7 +133,7 @@ module.exports = testCase
         test.deepEqual data, {v:0}
 
         @model.getSnapshot @name, (error, doc) ->
-          test.deepEqual doc, {v:1, type:types.simple, snapshot:{str:'Hi'}, meta:{}}
+          test.deepEqual doc, {v:1, type:types.simple, snapshot:{str:'Hi'}, meta:{ctime: 0, mtime: 0, sessions: {}}}
           test.done()
   
   'POST a document setting the version in an HTTP header works': (test) ->
@@ -123,7 +143,7 @@ module.exports = testCase
         test.deepEqual data, {v:0}
 
         @model.getSnapshot @name, (error, doc) ->
-          test.deepEqual doc, {v:1, type:types.simple, snapshot:{str:'Hi'}, meta:{}}
+          test.deepEqual doc, {v:1, type:types.simple, snapshot:{str:'Hi'}, meta:{ctime: 0, mtime: 0, sessions: {}}}
           test.done()
   
   'POST a document with no version returns 400': (test) ->
@@ -236,7 +256,7 @@ module.exports = testCase
 
         # & Check the document is unchanged
         @model.getSnapshot @name, (error, doc) ->
-          test.deepEqual doc, {v:0, type:types.simple, snapshot:{str:''}, meta:{}}
+          test.deepEqual doc, {v:0, type:types.simple, snapshot:{str:''}, meta:{ctime: 0, mtime: 0, sessions: {}}}
           test.done()
 
   'A Forbidden DELETE on a nonexistant document returns 403': (test) ->
