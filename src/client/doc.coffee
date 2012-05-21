@@ -1,5 +1,12 @@
+
 unless WEB?
   types = require '../types'
+  metadata = require '../types/metadata'
+
+if WEB?
+  metadata = exports.meta
+  exports.extendDoc = (name, fn) ->
+    Doc::[name] = fn
 
 # A Doc is a client's view on a sharejs document.
 #
@@ -27,6 +34,8 @@ class Doc
     @version = openData.v
     @snapshot = openData.snaphot
     @_setType openData.type if openData.type
+
+    @metadata = null;
 
     @state = 'closed'
     @autoOpen = false
@@ -69,6 +78,21 @@ class Doc
     @emit 'change', docOp, oldSnapshot
     @emit 'remoteop', docOp, oldSnapshot if isRemote
   
+  _mopApply: (mop, isRemote) ->
+    if !@metadata
+      @metadata = metadata.create()
+
+      metadata.applyMop(@metadata, mop)
+
+    @emit 'metachange', @metadata
+    if (mop.n)
+      @emit 'metanew', mop.n
+    if (mop.as)
+      @emit 'metainsert', mop.id, mop.as
+    if (mop.rs)
+      @emit 'metaremove', mop.id, mop.rs
+
+
   _connectionStateChanged: (state, data) ->
     switch state
       when 'disconnected'
@@ -153,7 +177,7 @@ class Doc
       # The op will be confirmed normally when we get the op itself was echoed back from the server
       # (handled below).
 
-    else if (msg.op is undefined and msg.v isnt undefined) or (msg.op and msg.meta.source in @inflightSubmittedIds)
+    else if (msg.op is undefined and msg.mop is undefined and msg.v isnt undefined) or (msg.op and msg.meta.source in @inflightSubmittedIds)
       # Our inflight op has been acknowledged.
       oldInflightOp = @inflightOp
       @inflightOp = null
@@ -223,6 +247,8 @@ class Doc
       # Finally, apply the op to @snapshot and trigger any event listeners
       @_otApply docOp, true
 
+    else if msg.mop
+      @_mopApply(msg.mop)
     else if msg.meta
       {path, value} = msg.meta
 
@@ -276,7 +302,7 @@ class Doc
   shout: (msg) =>
     # Meta ops don't have to queue, they can go direct. Good/bad idea?
     @connection.send {doc:@name, meta: { path: ['shout'], value: msg } }
-  
+
   # Open a document. The document starts closed.
   open: (callback) ->
     @autoOpen = true

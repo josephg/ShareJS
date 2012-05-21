@@ -22,6 +22,8 @@ expectData = (socket, expectedData, callback) ->
   expectedData = [expectedData] unless Array.isArray expectedData
 
   socket.onmessage = (data) ->
+    if data.mop # ignore the mop messages
+      return
     expected = expectedData.shift()
     if expected.meta == ANYOBJECT
       assert.strictEqual typeof data.meta, 'object'
@@ -276,6 +278,8 @@ module.exports = testCase
 
       # All the ops that come through the socket should have the doc name set.
       @socket.onmessage = (data) =>
+        if data.mop # ignore mop messages
+          return
         test.strictEqual data.doc?, true
         passPart()
 

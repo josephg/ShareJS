@@ -63,6 +63,19 @@ module.exports = (model, options) ->
 
       auth this, action
 
+    connect: (docName, callback) ->
+      mop = {
+        mop: {
+          id: @sessionId,
+          p: 'sessions',
+          as: {
+              name: @name, 
+              ctime: Date.now()
+            }
+        }
+      }
+      model.applyMop docName, mop, callback
+
     disconnect: ->
       model.removeListener docName, listener for docName, listener of @listeners
 
@@ -135,6 +148,22 @@ module.exports = (model, options) ->
       throw new Error 'Document is not open' unless @listeners[docName]
       model.removeListener docName, @listeners[docName]
       delete @listeners[docName]
+
+      mop = { 
+        v: 0,
+        mop: {
+          id: @sessionId,
+          p: 'sessions',
+          rs: {
+              name: @name, 
+              ctime: Date.now()
+            }
+        }
+      }
+
+      model.applyMop docName, mop, (error, version) ->
+        callback? error, version
+
 
   # Finally, return a function which takes client data and returns an authenticated useragent object
   # through a callback.
