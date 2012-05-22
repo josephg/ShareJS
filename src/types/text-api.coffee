@@ -11,6 +11,14 @@ text.api =
   # Get the text contents of a document
   getText: -> @snapshot
 
+  setText: (text, callback) ->
+    cbCount = 2
+    realcb = (err, result) ->
+      cbCount--
+      callback(err, result) if callback and cbCount is 0
+    @del 0, @snapshot.length, realcb
+    @insert 0, text, realcb
+
   insert: (pos, text, callback) ->
     op = [{p:pos, i:text}]
     

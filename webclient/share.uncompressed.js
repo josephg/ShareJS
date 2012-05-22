@@ -383,6 +383,16 @@
     getText: function() {
       return this.snapshot;
     },
+    setText: function(text, callback) {
+      var cbCount, realcb;
+      cbCount = 2;
+      realcb = function(err, result) {
+        cbCount--;
+        if (callback && cbCount === 0) return callback(err, result);
+      };
+      this.del(0, this.snapshot.length, realcb);
+      return this.insert(0, text, realcb);
+    },
     insert: function(pos, text, callback) {
       var op;
       op = [
@@ -701,7 +711,7 @@
   exports.Doc = Doc;
 
   if (typeof WEB !== "undefined" && WEB !== null) {
-    types || (types = exports.types);
+    types = exports.types;
     if (!window.BCSocket) {
       throw new Error('Must load browserchannel before this library');
     }
