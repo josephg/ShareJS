@@ -137,6 +137,7 @@ class Doc
       if msg.create
         @created = true
         @snapshot = @type.create()
+        @meta = {} # This should have ctime:now, creator:me.
       else
         @created = false unless @created is true
         @snapshot = msg.snapshot if msg.snapshot isnt undefined

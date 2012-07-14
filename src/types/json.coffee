@@ -31,7 +31,7 @@ json.invert = (op) -> json.invertComponent c for c in op.slice().reverse()
 
 json.checkValidOp = (op) ->
 
-isArray = (o) -> Object.prototype.toString.call(o) == '[object Array]'
+isArray = Array.isArray or (o) -> Object.prototype.toString.call(o) == '[object Array]'
 json.checkList = (elem) ->
   throw new Error 'Referenced element not a list' unless isArray(elem)
 

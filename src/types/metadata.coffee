@@ -67,18 +67,6 @@ meta =
 
     meta
 
-  # This is used to transform one metadata operation by another. Metadata ops aren't stored, and
-  # aren't transformed by each other. This is needed to make cursor positions work.
-  #
-  # Like in the OT types, 'side' is 'left' or 'right'.
-  transform: (type, mop, op, side) ->
-    if mop.c? and type.transformCursor
-      # Cursors are the only thing we need to transform.
-      # mop.c is the new cursor position, so we just need to transform it by the op.
-      type.transformCursor mop.c, op, side
-
-    mop
-
   # This method applies a metadata operation to the metadata object. It is destructive to
   # the current metadata object. It returns a new value for the document metadata.
   #
@@ -117,6 +105,22 @@ meta =
           meta[mop.p] = mop.v
 
     meta
+
+  # This is used to transform one metadata operation by another. Metadata ops aren't stored, and
+  # aren't transformed by each other. This is needed to make cursor positions work.
+  #
+  # Like in the OT types, 'side' is 'left' or 'right'.
+  transform: (type, mop, op, side) ->
+    return mop unless type.transformCursor
+
+    if mop.c?
+      # Cursors are the only thing we need to transform.
+      # mop.c is the new cursor position, so we just need to transform it by the op.
+      type.transformCursor mop.c, op, side
+    else if mop.as?.cursor?
+      mop.as.cursor = type.transformCursor mop.as.cursor, op, side
+
+    mop
 
 if WEB?
   exports.meta = meta

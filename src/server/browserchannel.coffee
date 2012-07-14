@@ -1,6 +1,6 @@
 # This implements the network API for ShareJS.
 #
-# The wire protocol is speccced out here:
+# The wire protocol is specced out here:
 # https://github.com/josephg/ShareJS/wiki/Wire-Protocol
 #
 # When a client connects the server first authenticates it and sends:
@@ -18,9 +18,6 @@
 #
 # The client can send open requests as soon as the socket has opened - it doesn't need to
 # wait for auth.
-#
-# The wire protocol is documented here:
-# https://github.com/josephg/ShareJS/wiki/Wire-Protocol
 
 browserChannel = require('browserchannel').server
 util = require 'util'
@@ -101,8 +98,11 @@ module.exports = (createAgent, options) ->
           handleOpenCreateSnapshot query, callback
 
         # The socket is submitting an op.
-        else if query.op? or query.meta?.path?
+        else if query.op?
           handleOp query, callback
+
+        else if query.mop?
+          handleMetaOp query, callback
 
         else
           console.warn "Invalid query #{JSON.stringify query} from #{agent.sessionId}"
@@ -152,7 +152,7 @@ module.exports = (createAgent, options) ->
             meta: opData.meta
           send opMsg
         else if opData.mop
-          mopMsg = 
+          mopMsg =
             doc: docName,
             mop: opData.mop,
             v: opData.v,
@@ -185,7 +185,7 @@ module.exports = (createAgent, options) ->
       callback()
 
     sendMetadata = (docName, version, metadata) ->
-      msg = 
+      msg =
         doc: docName,
         mop: {
           n: metadata
@@ -317,13 +317,12 @@ module.exports = (createAgent, options) ->
 
     # We received an op from the socket
     handleOp = (query, callback) ->
-      # ...
       #throw new Error 'No version specified' unless query.v?
 
-      opData = {v:query.v, op:query.op, meta:query.meta, dupIfSource:query.dupIfSource}
+      # The agent will sanify the query
+      opData = query #{v:query.v, op:query.op, meta:query.meta, dupIfSource:query.dupIfSource}
 
-      # If it's a metaOp don't send a response
-      agent.submitOp query.doc, opData, if (not opData.op? and opData.meta?.path?) then callback else (error, appliedVersion) ->
+      agent.submitOp query.doc, opData, (error, appliedVersion) ->
         msg = if error
           #p "Sending error to socket: #{error}"
           {doc:query.doc, v:null, error:error}
@@ -332,6 +331,9 @@ module.exports = (createAgent, options) ->
 
         send msg
         callback()
+
+    handleMetaOp = (query, callback) ->
+      agent.submitMOp query.doc, query, callback
 
     # We don't process any messages from the agent until they've authorized. Instead,
     # they are stored in this buffer.

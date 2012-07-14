@@ -641,25 +641,54 @@ genTests = (async) -> testCase
           test.strictEqual snapshotWritten, true
           test.done()
 
-  ###
+  'Metadata ops are applied': (test) ->
+    @db.create = (docName, data, callback) -> callback null
 
-  'New clients are added to the document metadata': (test) ->
-
-  'When a client disconnects, their session is removed from the document metadata': (test) ->
-
-
-
-
-  'A meta op set is applied': (test) ->
     @model.create @name, 'simple', (error) =>
+      @model.applyMetaOp @name, {v:0, mop:{id:'seph', as:{}}}, (error) =>
+        test.equal error, null
+        @model.getSnapshot @name, (error, data) ->
+          test.deepEqual data.meta, {ctime:321, mtime:321, sessions:{seph:{}}}
+          test.done()
 
+  "A document's mtime doesn't change because of meta data on a meta op": (test) ->
+    @setDb null
 
-  'Applying a metadata op to a nonexistant document has no effect': (test) ->
+    @model.create @name, 'simple', (error) =>
+      # The metadata here should be ignored.
+      @model.applyMetaOp @name, {v:0, mop:{p:'internet', v:true}, meta:{ts:400}}, (error) =>
+        test.equal error, null
+        @model.getSnapshot @name, (error, data) ->
+          test.deepEqual data.meta, {ctime:321, mtime:321, internet:true, sessions:{}}
+          test.done()
 
+  'Applying a metadata op to a nonexistant document causes an error': (test) ->
+    @db.getSnapshot = (docName, callback) => callback 'Document does not exist'
+
+    @model.applyMetaOp 'doesnotexist', {v:0, mop:{p:'internet', v:true}, meta:{ts:400}}, (error) =>
+      test.strictEqual error, 'Document does not exist'
+      test.done()
 
   'A metadata op applied to an old version is transformed': (test) ->
+    @setDb null
+    op = (v) -> {v, op:{position:v, text:"#{v}"}, meta:{}}
 
+    @model.create @name, 'simple', (error) =>
+      @model.applyOp @name, op(0), (error) =>
+        @model.applyOp @name, op(1), (error) =>
+          @model.applyOp @name, op(2), (error) =>
+
+
+  ###
   'A metadata op applied to a future version is rejected': (test) ->
+
+  'A metadata op applied to a deleted document is rejected': (test) ->
+
+  'Document metadata is transformed by applied operations': (test) ->
+
+  'Metadata is flushed to the database': (test) ->
+
+
   ###
 
   # *** Tests for getOps

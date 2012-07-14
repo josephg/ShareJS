@@ -68,7 +68,7 @@ genTests = (type) ->
     test.strictEqual out.mtime, 2000
     test.done()
 
-  'applyOp on a type with no transformCursor do nothing': (test) ->
+  'applyOp on a type with no transformCursor does nothing': (test) ->
     meta = type.create()
     meta.sessions.a = cursor: 99
     meta.ctime = meta.mtime = 1000
@@ -101,6 +101,8 @@ genTests = (type) ->
     meta = expect {n:{sessions:{abc: {x:'y'}},ctime:1,mtime:2}}, meta, {ctime:1, mtime:2, sessions:{abc:{x:'y'}}}
 
     test.done()
+
+  'transform a cursor metaop 
 
 
 exports.node = genTests nativeType

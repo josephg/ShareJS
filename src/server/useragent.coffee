@@ -5,6 +5,7 @@
 
 hat = require 'hat'
 types = require '../types'
+metadata = require '../types/metadata'
 
 # This module exports a function which you can call with the model and options. Calling the function
 # returns _another_ function which you can call when clients connect.
@@ -93,27 +94,36 @@ module.exports = (model, options) ->
 
       # I'm not sure what client-specified metadata should be allowed in the document metadata
       # object. For now, I'm going to ignore all create metadata until I know how it should work.
-      meta = {}
-
-      meta.creator = @name if @name
-      meta.ctime = meta.mtime = Date.now()
+      meta = metadata.create {creator:@name if @name}
 
       # The action object has a 'type' property already. Hence the doc type is renamed to 'docType'
       @doAuth {docName, docType:type, meta}, 'create', callback, =>
         model.create docName, type, meta, callback
 
     submitOp: (docName, opData, callback) ->
-      opData.meta ||= {}
-      opData.meta.source = @sessionId
-      dupIfSource = opData.dupIfSource or []
+      # Sanify opData
+      opData =
+        docName: docName
+        op: opData.op
+        v: opData.v
+        source: @sessionId
+        ts: Date.now()
+        dupIfSource: opData.dupIfSource or []
 
-      # If ops and meta get coalesced, they should be separated here.
-      if opData.op
-        @doAuth {docName, op:opData.op, v:opData.v, meta:opData.meta, dupIfSource}, 'submit op', callback, =>
-          model.applyOp docName, opData, callback
-      else
-        @doAuth {docName, meta:opData.meta}, 'submit meta', callback, =>
-          model.applyMetaOp docName, opData, callback
+      @doAuth opData, 'submit op', callback, =>
+        model.applyOp docName, opData, callback
+
+    submitMetaOp: (docName, mopData, callback) ->
+      mopData =
+        docName: docName
+        mop: mopData.mop
+        v: mopData.v
+        source: @sessionId
+        ts: Date.now()
+
+      # A meta op.
+      @doAuth mopData, 'submit meta', callback, =>
+        model.applyMetaOp docName, mopData, callback
 
     # Delete the named operation.
     # Callback is passed (deleted?, error message)
