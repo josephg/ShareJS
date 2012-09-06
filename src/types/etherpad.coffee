@@ -22,7 +22,10 @@ else
   Changeset = require("./../lib-etherpad/Changeset");
   AttributePool = require("./../lib-etherpad/AttributePool");
 
-etherpad = {}
+etherpad = 
+  Changeset : Changeset
+  AttributePool : AttributePool
+
 
 etherpad.name = "etherpad"
 etherpad.create = -> 
