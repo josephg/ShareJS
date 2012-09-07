@@ -92,7 +92,7 @@ task 'webclient', 'Build the web client into one file', ->
 	extrafiles = expandNames extras
 	e "coffee --compile --output webclient/ #{extrafiles}", ->
 	# For backwards compatibility. (The ace.js file used to be called share-ace.js)
-	e "cp webclient/ace.js webclient/share-ace.js"
+		e "cp webclient/ace.js webclient/share-ace.js"
 	e "cp src/lib-etherpad/* webclient/"
 
 #task 'lightwave', ->
