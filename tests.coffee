@@ -15,6 +15,7 @@ modules = [
   'types/text-api'
   'types/json'
   'types/json-api'
+  'types/etherpad'
 
   'db'
   'model'

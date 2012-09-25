@@ -12,4 +12,6 @@ register './text'
 register './text-composable'
 register './text-tp2'
 
+register './etherpad'
+
 register './json'
