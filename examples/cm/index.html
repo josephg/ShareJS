@@ -16,24 +16,15 @@
 <script src="/share/share.uncompressed.js"></script>
 <script src="/share/cm.js"></script>
 <script>
-var doc = null, editor = null;
-
 function setDoc(docName) {
   document.title = docName;
 
-  sharejs.open(docName, function(error, newDoc) {
-      if (doc !== null) {
-          doc.close();
-          doc.detach_ace();
-      }
-
-      doc = newDoc;
-
-      if (error) {
-          console.error(error);
-          return;
-      }
-      doc.attach_cm(editor);
+  sharejs.open(docName, 'text', function(error, newDoc) {
+      newDoc.attach_codemirror(editor);
+      // uncomment following lines if you want codemirror's onChange
+      // doc.onChange = function () {
+      //    console.log('editor changed');
+      // };
   });
 };
 
