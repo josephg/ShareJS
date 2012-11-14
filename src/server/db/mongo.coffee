@@ -29,7 +29,7 @@ module.exports = MongoDb = (options) ->
   options ?= {}
   options[k] ?= v for k, v of defaultOptions
 
-  client = options.client or new mongodb.Db(options.db, new mongodb.Server(options.hostname, options.port, options.mongoOptions))
+  client = options.client or new mongodb.Db(options.db, new mongodb.Server(options.hostname, options.port, options.mongoOptions), {safe: true})
   
   if options.user and options.password
     client.open (err, db) -> 
