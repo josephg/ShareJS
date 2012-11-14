@@ -264,4 +264,12 @@ try
 
 try
   require 'mongodb'
-  exports.mongodb = test require('../src/server/db/mongo'), { db: "sharejs-test" }
+  exports.mongodbOpsCollectionPerDoc = test require('../src/server/db/mongo'), 
+    db: "sharejs-test"
+    opsCollectionPerDoc: true
+  
+  exports.mongodbSingleOpsCollection = test require('../src/server/db/mongo'), 
+    db: "sharejs-test-single-ops-collection"
+    opsCollectionPerDoc: false
+
+
