@@ -201,6 +201,11 @@ module.exports = Model = (db, options) ->
 
     if error
       callback error for callback in callbacks if callbacks
+    else if docs[docName]
+      # The doc may have been created by another agent since we last checked for its
+      # existence in docs. If it was, don't create it again.
+      doc = docs[docName]
+      callback null, doc for callback in callbacks if callbacks
     else
       doc = docs[docName] =
         snapshot: data.snapshot
