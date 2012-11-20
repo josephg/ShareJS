@@ -3,8 +3,8 @@
 # It uses Dynamo as the metadata store and it uses S3 for snapshot storage as
 # Dynamo objects are limited to 64KB in size.
 #
-# In order to use this backend you must require the 'awssum', 'async' and the
-# 'dynamo' npm packages.
+# In order to use this backend you must require the 'awssum' and 'async' npm
+# packages.
 #
 # Example usage:
 #
@@ -191,7 +191,7 @@ module.exports = AmazonDb = (options) ->
 
   awssum = require('awssum')
   amazon = awssum.load('amazon/amazon')
-  dynamo = require('dynamo')
+  DynamoDB = awssum.load('amazon/dynamodb').DynamoDB
   S3 = awssum.load('amazon/s3').S3
   s3 = new S3({
     accessKeyId: options.amazon_access_key,
@@ -199,11 +199,11 @@ module.exports = AmazonDb = (options) ->
     region: amazon.US_EAST_1
   });
 
-  client = dynamo.createClient({
+  db = new DynamoDB({
     accessKeyId: options.amazon_access_key,
-    secretAccessKey: options.amazon_secret_key
+    secretAccessKey: options.amazon_secret_key,
+    region: amazon.US_EAST_1
   })
-  db = client.get(options.amazon_region)
 
   snapshots_table = options.amazon_dynamo_snapshots_table_name
   snapshots_bucket = options.amazon_s3_snapshots_bucket_name
@@ -248,7 +248,7 @@ module.exports = AmazonDb = (options) ->
         request.Item['c'] = { S: 't' } if options['compress']
 
         snapshots_rw_queue.push((c) ->
-          db.putItem(request, c)
+          db.PutItem(request, c)
         , 'write Snapshot('+docName+'-'+docData.v+')', cb)
       ]
 
@@ -268,7 +268,7 @@ module.exports = AmazonDb = (options) ->
       ]
     (error, results) ->
       if error?
-        if error.message? and error.message.match 'The conditional request failed'
+        if error.Body? and error.Body.message.match 'The conditional request failed'
           callback?('Document already exists')
         else if results? and results.write_metadata?
           console.error('Failed to save Snapshot('+docName+'-'+docData.v+') to S3: '+util.inspect(error))
@@ -300,7 +300,7 @@ module.exports = AmazonDb = (options) ->
         # TODO: This will only return the latest 1 MB of results, so if there
         # are more keys additional requests must be made.
         snapshots_ro_queue.push((c) ->
-          db.query(request, c)
+          db.Query(request, c)
         , 'query Snapshots('+docName+')', cb)
 
       list_operations: (cb) ->
@@ -313,13 +313,13 @@ module.exports = AmazonDb = (options) ->
         # TODO: This will only return the latest 1 MB of results, so if there
         # are more keys additional requests must be made.
         operations_ro_queue.push((c) ->
-          db.query(request, c)
+          db.Query(request, c)
         , 'query Operations('+docName+')', cb)
 
       delete_snapshots: ['list_snapshots', (cb, results) ->
-        return cb('Document does not exist', null) if results.list_snapshots.Count == 0
+        return cb('Document does not exist', null) if results.list_snapshots.Body.Count == 0
 
-        async.mapSeries(results.list_snapshots.Items,
+        async.mapSeries(results.list_snapshots.Body.Items,
           (item, cb) ->
             request =
               TableName: snapshots_table
@@ -329,8 +329,10 @@ module.exports = AmazonDb = (options) ->
               Expected:
                 doc:
                   Value: { S: item.doc.S }
+              ReturnValues: 'NONE'
+
             snapshots_rw_queue.push((c) ->
-              db.deleteItem(request, c)
+              db.DeleteItem(request, c)
             , 'delete Snapshot('+item.doc.S+'-'+item.v.N+')', cb)
           (error, result)->
             if error?
@@ -341,9 +343,9 @@ module.exports = AmazonDb = (options) ->
       ]
 
       delete_s3_snapshots: ['list_snapshots', (cb, results) ->
-        return cb(null, {}) if results.list_snapshots.Count == 0
+        return cb(null, {}) if results.list_snapshots.Body.Count == 0
 
-        async.forEachSeries(results.list_snapshots.Items,
+        async.forEachSeries(results.list_snapshots.Body.Items,
           (item, cb) ->
             params =
               BucketName: snapshots_bucket
@@ -361,9 +363,9 @@ module.exports = AmazonDb = (options) ->
       ]
 
       delete_operations: ['list_operations', (cb, results) ->
-        return cb(null, {}) if results.list_operations.Count == 0
+        return cb(null, {}) if results.list_operations.Body.Count == 0
 
-        async.forEachSeries(results.list_operations.Items,
+        async.forEachSeries(results.list_operations.Body.Items,
           (item, cb) ->
             request =
               TableName: operations_table
@@ -373,8 +375,10 @@ module.exports = AmazonDb = (options) ->
               Expected:
                 doc:
                   Value: { S: item.doc.S }
+              ReturnValues: 'NONE'
+
             operations_rw_queue.push((c) ->
-              db.deleteItem(request, c)
+              db.DeleteItem(request, c)
             , 'delete Operation('+item.doc.S+'-'+item.v.N+')', cb)
           (error)->
             if error?
@@ -385,7 +389,7 @@ module.exports = AmazonDb = (options) ->
       ]
     (error, results) ->
       if error?
-        if error.toString().match 'The conditional request failed'
+        if error.Body? and error.Body.message.match 'The conditional request failed'
           callback?('Document does not exist')
         else if error == 'Document does not exist'
           callback?(error)
@@ -414,13 +418,13 @@ module.exports = AmazonDb = (options) ->
           ConsistentRead: true
 
         snapshots_ro_queue.push((c) ->
-          db.query(request, c)
+          db.Query(request, c)
         , 'query Snapshot('+docName+')', cb)
 
       get_data: ['get_snapshot', (cb, results) ->
-        return cb('Document does not exist', null) unless results.get_snapshot.Count == 1
+        return cb('Document does not exist', null) unless results.get_snapshot.Body.Count == 1
 
-        item = results.get_snapshot.Items[0]
+        item = results.get_snapshot.Body.Items[0]
         params =
           BucketName: snapshots_bucket
           ObjectName: item.doc.S+'-'+item.v.N+'.snapshot'
@@ -432,8 +436,8 @@ module.exports = AmazonDb = (options) ->
 
       compressor: ['get_snapshot', 'get_data', (cb, results) ->
         cb(null,
-          text: new TextCompressor(results.get_snapshot.Items[0].c, options['timing'])
-          binary: new BinaryCompressor(results.get_snapshot.Items[0].c, options['timing'])
+          text: new TextCompressor(results.get_snapshot.Body.Items[0].c, options['timing'])
+          binary: new BinaryCompressor(results.get_snapshot.Body.Items[0].c, options['timing'])
         )
       ]
 
@@ -442,21 +446,21 @@ module.exports = AmazonDb = (options) ->
       ]
 
       meta: ['compressor', (cb, results) ->
-        results.compressor.text.decode(results.get_snapshot.Items[0].meta.S, cb)
+        results.compressor.text.decode(results.get_snapshot.Body.Items[0].meta.S, cb)
       ]
     (error, results) ->
       if error?
         if error == 'Document does not exist'
           callback?(error)
         else if results? and results.get_snapshot?
-          item = results.get_snapshot.Items[0]
+          item = results.get_snapshot.Body.Items[0]
           console.error('Failed to get snapshot data for Document('+item.doc.S+'-'+item.v.N+'): '+util.inspect(error))
           callback?('Failed to get snapshot data')
         else
           console.error('Failed to get snapshot metadata for Document('+docName+'): '+util.inspect(error))
           callback?('Failed to get snapshot metadata')
       else
-        item = results.get_snapshot.Items[0]
+        item = results.get_snapshot.Body.Items[0]
 
         try
           snapshot = JSON.parse(results.snapshot)
@@ -514,7 +518,7 @@ module.exports = AmazonDb = (options) ->
         request.Item['c'] = { S: 't' } if options['compress']
 
         snapshots_rw_queue.push((c) ->
-          db.putItem(request, c)
+          db.PutItem(request, c)
         , 'write Snapshot('+docName+'-'+docData.v+')', cb)
       ]
 
@@ -535,7 +539,7 @@ module.exports = AmazonDb = (options) ->
       ]
     (error, results) ->
       if error?
-        if error.message? and error.message.match 'The conditional request failed'
+        if error.Body? and error.Body.message.match 'The conditional request failed'
           callback?('Document already exists')
         else if results? and results.write_metadata?
           console.error('Failed to save Snapshot('+docName+'-'+docData.v+') to S3: '+util.inspect(error))
@@ -568,14 +572,13 @@ module.exports = AmazonDb = (options) ->
           TableName: operations_table
           HashKeyValue: { S: docName }
           ConsistentRead: true
-          RangeKeyCondition:
-            ComparisonOperator: 'BETWEEN'
-            AttributeValueList: [{ N: start.toString() }, { N: end.toString() }]
+          ComparisonOperator: 'BETWEEN'
+          AttributeValueList: [{ N: start.toString() }, { N: end.toString() }]
 
         # TODO: This is limited to returning 1MB of data at a time, we should
         # handle getting more.
         operations_ro_queue.push((c) ->
-          db.query(request, c)
+          db.Query(request, c)
         , 'query Operations('+docName+'-'+start+':'+end+')', cb)
 
     (error, results) ->
@@ -584,7 +587,7 @@ module.exports = AmazonDb = (options) ->
         callback?('Failed to fetch operations')
       else
         data = []
-        async.map(results.get_metadata.Items, (operation, cb) ->
+        async.map(results.get_metadata.Body.Items, (operation, cb) ->
           compressor = new TextCompressor(operation.c?, options['timing'])
           async.auto(
             snapshot: (c) ->
@@ -652,7 +655,7 @@ module.exports = AmazonDb = (options) ->
         request.Item['c'] = { S: 't' } if options['compress']
 
         operations_rw_queue.push((c) ->
-          db.putItem(request, c)
+          db.PutItem(request, c)
         , 'write Operation('+docName+'-'+opData.v+')', cb)
       ]
     (error, results) ->
