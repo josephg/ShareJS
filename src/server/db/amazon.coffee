@@ -3,7 +3,7 @@
 # It uses Dynamo as the metadata store and it uses S3 for snapshot storage as
 # Dynamo objects are limited to 64KB in size.
 #
-# In order to use this backend you must require the 'aws2js', 'async' and the
+# In order to use this backend you must require the 'awssum', 'async' and the
 # 'dynamo' npm packages.
 #
 # Example usage:
@@ -189,8 +189,15 @@ module.exports = AmazonDb = (options) ->
   options ?= {}
   options[k] ?= v for k, v of defaultOptions
 
+  awssum = require('awssum')
+  amazon = awssum.load('amazon/amazon')
   dynamo = require('dynamo')
-  s3 = require('aws2js').load('s3', options.amazon_access_key, options.amazon_secret_key);
+  S3 = awssum.load('amazon/s3').S3
+  s3 = new S3({
+    accessKeyId: options.amazon_access_key,
+    secretAccessKey: options.amazon_secret_key,
+    region: amazon.US_EAST_1
+  });
 
   client = dynamo.createClient({
     accessKeyId: options.amazon_access_key,
@@ -249,11 +256,14 @@ module.exports = AmazonDb = (options) ->
         binaryCompressor.encode(JSON.stringify(docData.snapshot), cb)
 
       write_data: ['compress_data', (cb, results) ->
-        path = snapshots_bucket+'/'+docName+'-'+docData.v+'.snapshot'
-        headers = {}
+        params =
+          BucketName: snapshots_bucket
+          ObjectName: docName+'-'+docData.v+'.snapshot'
+          ContentLength: results.compress_data.length
+          Body: results.compress_data
 
         s3_rw_queue.push((c) ->
-          s3.put(path, headers, results.compress_data, c)
+          s3.PutObject(params, c)
         , 'write Snapshot('+docName+'-'+docData.v+')', cb)
       ]
     (error, results) ->
@@ -335,8 +345,12 @@ module.exports = AmazonDb = (options) ->
 
         async.forEachSeries(results.list_snapshots.Items,
           (item, cb) ->
+            params =
+              BucketName: snapshots_bucket
+              ObjectName: item.doc.S+'-'+item.v.N+'.snapshot'
+
             s3_rw_queue.push((c) ->
-              s3.del('/'+snapshots_bucket+'/'+item.doc.S+'-'+item.v.N+'.snapshot', c)
+              s3.DeleteObject(params, c)
             , 'delete Snapshot('+item.doc.S+'-'+item.v.N+')', cb)
           (error)->
             if error?
@@ -407,8 +421,12 @@ module.exports = AmazonDb = (options) ->
         return cb('Document does not exist', null) unless results.get_snapshot.Count == 1
 
         item = results.get_snapshot.Items[0]
+        params =
+          BucketName: snapshots_bucket
+          ObjectName: item.doc.S+'-'+item.v.N+'.snapshot'
+
         s3_ro_queue.push((c) ->
-          s3.get('/'+snapshots_bucket+'/'+item.doc.S+'-'+item.v.N+'.snapshot', 'buffer', c)
+          s3.GetObject(params, c)
         , 'fetch Snapshot('+item.doc.S+'-'+item.v.N+')', cb)
       ]
 
@@ -420,7 +438,7 @@ module.exports = AmazonDb = (options) ->
       ]
 
       snapshot: ['compressor', (cb, results) ->
-        results.compressor.binary.decode(results.get_data.buffer, cb)
+        results.compressor.binary.decode(results.get_data.Body, cb)
       ]
 
       meta: ['compressor', (cb, results) ->
@@ -504,11 +522,15 @@ module.exports = AmazonDb = (options) ->
         binaryCompressor.encode(JSON.stringify(docData.snapshot), cb)
 
       write_data: ['compress_data', (cb, results) ->
-        path = snapshots_bucket+'/'+docName+'-'+docData.v+'.snapshot'
-        headers = {}
+        params =
+          BucketName: snapshots_bucket
+          ObjectName: docName+'-'+docData.v+'.snapshot'
+          ContentLength: results.compress_data.length
+          Body: results.compress_data
 
         s3_rw_queue.push((c) ->
-          s3.put(path, headers, results.compress_data, c)
+          s3.PutObject(params, c)
+
         , 'write Snapshot('+docName+'-'+docData.v+')', cb)
       ]
     (error, results) ->
