@@ -3,8 +3,8 @@
 # It uses Dynamo as the metadata store and it uses S3 for snapshot storage as
 # Dynamo objects are limited to 64KB in size.
 #
-# In order to use this backend you must require the 'awssum' and 'async' npm
-# packages.
+# In order to use this backend you must require the 'awssum', 'retry', and
+# 'async' npm packages.
 #
 # Example usage:
 #
@@ -58,6 +58,7 @@
 
 util = require('util')
 async = require('async')
+retry = require('retry')
 zlib = require('zlib')
 
 defaultOptions =
@@ -77,19 +78,62 @@ class DynamoQueue
       task(callback)
     , concurrency)
 
+  # Public: Executes the given function in the order which it was received.
+  #
+  # If the function returns an error it is retried as described by
+  # @_retryableOperation
+  #
+  # fn - The function to execute
+  # description - A brief description of the operation
+  # callback - The callback to notify when the operation has completed.
+  #
+  # Returns nothing.
   push: (fn, description, callback) =>
-    start = new Date().getTime()
-    @queue.push(fn, (error, results) =>
-      if @timing
-        elapsed = new Date().getTime() - start
-        if results?
-          capacity = results.ConsumedCapacityUnits
-        else
-          capacity = -1
-        console.log('Dynamo['+elapsed+'ms,'+capacity+'] '+@name+': '+description)
+    operation = @_retryableOperation()
 
-      callback(error, results)
+    operation.attempt((currentAttempt) =>
+      start = new Date().getTime()
+      @queue.push(fn, (error, results) =>
+        elapsed = new Date().getTime() - start
+        attempt = operation.attempts()
+        capacity = if results? then results.Body.ConsumedCapacityUnits else -1
+
+        if @_shouldRetry(error)
+          retried = operation.retry(error)
+        else
+          retried = false
+
+        if retried
+          console.error('Dyname[#'+attempt+','+elapsed+'ms,'+capacity+'] '+@name+': Retrying +'+description+'+ due to '+util.inspect(error))
+        else
+          console.log('Dynamo[#'+attempt+','+elapsed+'ms,'+capacity+'] '+@name+': '+description) if @timing
+          callback(error, results)
+      )
     )
+
+   # Private: Determine if an error is should be retried
+   #
+   # error - The error object to evaluate
+   #
+   # Returns the error object if it should be retried and an empty object
+   # otherwise.
+   _shouldRetry: (error) ->
+     if error and error.Body? and error.Body.message.match('The conditional request failed')
+       false
+     else
+       true
+
+   # Private: Creates an operation that will be retried with the default timing
+   # values
+   #
+   # Returns a retry.Operation.
+   _retryableOperation: ->
+     retry.operation
+       retries: 5
+       factor: 1.5
+       minTimeout: 500
+       maxTimeout: 10 * 1000
+       randomize: false
 
 class S3Queue
   constructor: (@name, concurrency, @timing) ->
