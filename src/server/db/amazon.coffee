@@ -141,15 +141,58 @@ class S3Queue
       task(callback)
     , concurrency)
 
+  # Public: Executes the given function in the order which it was received.
+  #
+  # If the function returns an error it is retried as described by
+  # @_retryableOperation
+  #
+  # fn - The function to execute
+  # description - A brief description of the operation
+  # callback - The callback to notify when the operation has completed.
+  #
+  # Returns nothing.
   push: (fn, description, callback) =>
-    start = new Date().getTime()
-    @queue.push(fn, (error, results) =>
-      if @timing
-        elapsed = new Date().getTime() - start
-        console.log('S3['+elapsed+'ms] '+@name+': '+description)
+    operation = @_retryableOperation()
 
-      callback(error, results)
+    operation.attempt((currentAttempt) =>
+      start = new Date().getTime()
+      @queue.push(fn, (error, results) =>
+        elapsed = new Date().getTime() - start
+        attempt = operation.attempts()
+
+        if @_shouldRetry(error)
+          retried = operation.retry(error)
+        else
+          retried = false
+
+        if retried
+          console.error('S3[#'+attempt+','+elapsed+'ms] '+@name+': Retrying '+description+' due to '+util.inspect(error))
+        else
+          console.log('S3[#'+attempt+','+elapsed+'ms] '+@name+': '+description) if @timing
+          callback(error, results)
+      )
     )
+
+   # Private: Determine if an error is should be retried
+   #
+   # error - The error object to evaluate
+   #
+   # Returns the error object if it should be retried and an empty object
+   # otherwise.
+   _shouldRetry: (error) ->
+     true
+
+   # Private: Creates an operation that will be retried with the default timing
+   # values
+   #
+   # Returns a retry.Operation.
+   _retryableOperation: ->
+     retry.operation
+       retries: 5
+       factor: 1.5
+       minTimeout: 500
+       maxTimeout: 10 * 1000
+       randomize: false
 
 class BlobHandler
   constructor: (@name, @encodeFunction, @decodeFunction, @logging) ->
