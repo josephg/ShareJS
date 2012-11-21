@@ -16,10 +16,11 @@
 #     var options = {
 #       db: {
 #         type: 'amazon',
-#         amazon_region: 'us-east-1',
 #         amazon_access_key: '',
 #         amazon_secret_key: '',
+#         amazon_s3_region: Amazon.US_EAST_1,
 #         amazon_s3_snapshots_bucket_name: 'a-bucket-just-for-snapshots',
+#         amazon_dynamo_region: Amazon.US_EAST_1,
 #         amazon_dynamo_snapshots_table_name: 'a-dynamo-table-for-snapshots',
 #         amazon_dynamo_operations_table_name: 'a-dynamo-table-for-operations',
 #       }
@@ -60,9 +61,13 @@ util = require('util')
 async = require('async')
 retry = require('retry')
 zlib = require('zlib')
+awssum = require('awssum')
+
+amazon = awssum.load('amazon/amazon')
 
 defaultOptions =
-  amazon_region: 'us-east-1'
+  amazon_s3_region: amazon.US_EAST_1
+  amazon_dynamo_region: amazon.US_EAST_1
   timing: false
   compress: true
   s3_rw_concurrency: 1
@@ -276,20 +281,18 @@ module.exports = AmazonDb = (options) ->
   options ?= {}
   options[k] ?= v for k, v of defaultOptions
 
-  awssum = require('awssum')
-  amazon = awssum.load('amazon/amazon')
-  DynamoDB = awssum.load('amazon/dynamodb').DynamoDB
   S3 = awssum.load('amazon/s3').S3
   s3 = new S3({
     accessKeyId: options.amazon_access_key,
     secretAccessKey: options.amazon_secret_key,
-    region: amazon.US_EAST_1
-  });
+    region: options.amazon_s3_region
+  })
 
+  DynamoDB = awssum.load('amazon/dynamodb').DynamoDB
   db = new DynamoDB({
     accessKeyId: options.amazon_access_key,
     secretAccessKey: options.amazon_secret_key,
-    region: amazon.US_EAST_1
+    region: options.amazon_dynamo_region
   })
 
   snapshots_table = options.amazon_dynamo_snapshots_table_name
