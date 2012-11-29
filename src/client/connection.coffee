@@ -139,6 +139,8 @@ class Connection
 
     doc.open (error) =>
       delete @docs[name] if error
+      unless error
+        doc.on 'closed', => delete @docs[name]
       callback error, (doc unless error)
 
   # Open a document that already exists
