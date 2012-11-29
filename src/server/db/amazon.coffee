@@ -109,7 +109,7 @@ class DynamoQueue
           retried = false
 
         if retried
-          console.error('Dyname[#'+attempt+','+elapsed+'ms,'+capacity+'] '+@name+': Retrying +'+description+'+ due to '+util.inspect(error))
+          console.error('Dyname[#'+attempt+','+elapsed+'ms,'+capacity+'] '+@name+': Retrying '+description+' due to '+util.inspect(error))
         else
           console.log('Dynamo[#'+attempt+','+elapsed+'ms,'+capacity+'] '+@name+': '+description) if @timing
           callback(error, results)
