@@ -508,7 +508,6 @@ genTests = (client) -> testCase
           test.ifError error
           test.ok doc2
           test.equal doc2.state, 'open'
-          test.equal doc1, doc2
           doc2.close ->
             test.done()
 
