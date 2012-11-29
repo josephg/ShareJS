@@ -145,7 +145,7 @@ class Connection
   # callback(error, doc)
   openExisting: (docName, callback) ->
     return callback 'connection closed' if @state is 'stopped'
-    return callback null, @docs[docName] if @docs[docName]
+    return @_ensureOpenState(@docs[docName], callback) if @docs[docName]
     doc = @makeDoc docName, {}, callback
 
   # Open a document. It will be created if it doesn't already exist.
@@ -176,12 +176,19 @@ class Connection
     if @docs[docName]
       doc = @docs[docName]
       if doc.type == type
-        callback null, doc
+        @_ensureOpenState(doc, callback)
       else
         callback 'Type mismatch', doc
       return
 
     @makeDoc docName, {create:true, type:type.name}, callback
+
+  _ensureOpenState: (doc, callback) ->
+    switch doc.state
+      when 'open' then callback null, doc
+      when 'opening' then @on 'open', -> callback null, doc
+      when 'closed' then doc.open -> callback null, doc
+    return
 
 # Not currently working.
 #  create: (type, callback) ->
