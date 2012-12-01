@@ -32,7 +32,7 @@ window.sharejs.extendDoc 'attach_textarea', (elem) ->
     elem.scrollTop = scrollTop if elem.scrollTop != scrollTop
     [elem.selectionStart, elem.selectionEnd] = newSelection
 
-  @on 'insert', (pos, text) ->
+  @on 'insert', insert_listener = (pos, text) ->
     transformCursor = (cursor) ->
       if pos < cursor
         cursor + text.length
@@ -42,7 +42,7 @@ window.sharejs.extendDoc 'attach_textarea', (elem) ->
     prevvalue = elem.value.replace /\r\n/g, '\n'
     replaceText prevvalue[...pos] + text + prevvalue[pos..], transformCursor
   
-  @on 'delete', (pos, text) ->
+  @on 'delete', delete_listener = (pos, text) ->
     transformCursor = (cursor) ->
       if pos < cursor
         cursor - Math.min(text.length, cursor - pos)
@@ -67,3 +67,12 @@ window.sharejs.extendDoc 'attach_textarea', (elem) ->
     else
       elem.attachEvent 'on'+event, genOp
 
+  elem.detach_share = =>
+    @removeListener 'insert', insert_listener
+    @removeListener 'delete', delete_listener
+
+    for event in ['textInput', 'keydown', 'keyup', 'select', 'cut', 'paste']
+      if elem.removeEventListener
+        elem.removeEventListener event, genOp, false
+      else
+        elem.detachEvent 'on'+event, genOp
