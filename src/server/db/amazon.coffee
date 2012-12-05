@@ -123,7 +123,7 @@ class DynamoQueue
    # Returns the error object if it should be retried and an empty object
    # otherwise.
    _shouldRetry: (error) ->
-     if error and error.Body? and error.Body.message.match('The conditional request failed')
+     if error and error.Body? and error.Body.message? and error.Body.message.match('The conditional request failed')
        false
      else
        true
