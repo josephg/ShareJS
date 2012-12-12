@@ -205,7 +205,7 @@ module.exports = Model = (db, options) ->
       # The doc may have been created by another agent since we last checked for its
       # existence in docs. If it was, don't create it again.
       doc = docs[docName]
-      callback null, doc for callback in callbacks if callbacks
+      callback 'Document already exists' for callback in callbacks if callbacks
     else
       doc = docs[docName] =
         snapshot: data.snapshot
