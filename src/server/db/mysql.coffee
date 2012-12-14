@@ -25,7 +25,7 @@
 #
 # You can run bin/setup_pg to create the SQL tables initially.
 
-mysql = require('mysql').native
+mysql = require('mysql')
 
 defaultOptions =
   schema: 'sharejs'
@@ -40,7 +40,7 @@ module.exports = MysqlDb = (options) ->
   options ?= {}
   options[k] ?= v for k, v of defaultOptions
 
-  client = options.client or mysql.createConnection options.uri
+  client = options.client or mysql.createConnection options
   client.connect()
 
   snapshot_table = options.schema and "#{options.schema}.#{options.snapshot_table}" or options.snapshot_table
@@ -53,23 +53,31 @@ module.exports = MysqlDb = (options) ->
     console.warn 'Creating mysql database tables'
 
     sql = """
-      CREATE SCHEMA #{options.schema};
+     CREATE SCHEMA #{options.schema};
+    """
+    client.query sql, (error, result) ->
+      error?.message
 
+    sql =  """
       CREATE TABLE #{snapshot_table} (
-        doc text NOT NULL,
-        v int4 NOT NULL,
-        type text NOT NULL,
-        snapshot text NOT NULL,
-        meta text NOT NULL,
-        created_at timestamp(6) NOT NULL,
+        doc varchar(256) NOT NULL,
+        v int NOT NULL,
+        type varchar(256) NOT NULL,
+        snapshot varchar(256) NOT NULL,
+        meta varchar(256) NOT NULL,
+        created_at timestamp NOT NULL,
         CONSTRAINT snapshots_pkey PRIMARY KEY (doc, v)
       );
+    """
+    client.query sql, (error, result) ->
+      error?.message
 
+    sql = """
       CREATE TABLE #{operations_table} (
-        doc text NOT NULL,
-        v int4 NOT NULL,
-        op text NOT NULL,
-        meta text NOT NULL,
+        doc varchar(256) NOT NULL,
+        v int NOT NULL,
+        op varchar(256) NOT NULL,
+        meta varchar(256) NOT NULL,
         CONSTRAINT operations_pkey PRIMARY KEY (doc, v)
       );
     """
@@ -103,15 +111,23 @@ module.exports = MysqlDb = (options) ->
 
   @delete = (docName, dbMeta, callback) ->
     sql = """
+      DELETE FROM #{operations_table}
+      WHERE "doc" = ?
+    """
+    values = [docName]
+    client.query sql, values, (error, result) ->
+      if !error?
+        sql = """
           DELETE FROM #{snapshot_table}
           WHERE "doc" = ?
         """
-    values = [docName]
-    client.query sql, values, (error, result) ->
-      if !error? and result.insertId
-         callback?()
-      else if !error?
-        callback? "Document does not exist"
+        client.query sql, values, (error, result) ->
+          if !error? and result.length > 0
+            callback?()
+          else if !error?
+            callback? "Document does not exist"
+          else
+            callback? error?.message
       else
         callback? error?.message
 
@@ -125,8 +141,8 @@ module.exports = MysqlDb = (options) ->
     """
     values = [docName]
     client.query sql, values, (error, result) ->
-      if !error? and result.rows.length > 0
-        row = result.rows[0]
+      if !error? and result.length > 0
+        row = result[0]
         data =
           v:        row.v
           snapshot: JSON.parse(row.snapshot)
@@ -144,11 +160,11 @@ module.exports = MysqlDb = (options) ->
       SET ?
       WHERE "doc" = ?
     """
-    values = 
-      v:        docData.v 
+    values =
+      v:        docData.v
       snapshot: JSON.stringify(docData.snapshot)
       meta:     JSON.stringify(docData.meta)
-    client.query sql, [values, docName] (error, result) ->
+    client.query sql, [values, docName], (error, result) ->
       if !error?
         callback?()
       else
@@ -166,7 +182,7 @@ module.exports = MysqlDb = (options) ->
     values = [start, end, docName]
     client.query sql, values, (error, result) ->
       if !error?
-        data = result.rows.map (row) ->
+        data = result.map (row) ->
           return {
             op:   JSON.parse row.op
             # v:    row.version
