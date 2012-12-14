@@ -265,3 +265,6 @@ if options.db.type == 'amazon'
 try
   require 'mongodb'
   exports.mongodb = test require('../src/server/db/mongo'), { db: "sharejs-test" }
+try
+  require 'mysql'
+  exports.mysql = test require('../src/server/db/mysql'), options.db
