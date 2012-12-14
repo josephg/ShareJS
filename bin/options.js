@@ -34,6 +34,12 @@ module.exports = {
     //type: 'pg',
     //uri: 'tcp://josephg:@localhost/postgres',
 
+    // To use mysql uncomment this section then run bin/setup_mysql
+    //database:'db_name',
+    //host:'localhost',
+    //user:'foo',
+    //password:'bar',
+
     // By default, sharejs will create its tables in a schema called 'sharejs'.
     //schema: 'sharejs',
     //operations_table: 'ops',
