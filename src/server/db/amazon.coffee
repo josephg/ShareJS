@@ -477,6 +477,28 @@ module.exports = AmazonDb = (options) ->
               cb(null, true)
           )
       ]
+
+      delete_operations_s3: ['list_operations', (cb, results) ->
+        return cb(null, {}) if results.list_operations.Body.Count == 0
+
+        async.forEachSeries(results.list_operations.Body.Items,
+          (item, cb) ->
+            return cb(null, null) unless item.e?
+
+            params =
+              BucketName: snapshots_bucket
+              ObjectName: item.doc.S+'-'+item.v.N+'.operation'
+
+            s3_rw_queue.push((c) ->
+              s3.DeleteObject(params, c)
+            , 'delete Operation('+item.doc.S+'-'+item.v.N+')', cb)
+          (error)->
+            if error?
+              cb(error, null)
+            else
+              cb(null, true)
+          )
+      ]
     (error, results) ->
       if error?
         if error.Body? and error.Body.message.match 'The conditional request failed'
