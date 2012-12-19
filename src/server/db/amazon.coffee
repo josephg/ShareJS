@@ -732,7 +732,7 @@ module.exports = AmazonDb = (options) ->
       compress_meta: (cb) ->
         compressor.encode(JSON.stringify(opData.meta), cb)
 
-      write_metadata: ['compress_op', 'compress_meta', (cb, results) ->
+      request: ['compress_op', 'compress_meta', (cb, results) ->
         request =
           TableName: operations_table,
           Item:
@@ -741,11 +741,35 @@ module.exports = AmazonDb = (options) ->
             op: { S: results.compress_op },
             meta: { S: results.compress_meta },
 
-        # Mark a snapshot as being compressed
+        # Mark an operation as being external
+        request_too_large = JSON.stringify(request).length > Math.pow(2, 16)
+        if request_too_large
+          delete request.Item.op
+          request.Item['e'] = { S: 't' }
+
+        # Mark an operation as being compressed
         request.Item['c'] = { S: 't' } if options['compress']
 
+        cb(null, request)
+      ]
+
+      write_metadata: ['request', (cb, results) ->
         operations_rw_queue.push((c) ->
-          db.PutItem(request, c)
+          db.PutItem(results.request, c)
+        , 'write Operation('+docName+'-'+opData.v+')', cb)
+      ]
+
+      write_data: ['request', (cb, results) ->
+        return cb(null, null) unless results.request.Item.e
+
+        params =
+          BucketName: snapshots_bucket
+          ObjectName: docName+'-'+opData.v+'.operation'
+          ContentLength: results.compress_op.length
+          Body: results.compress_op
+
+        s3_rw_queue.push((c) ->
+          s3.PutObject(params, c)
         , 'write Operation('+docName+'-'+opData.v+')', cb)
       ]
     (error, results) ->
