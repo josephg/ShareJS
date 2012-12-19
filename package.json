@@ -23,6 +23,7 @@
     "hat": "*"
   },
   "devDependencies": {
+    "express": "~ 3.x",
     "nodeunit": "*",
     "websocket": "*"
   },
