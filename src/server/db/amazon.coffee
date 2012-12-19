@@ -680,8 +680,28 @@ module.exports = AmazonDb = (options) ->
         async.map(results.get_metadata.Body.Items, (operation, cb) ->
           compressor = new TextCompressor(operation.c?, options['timing'])
           async.auto(
-            snapshot: (c) ->
-              compressor.decode(operation.op.S, c)
+            fetch_data: (c) ->
+              if operation.e?
+                params =
+                  BucketName: snapshots_bucket
+                  ObjectName: docName+'-'+operation.v.N+'.operation'
+
+                s3_ro_queue.push((d) ->
+                  s3.GetObject(params, d)
+                , 'fetch Operation('+docName+'-'+operation.v.N+')', c)
+              else
+                c(null, operation.op.S)
+
+            data: ['fetch_data', (c, r) ->
+              if r.fetch_data.Body?
+                c(null, r.fetch_data.Body.toString())
+              else
+                c(null, r.fetch_data)
+            ]
+
+            snapshot: ['data', (c, r) ->
+              compressor.decode(r.data, c)
+            ]
 
             meta: (c) ->
               compressor.decode(operation.meta.S, c)
