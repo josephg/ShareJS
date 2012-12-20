@@ -51,13 +51,13 @@ create.attach = attach = (server, options, model = createModel(options)) ->
 
   browserChannel.attach(server, createAgent, options.browserChannel or {}) if options.browserChannel != null
 
+  if !(server instanceof http.Server)
+    server = http.createServer server
+
+  # this is required by sockjs since it only works with http server, not with
+  # `connect` server
   # SockJS frontend is disabled by default
-  if options.sockjs?
-    # this is required by sockjs since it only works with http server, not with
-    # `connect` server
-    if !(server instanceof http.Server)
-      server = http.createServer server
-    sockjs.attach(server, createAgent, options.sockjs or {})
+  sockjs.attach(server, createAgent, options.sockjs or {}) if options.sockjs?
 
   server
 
