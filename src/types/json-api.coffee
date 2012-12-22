@@ -16,6 +16,7 @@ depath = (path) ->
 class SubDoc
   constructor: (@doc, @path) ->
   at: (path...) -> @doc.at @path.concat depath path
+  parent: -> if @path.length then @doc.at @path[...@path.length-1] else undefined
   get: -> @doc.getAt @path
   # for objects and lists
   set: (value, cb) -> @doc.setAt @path, value, cb

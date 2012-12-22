@@ -13,6 +13,8 @@ json.name = 'json'
 
 json.create = -> null
 
+# TODO: remove all invertibility things from JSON OT
+###
 json.invertComponent = (c) ->
   c_ = {p: c.p}
   c_.sd = c.si if c.si != undefined
@@ -26,8 +28,9 @@ json.invertComponent = (c) ->
     c_.lm = c.p[c.p.length-1]
     c_.p = c.p[0...c.p.length - 1].concat([c.lm])
   c_
+###
 
-json.invert = (op) -> json.invertComponent c for c in op.slice().reverse()
+#json.invert = (op) -> json.invertComponent c for c in op.slice().reverse()
 
 json.checkValidOp = (op) ->
 
@@ -209,6 +212,7 @@ json.transformComponent = (dest, c, otherC, type) ->
   c.p.pop() if c.na != undefined # hax
   otherC.p.pop() if otherC.na != undefined
 
+  ###
   if otherC.na
     if common2? && otherCplength >= cplength && otherC.p[common2] == c.p[common2]
       if c.ld != undefined
@@ -222,8 +226,10 @@ json.transformComponent = (dest, c, otherC, type) ->
     json.append dest, c
     return dest
 
+  # if c is deleting something, and that thing is changed by otherC, we need to
+  # update c to reflect that change for invertibility.
+  # TODO this is probably not needed since we don't have invertibility
   if common2? && otherCplength > cplength && c.p[common2] == otherC.p[common2]
-    # transform based on c
     if c.ld != undefined
       oc = clone otherC
       oc.p = oc.p[cplength..]
@@ -232,6 +238,7 @@ json.transformComponent = (dest, c, otherC, type) ->
       oc = clone otherC
       oc.p = oc.p[cplength..]
       c.od = json.apply clone(c.od), [oc]
+  ###
 
 
   if common?
