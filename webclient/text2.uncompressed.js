@@ -286,6 +286,46 @@ var WEB = true;
     return trim(result);
   };
 
+  text2.transformCursor = function(cursor, op, isOwnOp) {
+    var c, pos, _i, _j, _len, _len1;
+    pos = 0;
+    if (isOwnOp) {
+      for (_i = 0, _len = op.length; _i < _len; _i++) {
+        c = op[_i];
+        switch (typeof c) {
+          case 'number':
+            pos += c;
+            break;
+          case 'string':
+            pos += c.length;
+        }
+      }
+      return pos;
+    } else {
+      for (_j = 0, _len1 = op.length; _j < _len1; _j++) {
+        c = op[_j];
+        if (cursor <= pos) {
+          break;
+        }
+        switch (typeof c) {
+          case 'number':
+            if (cursor <= pos + c) {
+              return cursor;
+            }
+            pos += c;
+            break;
+          case 'string':
+            pos += c.length;
+            cursor += c.length;
+            break;
+          case 'object':
+            cursor -= Math.min(c.d, cursor - pos);
+        }
+      }
+      return cursor;
+    }
+  };
+
   if (typeof WEB !== "undefined" && WEB !== null) {
     exports.types.text2 = text2;
   } else {

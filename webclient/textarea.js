@@ -24,7 +24,8 @@
   };
 
   window.sharejs.extendDoc('attach_textarea', function(elem) {
-    var doc, event, genOp, prevvalue, replaceText, _i, _len, _ref, _results;
+    var delete_listener, doc, event, genOp, insert_listener, prevvalue, replaceText, _i, _len, _ref,
+      _this = this;
     doc = this;
     elem.value = this.getText();
     prevvalue = elem.value;
@@ -38,7 +39,7 @@
       }
       return elem.selectionStart = newSelection[0], elem.selectionEnd = newSelection[1], newSelection;
     };
-    this.on('insert', function(pos, text) {
+    this.on('insert', insert_listener = function(pos, text) {
       var transformCursor;
       transformCursor = function(cursor) {
         if (pos < cursor) {
@@ -50,7 +51,7 @@
       prevvalue = elem.value.replace(/\r\n/g, '\n');
       return replaceText(prevvalue.slice(0, pos) + text + prevvalue.slice(pos), transformCursor);
     });
-    this.on('delete', function(pos, text) {
+    this.on('delete', delete_listener = function(pos, text) {
       var transformCursor;
       transformCursor = function(cursor) {
         if (pos < cursor) {
@@ -75,16 +76,30 @@
       });
     };
     _ref = ['textInput', 'keydown', 'keyup', 'select', 'cut', 'paste'];
-    _results = [];
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       event = _ref[_i];
       if (elem.addEventListener) {
-        _results.push(elem.addEventListener(event, genOp, false));
+        elem.addEventListener(event, genOp, false);
       } else {
-        _results.push(elem.attachEvent('on' + event, genOp));
+        elem.attachEvent('on' + event, genOp);
       }
     }
-    return _results;
+    return elem.detach_share = function() {
+      var _j, _len1, _ref1, _results;
+      _this.removeListener('insert', insert_listener);
+      _this.removeListener('delete', delete_listener);
+      _ref1 = ['textInput', 'keydown', 'keyup', 'select', 'cut', 'paste'];
+      _results = [];
+      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+        event = _ref1[_j];
+        if (elem.removeEventListener) {
+          _results.push(elem.removeEventListener(event, genOp, false));
+        } else {
+          _results.push(elem.detachEvent('on' + event, genOp));
+        }
+      }
+      return _results;
+    };
   });
 
 }).call(this);
