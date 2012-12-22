@@ -122,6 +122,7 @@ class Doc
         @created = false unless @created is true
         @snapshot = msg.snapshot if msg.snapshot isnt undefined
 
+      @meta = msg.meta if msg.meta
       @version = msg.v if msg.v?
 
       # Resend any previously queued operation.

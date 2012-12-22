@@ -576,6 +576,9 @@
             this.snapshot = msg.snapshot;
           }
         }
+        if (msg.meta) {
+          this.meta = msg.meta;
+        }
         if (msg.v != null) {
           this.version = msg.v;
         }
