@@ -230,6 +230,37 @@ text2.compose = (op1, op2) ->
     append component
 
   trim result
+
+text2.transformCursor = (cursor, op, isOwnOp) ->
+  pos = 0
+
+  if isOwnOp
+    # Just track the position. We'll teleport the cursor to the end anyway.
+    for c in op
+      switch typeof c
+        when 'number'
+          pos += c
+        when 'string'
+          pos += c.length
+        # Just eat deletes.
+
+    pos
+  else
+    # I could actually use the op_iter stuff above - but I think its simpler like this.
+    for c in op
+      break if cursor <= pos
+    
+      switch typeof c
+        when 'number'
+          if cursor <= pos + c
+            return cursor
+          pos += c
+        when 'string'
+          pos += c.length
+          cursor += c.length
+        when 'object'
+          cursor -= Math.min c.d, cursor - pos
+    cursor
   
 if WEB?
   exports.types.text2 = text2

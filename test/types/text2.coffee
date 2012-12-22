@@ -63,6 +63,59 @@ exports.testNormalize = (test) ->
 
   test.done()
 
+exports.testTransformCursor = (test) ->
+  # This test was copied from https://github.com/josephg/libot/blob/master/test.c
+  ins = [10, "oh hi"]
+  del = [25, {d:20}]
+  op = [10, 'oh hi', 10, {d:20}] # The previous ops composed together
+
+  tc = (op, isOwn, cursor, expected) ->
+    test.strictEqual expected, text.transformCursor cursor, op, isOwn
+ 
+  # A cursor at the start of the inserted text shouldn't move.
+  tc op, false, 10, 10
+  
+  # Unless its your cursor.
+  tc ins, true, 10, 15
+  
+  # Any character inside the deleted region should move to the start of the region.
+  tc del, false, 25, 25
+  tc del, false, 35, 25
+  tc del, false, 45, 25
+
+  tc del, true, 25, 25
+  tc del, true, 35, 25
+  tc del, true, 45, 25
+  
+  # Cursors before the deleted region are uneffected
+  tc del, false, 10, 10
+  
+  # Cursors past the end of the deleted region get pulled back.
+  tc del, false, 55, 35
+  
+  # Your cursor always teleports to the end of the last insert or the deletion site.
+  tc ins, true, 0, 15
+  tc ins, true, 100, 15
+  tc del, true, 0, 25
+  tc del, true, 100, 25
+
+  # More complicated cases
+  tc op, false, 0, 0
+  tc op, false, 100, 85
+  tc op, false, 10, 10
+  tc op, false, 11, 16
+  return test.done()
+  
+  tc op, false, 20, 25
+  tc op, false, 30, 25
+  tc op, false, 40, 25
+  tc op, false, 41, 26
+
+  tc op, true, 0, 25
+  tc op, true, 100, 25
+  
+  test.done()
+
 text.generateRandomOp = (docStr) ->
   initial = docStr
 
