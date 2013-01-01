@@ -26,22 +26,49 @@ var WEB = true;
     return null;
   };
 
-  /*
-  json.invertComponent = (c) ->
-    c_ = {p: c.p}
-    c_.sd = c.si if c.si != undefined
-    c_.si = c.sd if c.sd != undefined
-    c_.od = c.oi if c.oi != undefined
-    c_.oi = c.od if c.od != undefined
-    c_.ld = c.li if c.li != undefined
-    c_.li = c.ld if c.ld != undefined
-    c_.na = -c.na if c.na != undefined
-    if c.lm != undefined
-      c_.lm = c.p[c.p.length-1]
-      c_.p = c.p[0...c.p.length - 1].concat([c.lm])
-    c_
-  */
+  json.invertComponent = function(c) {
+    var c_;
+    c_ = {
+      p: c.p
+    };
+    if (c.si !== void 0) {
+      c_.sd = c.si;
+    }
+    if (c.sd !== void 0) {
+      c_.si = c.sd;
+    }
+    if (c.oi !== void 0) {
+      c_.od = c.oi;
+    }
+    if (c.od !== void 0) {
+      c_.oi = c.od;
+    }
+    if (c.li !== void 0) {
+      c_.ld = c.li;
+    }
+    if (c.ld !== void 0) {
+      c_.li = c.ld;
+    }
+    if (c.na !== void 0) {
+      c_.na = -c.na;
+    }
+    if (c.lm !== void 0) {
+      c_.lm = c.p[c.p.length - 1];
+      c_.p = c.p.slice(0, c.p.length - 1).concat([c.lm]);
+    }
+    return c_;
+  };
 
+  json.invert = function(op) {
+    var c, _i, _len, _ref, _results;
+    _ref = op.slice().reverse();
+    _results = [];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      c = _ref[_i];
+      _results.push(json.invertComponent(c));
+    }
+    return _results;
+  };
 
   json.checkValidOp = function(op) {};
 
@@ -232,7 +259,7 @@ var WEB = true;
   };
 
   json.transformComponent = function(dest, c, otherC, type) {
-    var common, common2, commonOperand, convert, cplength, from, jc, otherCplength, otherFrom, otherTo, p, res, tc, tc1, tc2, to, _i, _len;
+    var common, common2, commonOperand, convert, cplength, from, jc, oc, otherCplength, otherFrom, otherTo, p, res, tc, tc1, tc2, to, _i, _len;
     c = clone(c);
     if (c.na !== void 0) {
       c.p.push(0);
@@ -254,34 +281,32 @@ var WEB = true;
     if (otherC.na !== void 0) {
       otherC.p.pop();
     }
-    /*
-      if otherC.na
-        if common2? && otherCplength >= cplength && otherC.p[common2] == c.p[common2]
-          if c.ld != undefined
-            oc = clone otherC
-            oc.p = oc.p[cplength..]
-            c.ld = json.apply clone(c.ld), [oc]
-          else if c.od != undefined
-            oc = clone otherC
-            oc.p = oc.p[cplength..]
-            c.od = json.apply clone(c.od), [oc]
-        json.append dest, c
-        return dest
-    
-      # if c is deleting something, and that thing is changed by otherC, we need to
-      # update c to reflect that change for invertibility.
-      # TODO this is probably not needed since we don't have invertibility
-      if common2? && otherCplength > cplength && c.p[common2] == otherC.p[common2]
-        if c.ld != undefined
-          oc = clone otherC
-          oc.p = oc.p[cplength..]
-          c.ld = json.apply clone(c.ld), [oc]
-        else if c.od != undefined
-          oc = clone otherC
-          oc.p = oc.p[cplength..]
-          c.od = json.apply clone(c.od), [oc]
-    */
-
+    if (otherC.na) {
+      if ((common2 != null) && otherCplength >= cplength && otherC.p[common2] === c.p[common2]) {
+        if (c.ld !== void 0) {
+          oc = clone(otherC);
+          oc.p = oc.p.slice(cplength);
+          c.ld = json.apply(clone(c.ld), [oc]);
+        } else if (c.od !== void 0) {
+          oc = clone(otherC);
+          oc.p = oc.p.slice(cplength);
+          c.od = json.apply(clone(c.od), [oc]);
+        }
+      }
+      json.append(dest, c);
+      return dest;
+    }
+    if ((common2 != null) && otherCplength > cplength && c.p[common2] === otherC.p[common2]) {
+      if (c.ld !== void 0) {
+        oc = clone(otherC);
+        oc.p = oc.p.slice(cplength);
+        c.ld = json.apply(clone(c.ld), [oc]);
+      } else if (c.od !== void 0) {
+        oc = clone(otherC);
+        oc.p = oc.p.slice(cplength);
+        c.od = json.apply(clone(c.od), [oc]);
+      }
+    }
     if (common != null) {
       commonOperand = cplength === otherCplength;
       if (otherC.na !== void 0) {

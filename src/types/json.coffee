@@ -1,6 +1,8 @@
 # This is the implementation of the JSON OT type.
 #
 # Spec is here: https://github.com/josephg/ShareJS/wiki/JSON-Operations
+#
+# Note: This is obsolete, and will be replaced by the JSON2 type.
 
 if WEB?
   text = exports.types.text
@@ -13,8 +15,6 @@ json.name = 'json'
 
 json.create = -> null
 
-# TODO: remove all invertibility things from JSON OT
-###
 json.invertComponent = (c) ->
   c_ = {p: c.p}
   c_.sd = c.si if c.si != undefined
@@ -28,9 +28,8 @@ json.invertComponent = (c) ->
     c_.lm = c.p[c.p.length-1]
     c_.p = c.p[0...c.p.length - 1].concat([c.lm])
   c_
-###
 
-#json.invert = (op) -> json.invertComponent c for c in op.slice().reverse()
+json.invert = (op) -> json.invertComponent c for c in op.slice().reverse()
 
 json.checkValidOp = (op) ->
 
@@ -212,7 +211,6 @@ json.transformComponent = (dest, c, otherC, type) ->
   c.p.pop() if c.na != undefined # hax
   otherC.p.pop() if otherC.na != undefined
 
-  ###
   if otherC.na
     if common2? && otherCplength >= cplength && otherC.p[common2] == c.p[common2]
       if c.ld != undefined
@@ -238,8 +236,6 @@ json.transformComponent = (dest, c, otherC, type) ->
       oc = clone otherC
       oc.p = oc.p[cplength..]
       c.od = json.apply clone(c.od), [oc]
-  ###
-
 
   if common?
     commonOperand = cplength == otherCplength
