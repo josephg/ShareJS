@@ -4,7 +4,7 @@ require('coffee-script');
 var connect = require('connect'),
   sharejs = require('../src');
 
-var server = connect();
+var server = connect(connect.logger());
 
 options = require('./options') || {};
 
