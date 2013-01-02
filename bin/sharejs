@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 require('coffee-script');
-var connect = require('connect'),
-  sharejs = require('../src');
+var connect = require('connect');
+var sharejs = require('../src');
 
 var server = connect(connect.logger());
 
@@ -17,10 +17,8 @@ if(options.pem) {
     server = connect(connect.logger());
 }
 
-if(options.log_level === 'verbose') {
-	util.puts("ShareJS server v" + sharejs.version);
-	util.puts("Options: ", options);
-}
+util.puts("ShareJS server v" + sharejs.version);
+util.puts("Options: ", options);
 
 var port = options.port || 8000;
 
@@ -29,9 +27,7 @@ sharejs.server.attach(server, options);
 
 server.listen(port);
 
-if(options.log_level === 'verbose') {
-	util.puts("Server running on port: " + port);
-}
+util.puts("Server running on port: " + port);
 
 process.title = 'sharejs'
 process.on('uncaughtException', function (err) {
