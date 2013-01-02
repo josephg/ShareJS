@@ -39,6 +39,15 @@ class Doc
     # Has the document already been created?
     @_create = openData.create
 
+    # My cursor
+    @cursor = null
+
+    # Set when we need to resend our cursor position to the server
+    @cursorDirty = false
+
+    @cursors = {} # Other user's cursor positions. Map from id -> cursor.
+
+
     # The op that is currently roundtripping to the server, or null.
     #
     # When the connection reconnects, the inflight op is resubmitted.
@@ -203,6 +212,7 @@ class Doc
 
         # Send the next op.
         @flush()
+        @flushCursor()
 
       when msg.op
         # We got a new op from the server.
@@ -222,14 +232,34 @@ class Doc
         @serverOps[@version] = op
 
         docOp = op
-        if @inflightOp != null
-          [@inflightOp, docOp] = @_xf @inflightOp, docOp
-        if @pendingOp != null
-          [@pendingOp, docOp] = @_xf @pendingOp, docOp
+        
+        [@inflightOp, docOp] = @_xf @inflightOp, docOp if @inflightOp
+        [@pendingOp, docOp] = @_xf @pendingOp, docOp if @pendingOp
+
+        for cid, cursor of @cursors
+          @cursors[cid] = @type.transformCursor cursor, op, cid == msg.meta.source.toString()
+        @cursor = @type.transformCursor @cursor, op, false if @cursor
           
         @version++
         # Finally, apply the op to @snapshot and trigger any event listeners
         @_otApply docOp, true
+
+        for id, cursor of @cursors
+          @emit 'cursor', id, @cursors[id]
+
+      when msg.cursor
+        # msg.cursor contains a map of changed data.
+        for id, c of msg.cursor
+          if c is null
+            delete @cursors[id]
+          else
+            c = @type.transformCursor c, @inflightOp, false if @inflightOp
+            c = @type.transformCursor c, @pendingOp, false if @pendingOp
+            @cursors[id] = c
+
+          @emit 'cursor', id, @cursors[id]
+
+        console.log @cursors
 
       when msg.meta
         {path, value} = msg.meta
@@ -260,6 +290,12 @@ class Doc
 
     @connection.send {doc:@name, op:@inflightOp, v:@version}
 
+  flushCursor: =>
+    return if @cursorDirty == false or @inflightOp
+
+    @connection.send {doc:@name, cursor:@cursor, v:@version}
+    @cursorDirty = false
+
   # Submit an op to the server. The op maybe held for a little while before being sent, as only one
   # op can be inflight at any time.
   submitOp: (op, callback) ->
@@ -267,6 +303,11 @@ class Doc
 
     # If this throws an exception, no changes should have been made to the doc
     @snapshot = @type.apply @snapshot, op
+
+    for cid, cursor of @cursors
+      @cursors[cid] = @type.transformCursor cursor, op, false
+    @cursor = @type.transformCursor @cursor, op, true if @cursor
+    @cursorDirty = false # Is this correct?
 
     if @pendingOp != null
       @pendingOp = @type.compose(@pendingOp, op)
@@ -280,9 +321,16 @@ class Doc
     # A timeout is used so if the user sends multiple ops at the same time, they'll be composed
     # & sent together.
     setTimeout @flush, 0
-  
+
+  setCursor: (cursor) ->
+    return if @cursor and @type.cursorEq? @cursor, cursor
+
+    @cursor = cursor
+    @cursorDirty = true
+    @flushCursor()
+
   shout: (msg) =>
-    # Meta ops don't have to queue, they can go direct. Good/bad idea?
+    # Rewrite me to have a top level 'broadcast:' message.
     @connection.send {doc:@name, meta: { path: ['shout'], value: msg } }
   
   # Open a document. The document starts closed.

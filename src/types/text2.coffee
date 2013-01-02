@@ -11,6 +11,9 @@
 # Eg: [3, 'hi', 5, {d:8}]
 #
 # Snapshots are strings.
+#
+# Cursors are pairs of [anchor, focus] (aka [start, end] - though be aware that
+# end can be before start).
 
 text2 = {}
 
@@ -21,7 +24,7 @@ text2.create = -> ''
 # -------- Utility methods
 
 checkOp = (op) ->
-  throw new Error('Op must be an array of components') unless Array.isArray(op)
+  throw new Error 'Op must be an array of components' unless Array.isArray op
   last = null
   for c in op
     switch typeof c
@@ -36,6 +39,10 @@ checkOp = (op) ->
     last = c
 
   throw new Error 'Op has a trailing skip' if typeof last is 'number'
+
+checkCursor = (cursor) ->
+  unless Array.isArray(cursor) and cursor.length is 2 and typeof cursor[0] is 'number' and typeof cursor[1] is 'number'
+    throw new Error 'Cursor must be an array with two numbers'
 
 # Makes a function for appending components to a given op.
 # Exported for the randomOpGenerator.
@@ -231,6 +238,8 @@ text2.compose = (op1, op2) ->
 
   trim result
 
+text2.cursorEq = (c1, c2) -> c1[0] == c2[0] and c1[1] == c2[1]
+
 transformPosition = (cursor, op) ->
   pos = 0
   for c in op
@@ -248,8 +257,10 @@ transformPosition = (cursor, op) ->
       when 'object'
         cursor -= Math.min c.d, cursor - pos
   cursor
- 
+
 text2.transformCursor = (cursor, op, isOwnOp) ->
+  checkCursor cursor
+
   pos = 0
 
   if isOwnOp

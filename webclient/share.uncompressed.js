@@ -471,6 +471,8 @@
       this.name = name;
       this.shout = __bind(this.shout, this);
 
+      this.flushCursor = __bind(this.flushCursor, this);
+
       this.flush = __bind(this.flush, this);
 
       openData || (openData = {});
@@ -482,6 +484,9 @@
       this.state = 'closed';
       this.autoOpen = false;
       this._create = openData.create;
+      this.cursor = null;
+      this.cursorDirty = false;
+      this.cursors = {};
       this.inflightOp = null;
       this.inflightCallbacks = [];
       this.inflightSubmittedIds = [];
@@ -555,7 +560,7 @@
     };
 
     Doc.prototype._onMessage = function(msg) {
-      var callback, docOp, error, oldInflightOp, op, path, response, undo, value, _i, _j, _len, _len1, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6;
+      var c, callback, cid, cursor, docOp, error, id, oldInflightOp, op, path, response, undo, value, _i, _j, _len, _len1, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9, _results;
       switch (false) {
         case msg.open !== true:
           this.state = 'open';
@@ -649,7 +654,8 @@
               callback(null, oldInflightOp);
             }
           }
-          return this.flush();
+          this.flush();
+          return this.flushCursor();
         case !msg.op:
           if (msg.v < this.version) {
             return;
@@ -663,16 +669,50 @@
           op = msg.op;
           this.serverOps[this.version] = op;
           docOp = op;
-          if (this.inflightOp !== null) {
+          if (this.inflightOp) {
             _ref4 = this._xf(this.inflightOp, docOp), this.inflightOp = _ref4[0], docOp = _ref4[1];
           }
-          if (this.pendingOp !== null) {
+          if (this.pendingOp) {
             _ref5 = this._xf(this.pendingOp, docOp), this.pendingOp = _ref5[0], docOp = _ref5[1];
           }
+          _ref6 = this.cursors;
+          for (cid in _ref6) {
+            cursor = _ref6[cid];
+            this.cursors[cid] = this.type.transformCursor(cursor, op, cid === msg.meta.source.toString());
+          }
+          if (this.cursor) {
+            this.cursor = this.type.transformCursor(this.cursor, op, false);
+          }
           this.version++;
-          return this._otApply(docOp, true);
+          this._otApply(docOp, true);
+          _ref7 = this.cursors;
+          _results = [];
+          for (id in _ref7) {
+            cursor = _ref7[id];
+            _results.push(this.emit('cursor', id, this.cursors[id]));
+          }
+          return _results;
+          break;
+        case !msg.cursor:
+          _ref8 = msg.cursor;
+          for (id in _ref8) {
+            c = _ref8[id];
+            if (c === null) {
+              delete this.cursors[id];
+            } else {
+              if (this.inflightOp) {
+                c = this.type.transformCursor(c, this.inflightOp, false);
+              }
+              if (this.pendingOp) {
+                c = this.type.transformCursor(c, this.pendingOp, false);
+              }
+              this.cursors[id] = c;
+            }
+            this.emit('cursor', id, this.cursors[id]);
+          }
+          return console.log(this.cursors);
         case !msg.meta:
-          _ref6 = msg.meta, path = _ref6.path, value = _ref6.value;
+          _ref9 = msg.meta, path = _ref9.path, value = _ref9.value;
           switch (path != null ? path[0] : void 0) {
             case 'shout':
               return this.emit('shout', value);
@@ -700,11 +740,33 @@
       });
     };
 
+    Doc.prototype.flushCursor = function() {
+      if (this.cursorDirty === false || this.inflightOp) {
+        return;
+      }
+      this.connection.send({
+        doc: this.name,
+        cursor: this.cursor,
+        v: this.version
+      });
+      return this.cursorDirty = false;
+    };
+
     Doc.prototype.submitOp = function(op, callback) {
+      var cid, cursor, _ref;
       if (this.type.normalize != null) {
         op = this.type.normalize(op);
       }
       this.snapshot = this.type.apply(this.snapshot, op);
+      _ref = this.cursors;
+      for (cid in _ref) {
+        cursor = _ref[cid];
+        this.cursors[cid] = this.type.transformCursor(cursor, op, false);
+      }
+      if (this.cursor) {
+        this.cursor = this.type.transformCursor(this.cursor, op, true);
+      }
+      this.cursorDirty = false;
       if (this.pendingOp !== null) {
         this.pendingOp = this.type.compose(this.pendingOp, op);
       } else {
@@ -715,6 +777,16 @@
       }
       this.emit('change', op);
       return setTimeout(this.flush, 0);
+    };
+
+    Doc.prototype.setCursor = function(cursor) {
+      var _base;
+      if (this.cursor && (typeof (_base = this.type).cursorEq === "function" ? _base.cursorEq(this.cursor, cursor) : void 0)) {
+        return;
+      }
+      this.cursor = cursor;
+      this.cursorDirty = true;
+      return this.flushCursor();
     };
 
     Doc.prototype.shout = function(msg) {
