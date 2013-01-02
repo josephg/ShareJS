@@ -1,5 +1,9 @@
 // ShareJS options
 module.exports = {
+
+    // Path to SSL PEM file
+    pem: null,
+
 	// Port to listen on
 	port: 8000,
 
@@ -13,9 +17,9 @@ module.exports = {
 
     // By default, sharejs tries to use the redis DB backend.
 		type: 'redis',
-   
+
 		// The prefix for database entries
-		prefix: 'ShareJS:',
+		prefix: 'ShareJS:'
 
 		// The hostname, port and options to pass to redis.
 		// null lets the database decide - redis by default connects to localhost port 6379.
@@ -68,12 +72,12 @@ module.exports = {
 	  // 'transports': ['xhr-polling', 'flashsocket']
 	},
 
-  // Browserchannel server options. Set browserChannel:null to disable browserchannel.
-  browserChannel: {},
+    // Browserchannel server options. Set browserChannel:null to disable browserchannel.
+    browserChannel: {}
 
 	// Authentication code to test if clients are allowed to perform different actions.
 	// See documentation for details.
 	//auth: function(client, action) {
 	//	action.allow();
 	//}
-}
+};
