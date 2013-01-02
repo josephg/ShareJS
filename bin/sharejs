@@ -1,13 +1,15 @@
 #!/usr/bin/env node
 
 require('coffee-script');
+var util = require('util');
+var fs = require('fs');
 var connect = require('connect');
 var sharejs = require('../src');
 
 var argv = require('optimist').
-    usage("Usage: $0 -f options.js").
+    	usage("Usage: $0 -f options.js").
 	demand('f').
-    alias('f','options')
+    	alias('f','options').
 	argv;
 
 var server = connect(connect.logger());
@@ -24,7 +26,7 @@ if(options.pem) {
 }
 
 util.puts("ShareJS server v" + sharejs.version);
-util.puts("Options: ", options);
+util.puts("Options: " + util.inspect(options, true, null));
 
 var port = options.port || 8000;
 
