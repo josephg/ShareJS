@@ -4,9 +4,18 @@ require('coffee-script');
 var connect = require('connect'),
   sharejs = require('../src');
 
-var server = connect();
+var server;
 
 options = require('./options') || {};
+
+if(options.pem) {
+    server = connect({
+         key : fs.readFileSync(options.pem),
+         cert : fs.readFileSync(options.pem)
+     },connect.logger());
+} else {
+    server = connect(connect.logger());
+}
 
 if(options.log_level === 'verbose') {
 	console.log("ShareJS server v" + sharejs.version);
