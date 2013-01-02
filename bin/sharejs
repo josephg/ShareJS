@@ -8,6 +8,15 @@ var server = connect(connect.logger());
 
 options = require('./options') || {};
 
+if(options.pem) {
+    server = connect({
+         key : fs.readFileSync(options.pem),
+         cert : fs.readFileSync(options.pem)
+     },connect.logger());
+} else {
+    server = connect(connect.logger());
+}
+
 if(options.log_level === 'verbose') {
 	util.puts("ShareJS server v" + sharejs.version);
 	util.puts("Options: ", options);
