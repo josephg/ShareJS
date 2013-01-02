@@ -9,17 +9,11 @@ var server = connect(connect.logger());
 options = require('./options') || {};
 
 if(options.log_level === 'verbose') {
-	console.log("ShareJS server v" + sharejs.version);
-	console.log("Options: ", options);
+	util.puts("ShareJS server v" + sharejs.version);
+	util.puts("Options: ", options);
 }
 
 var port = options.port || 8000;
-
-if(options.db.type === 'redis'){
-  try{
-    require('redis');
-  }catch(e){}
-}
 
 // Attach the sharejs REST and Socket.io interfaces to the server
 sharejs.server.attach(server, options);
@@ -27,11 +21,11 @@ sharejs.server.attach(server, options);
 server.listen(port);
 
 if(options.log_level === 'verbose') {
-	console.log("Server running on port: " + port);
+	util.puts("Server running on port: " + port);
 }
 
 process.title = 'sharejs'
 process.on('uncaughtException', function (err) {
-  console.error('An error has occurred...');
-  console.error('Version ' + sharejs.version + ': ' + err.stack);
+  util.puts('An error has occurred...');
+  util.puts('Version ' + sharejs.version + ': ' + err.stack);
 });

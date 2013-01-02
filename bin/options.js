@@ -3,6 +3,9 @@ module.exports = {
 	// Port to listen on
 	port: 8000,
 
+    // Allowed values are verbose or none
+    log_level: 'verbose',
+
 	// Database options
 	db: {
 		// DB type. Options are 'redis', 'couchdb' or 'none'. 'redis' requires the
@@ -13,7 +16,7 @@ module.exports = {
 
     // By default, sharejs tries to use the redis DB backend.
 		type: 'redis',
-   
+
 		// The prefix for database entries
 		prefix: 'ShareJS:',
 
