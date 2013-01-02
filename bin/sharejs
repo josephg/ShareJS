@@ -4,9 +4,15 @@ require('coffee-script');
 var connect = require('connect');
 var sharejs = require('../src');
 
+var argv = require('optimist').
+    usage("Usage: $0 -f options.js").
+	demand('f').
+    alias('f','options')
+	argv;
+
 var server = connect(connect.logger());
 
-options = require('./options') || {};
+options = require(argv.options);
 
 if(options.pem) {
     server = connect({
