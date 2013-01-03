@@ -303,7 +303,7 @@ class Doc
 
     for cid, cursor of @cursors
       @cursors[cid] = @type.transformCursor cursor, op, false
-    @cursor = @type.transformCursor @cursor, op, true if @cursor
+    @cursor = @type.transformCursor @cursor, op, true if @cursor and @type.transformCursor
     @cursorDirty = false # Is this correct?
 
     if @pendingOp != null
@@ -320,7 +320,7 @@ class Doc
     setTimeout @flush, 0
 
   setCursor: (cursor) ->
-    return if @cursor and @type.cursorEq? @cursor, cursor
+    return if @cursor? and @type.cursorEq? @cursor, cursor
 
     @cursor = cursor
     @cursorDirty = true

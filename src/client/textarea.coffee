@@ -17,6 +17,8 @@ applyChange = (doc, oldval, newval, cursor) ->
   doc.del commonStart, oldval.length - commonStart - commonEnd unless oldval.length == commonStart + commonEnd
   doc.insert commonStart, newval[commonStart ... newval.length - commonEnd] unless newval.length == commonStart + commonEnd
 
+hueForId = (id) -> id * 133 % 360
+
 window.sharejs.extendDoc 'attach_textarea', (elem) ->
   window.e = elem
 
@@ -45,12 +47,12 @@ window.sharejs.extendDoc 'attach_textarea', (elem) ->
         else
           div.appendChild span
       else if pos < elem.value.length
-        remainder = text.splitText c
+        remainder = text.splitText pos
         div.insertBefore span, remainder
       else
         div.appendChild span
 
-      #span.innerText = ' '
+      span.innerText = ' '
 
       divrect = div.getBoundingClientRect()
       spanrect = span.getBoundingClientRect()
@@ -62,20 +64,65 @@ window.sharejs.extendDoc 'attach_textarea', (elem) ->
       div.removeChild span
       div.normalize() # join the text nodes back up
 
-      {x, y, h}
+      {x:Math.round(x), y:Math.round(y) - elem.scrollTop - 1, h}
 
 
     ctx.clearRect 0, 0, elem.offsetWidth, elem.offsetHeight
+    ctx.font = '14px monaco'
+    ctx.textBaseline = 'top'
+    ctx.textAlign = 'right'
+    ctx.lineWidth = 3
     for id, c of doc.cursors
-      c = c[1] unless typeof c is 'number'
-
+      metrics = ctx.measureText id
       try
-        pos = getPos c
+        if typeof c is 'number'
+          pos = getPos c
+          ctx.fillStyle = "hsl(#{hueForId id}, 90%, 34%)"
+          ctx.fillRect pos.x-1, pos.y, 2, pos.h
 
-        #console.log pos
+          y = pos.y + 2 #+ Math.round(pos.h/2)
+          ctx.beginPath()
+          ctx.moveTo pos.x, y
+          ctx.lineTo elem.scrollWidth, y
+          ctx.strokeStyle = "hsla(#{hueForId id}, 90%, 34%, 0.3)"
+          ctx.stroke()
 
-        ctx.fillStyle = "hsl(#{id * 41 % 360}, 90%, 34%)"
-        ctx.fillRect Math.round(pos.x-1), pos.y - elem.scrollTop-1, 2, pos.h
+          ctx.fillStyle = "hsla(#{hueForId id}, 90%, 34%, 0.6)"
+          ctx.fillRect elem.scrollWidth - metrics.width - 5, y - 2, metrics.width + 5, 21
+        else
+          p1 = getPos Math.min(c[0], c[1])
+          p2 = getPos Math.max(c[0], c[1])
+          y = p1.y + 2
+
+          # Urgh gross
+          continue unless p1.h and p2.h
+
+          ctx.fillStyle = "hsla(#{hueForId id}, 90%, 34%, 0.5)"
+          if p1.y == p2.y
+            ctx.fillRect p1.x, p1.y, p2.x - p1.x, p1.h
+
+            ctx.beginPath()
+            ctx.moveTo p1.x, y
+            ctx.lineTo elem.scrollWidth, y
+            ctx.strokeStyle = "hsla(#{hueForId id}, 90%, 34%, 0.3)"
+            ctx.stroke()
+            ctx.fillStyle = "hsla(#{hueForId id}, 90%, 34%, 0.6)"
+            ctx.fillRect elem.scrollWidth - metrics.width - 5, y - 2, metrics.width + 5, 21
+          else
+            # There are three regions:
+            # - p1 -> the end of the line
+            # - the block of lines between p1 and p2
+            # - the start of the line -> p2
+            console.log p1, p2
+
+            ctx.fillRect p1.x, p1.y, elem.scrollWidth - p1.x, p1.h
+            ctx.fillRect 0, p1.y + p1.h, elem.scrollWidth, p2.y - p1.y - p1.h
+            ctx.fillRect 0, p2.y, p2.x, p2.h
+
+        ctx.fillStyle = 'white'
+        ctx.fillText id, elem.scrollWidth - 3, y
+            
+
       catch e
         console.error e.stack
 
@@ -129,7 +176,7 @@ window.sharejs.extendDoc 'attach_textarea', (elem) ->
           drawCursors()
       , 0
 
-  events = ['textInput', 'keydown', 'keyup', 'select', 'cut', 'paste', 'click', 'focus']
+  events = ['textInput', 'keydown', 'keyup', 'select', 'cut', 'paste', 'click']#, 'mousemove', 'focus']
   for event in events
     if elem.addEventListener
       elem.addEventListener event, checkForChanges, false

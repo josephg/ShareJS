@@ -755,7 +755,7 @@
         cursor = _ref[cid];
         this.cursors[cid] = this.type.transformCursor(cursor, op, false);
       }
-      if (this.cursor) {
+      if (this.cursor && this.type.transformCursor) {
         this.cursor = this.type.transformCursor(this.cursor, op, true);
       }
       this.cursorDirty = false;
@@ -773,7 +773,7 @@
 
     Doc.prototype.setCursor = function(cursor) {
       var _base;
-      if (this.cursor && (typeof (_base = this.type).cursorEq === "function" ? _base.cursorEq(this.cursor, cursor) : void 0)) {
+      if ((this.cursor != null) && (typeof (_base = this.type).cursorEq === "function" ? _base.cursorEq(this.cursor, cursor) : void 0)) {
         return;
       }
       this.cursor = cursor;
