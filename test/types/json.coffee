@@ -246,6 +246,10 @@ genTests = (type) ->
       test.deepEqual type.transform([{p:['k', 5], sd:'a'}], [{p:['k', 5], sd:'a'}], 'left'), []
       test.done()
 
+    'blank inserts do not throw error': (test) ->
+      test.deepEqual type.transform([{p: ['k', 5], si:''}], [{p: ['k', 3], si: 'a'}], 'left'), []
+      test.done()
+
   list:
     'Apply inserts': (test) ->
       test.deepEqual ['a', 'b', 'c'], type.apply ['b', 'c'], [{p:[0], li:'a'}]

@@ -250,7 +250,7 @@ json.transformComponent = (dest, c, otherC, type) ->
         # Convert an op component to a text op component
         convert = (component) ->
           newC = p:component.p[component.p.length - 1]
-          if component.si
+          if component.si?
             newC.i = component.si
           else
             newC.d = component.sd
