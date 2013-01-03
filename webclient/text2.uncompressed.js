@@ -54,8 +54,8 @@ var WEB = true;
   };
 
   checkCursor = function(cursor) {
-    if (!(Array.isArray(cursor) && cursor.length === 2 && typeof cursor[0] === 'number' && typeof cursor[1] === 'number')) {
-      throw new Error('Cursor must be an array with two numbers');
+    if (!(typeof cursor === 'number' || (Array.isArray(cursor) && cursor.length === 2 && typeof cursor[0] === 'number' && typeof cursor[1] === 'number'))) {
+      throw new Error('Cursor must be a number or an array with two numbers');
     }
   };
 
@@ -293,7 +293,14 @@ var WEB = true;
   };
 
   text2.cursorEq = function(c1, c2) {
-    return c1[0] === c2[0] && c1[1] === c2[1];
+    if (typeof c1 !== typeof c2) {
+      return false;
+    }
+    if (typeof c1 === 'number') {
+      return c1 === c2;
+    } else {
+      return c1[0] === c2[0] && c1[1] === c2[1];
+    }
   };
 
   transformPosition = function(cursor, op) {
@@ -337,9 +344,13 @@ var WEB = true;
             pos += c.length;
         }
       }
-      return [pos, pos];
+      return pos;
     } else {
-      return [transformPosition(cursor[0], op), transformPosition(cursor[1], op)];
+      if (typeof cursor === 'number') {
+        return transformPosition(cursor, op);
+      } else {
+        return [transformPosition(cursor[0], op), transformPosition(cursor[1], op)];
+      }
     }
   };
 

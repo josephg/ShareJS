@@ -12,8 +12,8 @@
 #
 # Snapshots are strings.
 #
-# Cursors are pairs of [anchor, focus] (aka [start, end] - though be aware that
-# end can be before start).
+# Cursors are either a single number (which is the cursor position) or a pair of
+# [anchor, focus] (aka [start, end]). Be aware that end can be before start.
 
 text2 = {}
 
@@ -41,8 +41,9 @@ checkOp = (op) ->
   throw new Error 'Op has a trailing skip' if typeof last is 'number'
 
 checkCursor = (cursor) ->
-  unless Array.isArray(cursor) and cursor.length is 2 and typeof cursor[0] is 'number' and typeof cursor[1] is 'number'
-    throw new Error 'Cursor must be an array with two numbers'
+  unless typeof cursor is 'number' or
+      (Array.isArray(cursor) and cursor.length is 2 and typeof cursor[0] is 'number' and typeof cursor[1] is 'number')
+    throw new Error 'Cursor must be a number or an array with two numbers'
 
 # Makes a function for appending components to a given op.
 # Exported for the randomOpGenerator.
@@ -238,9 +239,16 @@ text2.compose = (op1, op2) ->
 
   trim result
 
-text2.cursorEq = (c1, c2) -> c1[0] == c2[0] and c1[1] == c2[1]
+text2.cursorEq = (c1, c2) ->
+  return false unless typeof c1 == typeof c2
+  if typeof c1 is 'number'
+    c1 == c2
+  else
+    c1[0] == c2[0] and c1[1] == c2[1]
 
 transformPosition = (cursor, op) ->
+  # I probably should have used different variable names - 'cursor' here must be a position
+  # in the document. It cannot be an array.
   pos = 0
   for c in op
     break if cursor <= pos
@@ -275,9 +283,12 @@ text2.transformCursor = (cursor, op, isOwnOp) ->
           pos += c.length
         # Just eat deletes.
 
-    [pos, pos]
+    pos
   else
-    [(transformPosition cursor[0], op), (transformPosition cursor[1], op)]
+    if typeof cursor is 'number'
+      transformPosition cursor, op
+    else
+      [(transformPosition cursor[0], op), (transformPosition cursor[1], op)]
   
 if WEB?
   exports.types.text2 = text2

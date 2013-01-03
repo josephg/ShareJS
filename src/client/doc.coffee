@@ -244,8 +244,7 @@ class Doc
         # Finally, apply the op to @snapshot and trigger any event listeners
         @_otApply docOp, true
 
-        for id, cursor of @cursors
-          @emit 'cursor', id, @cursors[id]
+        @emit 'cursors'
 
       when msg.cursor
         # msg.cursor contains a map of changed data.
@@ -257,9 +256,7 @@ class Doc
             c = @type.transformCursor c, @pendingOp, false if @pendingOp
             @cursors[id] = c
 
-          @emit 'cursor', id, @cursors[id]
-
-        console.log @cursors
+        @emit 'cursors'
 
       when msg.meta
         {path, value} = msg.meta
@@ -327,7 +324,7 @@ class Doc
 
     @cursor = cursor
     @cursorDirty = true
-    @flushCursor()
+    setTimeout @flushCursor, 0
 
   shout: (msg) =>
     # Rewrite me to have a top level 'broadcast:' message.

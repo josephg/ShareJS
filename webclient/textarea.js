@@ -2,18 +2,18 @@
 (function() {
   var applyChange;
 
-  applyChange = function(doc, oldval, newval) {
+  applyChange = function(doc, oldval, newval, cursor) {
     var commonEnd, commonStart;
     if (oldval === newval) {
       return;
     }
-    commonStart = 0;
-    while (oldval.charAt(commonStart) === newval.charAt(commonStart)) {
-      commonStart++;
-    }
     commonEnd = 0;
-    while (oldval.charAt(oldval.length - 1 - commonEnd) === newval.charAt(newval.length - 1 - commonEnd) && commonEnd + commonStart < oldval.length && commonEnd + commonStart < newval.length) {
+    while (oldval.charAt(oldval.length - 1 - commonEnd) === newval.charAt(newval.length - 1 - commonEnd) && commonEnd < oldval.length && commonEnd < newval.length && cursor + commonEnd < newval.length) {
       commonEnd++;
+    }
+    commonStart = 0;
+    while (oldval.charAt(commonStart) === newval.charAt(commonStart) && commonEnd + commonStart < oldval.length && commonEnd + commonStart < newval.length) {
+      commonStart++;
     }
     if (oldval.length !== commonStart + commonEnd) {
       doc.del(commonStart, oldval.length - commonStart - commonEnd);
@@ -24,78 +24,139 @@
   };
 
   window.sharejs.extendDoc('attach_textarea', function(elem) {
-    var delete_listener, doc, event, genOp, insert_listener, prevvalue, replaceText, _i, _len, _ref,
+    var checkForChanges, ctx, deleteListener, doc, drawCursors, event, events, insertListener, prevvalue, replaceText, _i, _len,
       _this = this;
+    window.e = elem;
     doc = this;
     elem.value = this.getText();
     prevvalue = elem.value;
-    replaceText = function(newText, transformCursor) {
-      var newSelection, scrollTop;
-      newSelection = [transformCursor(elem.selectionStart), transformCursor(elem.selectionEnd)];
+    this.setCursor(elem.selectionStart);
+    ctx = document.getCSSCanvasContext('2d', 'cursors', elem.offsetWidth, elem.offsetHeight);
+    drawCursors = function() {
+      var c, cs, div, getPos, id, k, pos, text, v, _ref;
+      div = document.createElement('div');
+      text = div.appendChild(document.createTextNode(elem.value));
+      div.style.width = "" + elem.offsetWidth + "px";
+      div.style.height = "" + elem.offsetHeight + "px";
+      cs = getComputedStyle(elem);
+      for (k in cs) {
+        v = cs[k];
+        div.style[k] = v;
+      }
+      document.body.appendChild(div);
+      getPos = function(pos) {
+        var divrect, h, remainder, span, spanrect, x, y;
+        span = document.createElement('span');
+        if (pos === 0) {
+          if (elem.value.length) {
+            div.insertBefore(span, text);
+          } else {
+            div.appendChild(span);
+          }
+        } else if (pos < elem.value.length) {
+          remainder = text.splitText(c);
+          div.insertBefore(span, remainder);
+        } else {
+          div.appendChild(span);
+        }
+        divrect = div.getBoundingClientRect();
+        spanrect = span.getBoundingClientRect();
+        x = spanrect.left - divrect.left;
+        y = spanrect.top - divrect.top;
+        h = spanrect.height;
+        div.removeChild(span);
+        div.normalize();
+        return {
+          x: x,
+          y: y,
+          h: h
+        };
+      };
+      ctx.clearRect(0, 0, elem.offsetWidth, elem.offsetHeight);
+      _ref = doc.cursors;
+      for (id in _ref) {
+        c = _ref[id];
+        if (typeof c !== 'number') {
+          c = c[1];
+        }
+        try {
+          pos = getPos(c);
+          ctx.fillStyle = "hsl(" + (id * 41 % 360) + ", 90%, 34%)";
+          ctx.fillRect(Math.round(pos.x - 1), pos.y - elem.scrollTop - 1, 2, pos.h);
+        } catch (e) {
+          console.error(e.stack);
+        }
+      }
+      return document.body.removeChild(div);
+    };
+    drawCursors();
+    replaceText = function(newText) {
+      var anchor, focus, scrollTop, _ref, _ref1, _ref2;
       scrollTop = elem.scrollTop;
       elem.value = newText;
       if (elem.scrollTop !== scrollTop) {
         elem.scrollTop = scrollTop;
       }
-      return elem.selectionStart = newSelection[0], elem.selectionEnd = newSelection[1], newSelection;
+      if (typeof doc.cursor === 'number') {
+        return elem.selectionStart = elem.selectionEnd = doc.cursor;
+      } else {
+        _ref = doc.cursor, anchor = _ref[0], focus = _ref[1];
+        if (anchor < focus) {
+          return _ref1 = [anchor, focus], elem.selectionStart = _ref1[0], elem.selectionEnd = _ref1[1], _ref1;
+        } else {
+          _ref2 = [focus, anchor], elem.selectionStart = _ref2[0], elem.selectionEnd = _ref2[1];
+          return elem.selectionDirection = 'backward';
+        }
+      }
     };
-    this.on('insert', insert_listener = function(pos, text) {
-      var transformCursor;
-      transformCursor = function(cursor) {
-        if (pos < cursor) {
-          return cursor + text.length;
-        } else {
-          return cursor;
-        }
-      };
+    this.on('insert', insertListener = function(pos, text) {
       prevvalue = elem.value.replace(/\r\n/g, '\n');
-      return replaceText(prevvalue.slice(0, pos) + text + prevvalue.slice(pos), transformCursor);
+      return replaceText(prevvalue.slice(0, pos) + text + prevvalue.slice(pos));
     });
-    this.on('delete', delete_listener = function(pos, text) {
-      var transformCursor;
-      transformCursor = function(cursor) {
-        if (pos < cursor) {
-          return cursor - Math.min(text.length, cursor - pos);
-        } else {
-          return cursor;
-        }
-      };
+    this.on('delete', deleteListener = function(pos, text) {
       prevvalue = elem.value.replace(/\r\n/g, '\n');
-      return replaceText(prevvalue.slice(0, pos) + prevvalue.slice(pos + text.length), transformCursor);
+      return replaceText(prevvalue.slice(0, pos) + prevvalue.slice(pos + text.length));
     });
-    genOp = function(event) {
-      var onNextTick;
-      onNextTick = function(fn) {
-        return setTimeout(fn, 0);
-      };
-      return onNextTick(function() {
+    this.on('cursors', drawCursors);
+    checkForChanges = function(event) {
+      return setTimeout(function() {
+        if (elem.selectionStart === elem.selectionEnd) {
+          doc.setCursor(elem.selectionStart);
+        } else {
+          if (elem.selectionDirection === 'backward') {
+            doc.setCursor([elem.selectionEnd, elem.selectionStart]);
+          } else {
+            doc.setCursor([elem.selectionStart, elem.selectionEnd]);
+          }
+        }
         if (elem.value !== prevvalue) {
           prevvalue = elem.value;
-          return applyChange(doc, doc.getText(), elem.value.replace(/\r\n/g, '\n'));
+          applyChange(doc, doc.getText(), elem.value.replace(/\r\n/g, '\n'), elem.selectionEnd);
+          return drawCursors();
         }
-      });
+      }, 0);
     };
-    _ref = ['textInput', 'keydown', 'keyup', 'select', 'cut', 'paste'];
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      event = _ref[_i];
+    events = ['textInput', 'keydown', 'keyup', 'select', 'cut', 'paste', 'click', 'focus'];
+    for (_i = 0, _len = events.length; _i < _len; _i++) {
+      event = events[_i];
       if (elem.addEventListener) {
-        elem.addEventListener(event, genOp, false);
+        elem.addEventListener(event, checkForChanges, false);
       } else {
-        elem.attachEvent('on' + event, genOp);
+        elem.attachEvent('on' + event, checkForChanges);
       }
     }
     return elem.detach_share = function() {
-      var _j, _len1, _ref1, _results;
-      _this.removeListener('insert', insert_listener);
-      _this.removeListener('delete', delete_listener);
-      _ref1 = ['textInput', 'keydown', 'keyup', 'select', 'cut', 'paste'];
+      var _j, _len1, _results;
+      _this.removeListener('insert', insertListener);
+      _this.removeListener('delete', deleteListener);
+      _this.removeListener('cursors', drawCursors);
       _results = [];
-      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-        event = _ref1[_j];
+      for (_j = 0, _len1 = events.length; _j < _len1; _j++) {
+        event = events[_j];
         if (elem.removeEventListener) {
-          _results.push(elem.removeEventListener(event, genOp, false));
+          _results.push(elem.removeEventListener(event, checkForChanges, false));
         } else {
-          _results.push(elem.detachEvent('on' + event, genOp));
+          _results.push(elem.detachEvent('on' + event, checkForChanges));
         }
       }
       return _results;

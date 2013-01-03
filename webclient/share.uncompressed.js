@@ -560,7 +560,7 @@
     };
 
     Doc.prototype._onMessage = function(msg) {
-      var c, callback, cid, cursor, docOp, error, id, oldInflightOp, op, path, response, undo, value, _i, _j, _len, _len1, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9, _results;
+      var c, callback, cid, cursor, docOp, error, id, oldInflightOp, op, path, response, undo, value, _i, _j, _len, _len1, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8;
       switch (false) {
         case msg.open !== true:
           this.state = 'open';
@@ -685,18 +685,11 @@
           }
           this.version++;
           this._otApply(docOp, true);
-          _ref7 = this.cursors;
-          _results = [];
-          for (id in _ref7) {
-            cursor = _ref7[id];
-            _results.push(this.emit('cursor', id, this.cursors[id]));
-          }
-          return _results;
-          break;
+          return this.emit('cursors');
         case !msg.cursor:
-          _ref8 = msg.cursor;
-          for (id in _ref8) {
-            c = _ref8[id];
+          _ref7 = msg.cursor;
+          for (id in _ref7) {
+            c = _ref7[id];
             if (c === null) {
               delete this.cursors[id];
             } else {
@@ -708,11 +701,10 @@
               }
               this.cursors[id] = c;
             }
-            this.emit('cursor', id, this.cursors[id]);
           }
-          return console.log(this.cursors);
+          return this.emit('cursors');
         case !msg.meta:
-          _ref9 = msg.meta, path = _ref9.path, value = _ref9.value;
+          _ref8 = msg.meta, path = _ref8.path, value = _ref8.value;
           switch (path != null ? path[0] : void 0) {
             case 'shout':
               return this.emit('shout', value);
@@ -786,7 +778,7 @@
       }
       this.cursor = cursor;
       this.cursorDirty = true;
-      return this.flushCursor();
+      return setTimeout(this.flushCursor, 0);
     };
 
     Doc.prototype.shout = function(msg) {
