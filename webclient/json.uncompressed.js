@@ -321,7 +321,7 @@ var WEB = true;
             newC = {
               p: component.p[component.p.length - 1]
             };
-            if (component.si) {
+            if (component.si != null) {
               newC.i = component.si;
             } else {
               newC.d = component.sd;
