@@ -35,9 +35,12 @@
     elem.value = this.getText();
     prevvalue = elem.value;
     this.setCursor(elem.selectionStart);
-    ctx = document.getCSSCanvasContext('2d', 'cursors', elem.offsetWidth, elem.offsetHeight);
+    ctx = typeof document.getCSSCanvasContext === "function" ? document.getCSSCanvasContext('2d', 'cursors', elem.offsetWidth, elem.offsetHeight) : void 0;
     drawCursors = function() {
       var c, cs, div, getPos, id, k, metrics, p1, p2, pos, text, v, y, _ref;
+      if (!ctx) {
+        return;
+      }
       div = document.createElement('div');
       text = div.appendChild(document.createTextNode(elem.value));
       div.style.width = "" + elem.offsetWidth + "px";
@@ -117,7 +120,6 @@
               ctx.fillStyle = "hsla(" + (hueForId(id)) + ", 90%, 34%, 0.6)";
               ctx.fillRect(elem.scrollWidth - metrics.width - 5, y - 2, metrics.width + 5, 21);
             } else {
-              console.log(p1, p2);
               ctx.fillRect(p1.x, p1.y, elem.scrollWidth - p1.x, p1.h);
               ctx.fillRect(0, p1.y + p1.h, elem.scrollWidth, p2.y - p1.y - p1.h);
               ctx.fillRect(0, p2.y, p2.x, p2.h);
@@ -178,7 +180,7 @@
         }
       }, 0);
     };
-    events = ['textInput', 'keydown', 'keyup', 'select', 'cut', 'paste', 'click'];
+    events = ['textInput', 'keydown', 'keyup', 'select', 'cut', 'paste', 'click', 'mousemove', 'focus'];
     for (_i = 0, _len = events.length; _i < _len; _i++) {
       event = events[_i];
       if (elem.addEventListener) {
@@ -187,6 +189,8 @@
         elem.attachEvent('on' + event, checkForChanges);
       }
     }
+    elem.addEventListener('scroll', drawCursors, false);
+    window.addEventListener('resize', drawCursors, false);
     return elem.detach_share = function() {
       var _j, _len1, _results;
       _this.removeListener('insert', insertListener);

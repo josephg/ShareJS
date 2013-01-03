@@ -27,8 +27,9 @@ window.sharejs.extendDoc 'attach_textarea', (elem) ->
   prevvalue = elem.value
   @setCursor elem.selectionStart
 
-  ctx = document.getCSSCanvasContext '2d', 'cursors', elem.offsetWidth, elem.offsetHeight
+  ctx = document.getCSSCanvasContext? '2d', 'cursors', elem.offsetWidth, elem.offsetHeight
   drawCursors = ->
+    return unless ctx
     div = document.createElement 'div'
     text = div.appendChild document.createTextNode elem.value
 
@@ -113,7 +114,7 @@ window.sharejs.extendDoc 'attach_textarea', (elem) ->
             # - p1 -> the end of the line
             # - the block of lines between p1 and p2
             # - the start of the line -> p2
-            console.log p1, p2
+            #console.log p1, p2
 
             ctx.fillRect p1.x, p1.y, elem.scrollWidth - p1.x, p1.h
             ctx.fillRect 0, p1.y + p1.h, elem.scrollWidth, p2.y - p1.y - p1.h
@@ -176,12 +177,15 @@ window.sharejs.extendDoc 'attach_textarea', (elem) ->
           drawCursors()
       , 0
 
-  events = ['textInput', 'keydown', 'keyup', 'select', 'cut', 'paste', 'click']#, 'mousemove', 'focus']
+  events = ['textInput', 'keydown', 'keyup', 'select', 'cut', 'paste', 'click', 'mousemove', 'focus']
   for event in events
     if elem.addEventListener
       elem.addEventListener event, checkForChanges, false
     else
       elem.attachEvent 'on'+event, checkForChanges
+
+  elem.addEventListener 'scroll', drawCursors, false
+  window.addEventListener 'resize', drawCursors, false
 
   elem.detach_share = =>
     @removeListener 'insert', insertListener
