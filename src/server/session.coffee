@@ -106,6 +106,10 @@ exports.handler = (session, createAgent) ->
         else if query.op? or query.meta?.path?
           handleOp query, callback
 
+        else if query.cursor?
+          # Ignore cursor queries for now.
+          callback()
+
         else
           console.warn "Invalid query #{JSON.stringify query} from #{agent.sessionId}"
           session.abort()
