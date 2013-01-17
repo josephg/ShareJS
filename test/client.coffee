@@ -433,9 +433,10 @@ genTests = (client) -> testCase
       test.strictEqual action.responded, false
       action.accept()
       test.strictEqual action.responded, true
-      test.done()
-
+      
     client.open @name, 'text', "http://localhost:#{@port}/sjs", (error, doc) =>
+      doc.close()
+      test.done()
 
   'Text API is advertised': (test) ->
     @c.open @name, 'text', (error, doc) ->
