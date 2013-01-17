@@ -1,6 +1,7 @@
 # The server module...
 
 connect = require 'connect'
+http = require 'http'
 
 Model = require './model'
 createDb = require './db'
@@ -24,7 +25,7 @@ create.createModel = createModel = (options) ->
   new Model db, options
 
 # Attach the OT server frontends to the provided Node HTTP server. Use this if you
-# already have a http.Server or https.Server and want to make some URL paths do OT.
+# already have a `connect` compatible server and want to make some URL paths do OT.
 #
 # The options object specifies options for everything. If settings are missing,
 # defaults will be provided.
@@ -48,11 +49,15 @@ create.attach = attach = (server, options, model = createModel(options)) ->
   # Socketio frontend is now disabled by default.
   socketio.attach(server, createAgent, options.socketio or {}) if options.socketio?
 
-  # SockJS frontend is disabled by default
-  sockjs.attach(server, createAgent, options.sockjs or {}) if options.sockjs?
-
   browserChannel.attach(server, createAgent, options.browserChannel or {}) if options.browserChannel != null
 
+  if !(server instanceof http.Server)
+    server = http.createServer server
+
+  # this is required by sockjs since it only works with http server, not with
+  # `connect` server
+  # SockJS frontend is disabled by default
+  sockjs.attach(server, createAgent, options.sockjs or {}) if options.sockjs?
 
   server
 
