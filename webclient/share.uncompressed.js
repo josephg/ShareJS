@@ -802,9 +802,6 @@
       this.socket = typeof useSockJS !== "undefined" && useSockJS !== null ? new SockJS(host) : new BCSocket(host, {
         reconnect: true
       });
-      this.socket.send({
-        "auth": authentication ? authentication : null
-      });
       this.socket.onmessage = function(msg) {
         var docName;
         if (typeof useSockJS !== "undefined" && useSockJS !== null) {
@@ -842,6 +839,9 @@
         return _this.emit('error', e);
       };
       this.socket.onopen = function() {
+        _this.send({
+          "auth": authentication ? authentication : null
+        });
         _this.lastError = _this.lastReceivedDoc = _this.lastSentDoc = null;
         return _this.setState('handshaking');
       };
@@ -871,11 +871,13 @@
 
     Connection.prototype.send = function(data) {
       var docName;
-      docName = data.doc;
-      if (docName === this.lastSentDoc) {
-        delete data.doc;
-      } else {
-        this.lastSentDoc = docName;
+      if (data.doc) {
+        docName = data.doc;
+        if (docName === this.lastSentDoc) {
+          delete data.doc;
+        } else {
+          this.lastSentDoc = docName;
+        }
       }
       if (typeof useSockJS !== "undefined" && useSockJS !== null) {
         data = JSON.stringify(data);

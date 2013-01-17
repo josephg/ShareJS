@@ -7,7 +7,7 @@
 var WEB = true;
 ;
 
-  var checkOp, componentLength, exports, makeAppend, makeTake, text2, trim, type;
+  var checkOp, componentLength, exports, makeAppend, makeTake, text2, transformPosition, trim, type;
 
   exports = window['sharejs'];
 
@@ -286,8 +286,34 @@ var WEB = true;
     return trim(result);
   };
 
+  transformPosition = function(cursor, op) {
+    var c, pos, _i, _len;
+    pos = 0;
+    for (_i = 0, _len = op.length; _i < _len; _i++) {
+      c = op[_i];
+      if (cursor <= pos) {
+        break;
+      }
+      switch (typeof c) {
+        case 'number':
+          if (cursor <= pos + c) {
+            return cursor;
+          }
+          pos += c;
+          break;
+        case 'string':
+          pos += c.length;
+          cursor += c.length;
+          break;
+        case 'object':
+          cursor -= Math.min(c.d, cursor - pos);
+      }
+    }
+    return cursor;
+  };
+
   text2.transformCursor = function(cursor, op, isOwnOp) {
-    var c, pos, _i, _j, _len, _len1;
+    var c, pos, _i, _len;
     pos = 0;
     if (isOwnOp) {
       for (_i = 0, _len = op.length; _i < _len; _i++) {
@@ -300,29 +326,9 @@ var WEB = true;
             pos += c.length;
         }
       }
-      return pos;
+      return [pos, pos];
     } else {
-      for (_j = 0, _len1 = op.length; _j < _len1; _j++) {
-        c = op[_j];
-        if (cursor <= pos) {
-          break;
-        }
-        switch (typeof c) {
-          case 'number':
-            if (cursor <= pos + c) {
-              return cursor;
-            }
-            pos += c;
-            break;
-          case 'string':
-            pos += c.length;
-            cursor += c.length;
-            break;
-          case 'object':
-            cursor -= Math.min(c.d, cursor - pos);
-        }
-      }
-      return cursor;
+      return [transformPosition(cursor[0], op), transformPosition(cursor[1], op)];
     }
   };
 
