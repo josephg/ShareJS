@@ -12,7 +12,7 @@ var argv = require('optimist').
     alias('f','options').
 	argv;
 
-var server = connect(connect.logger());
+var server;
 
 options = require(argv.options);
 
@@ -20,9 +20,9 @@ if(options.pem) {
     server = connect({
          key : fs.readFileSync(options.pem),
          cert : fs.readFileSync(options.pem)
-     },connect.logger());
+     },connect.logger(),connect.query());
 } else {
-    server = connect(connect.logger());
+    server = connect(connect.logger(),connect.query());
 }
 
 util.puts("ShareJS server v" + sharejs.version);
