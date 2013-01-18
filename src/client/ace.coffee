@@ -1,6 +1,7 @@
 # This is some utility code to connect an ace editor to a sharejs document.
 
-Range = require("ace/range").Range
+requireImpl = if ace.require? then ace.require else require
+Range = requireImpl("ace/range").Range
 
 # Convert an ace delta into an op understood by share.js
 applyToShareJS = (editorDoc, delta, doc) ->
@@ -106,13 +107,13 @@ window.sharejs.extendDoc 'attach_ace', (editor, keepEditorContents) ->
 
     row:row, column:offset
 
-  doc.on 'insert', (pos, text) ->
+  doc.on 'insert', insertListener = (pos, text) ->
     suppress = true
     editorDoc.insert offsetToPos(pos), text
     suppress = false
     check()
 
-  doc.on 'delete', (pos, text) ->
+  doc.on 'delete', deleteListener = (pos, text) ->
     suppress = true
     range = Range.fromPoints offsetToPos(pos), offsetToPos(pos + text.length)
     editorDoc.remove range
@@ -120,6 +121,8 @@ window.sharejs.extendDoc 'attach_ace', (editor, keepEditorContents) ->
     check()
 
   doc.detach_ace = ->
+    doc.removeListener 'insert', insertListener
+    doc.removeListener 'delete', deleteListener
     doc.removeListener 'remoteop', docListener
     editorDoc.removeListener 'change', editorListener
     delete doc.detach_ace
