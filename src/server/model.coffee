@@ -575,8 +575,9 @@ module.exports = Model = (db, options) ->
   # This is synchronous.
   @removeListener = (docName, listener) ->
     # The document should already be loaded.
-    doc = docs[docName]
-    throw new Error 'removeListener called but document not loaded' unless doc
+    # If it's not we probably hit a race condition where the browser closes
+    # before the document opened. In that case, ignore.
+    return unless doc = docs[docName]
 
     doc.eventEmitter.removeListener 'op', listener
     refreshReapingTimeout docName
