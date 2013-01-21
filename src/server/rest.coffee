@@ -96,7 +96,7 @@ router = (app, createClient, options) ->
           if typeof doc.snapshot == 'string'
             send200 res, doc.snapshot
           else
-            if req.query['callback']
+            if req.query['callback'] && req.query['callback'].match /^[_$a-zA-Z][_$a-zA-Z0-9]*$/
               sendJSONP res, doc.snapshot, req.query['callback']
             else
               sendJSON res, doc.snapshot
