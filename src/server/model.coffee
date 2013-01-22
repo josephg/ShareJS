@@ -227,6 +227,7 @@ module.exports = Model = (db, options) ->
         snapshotWriteLock: false
         dbMeta: dbMeta
 
+      doc.eventEmitter.setMaxListeners 0
       doc.opQueue = makeOpQueue docName, doc
       
       refreshReapingTimeout docName
