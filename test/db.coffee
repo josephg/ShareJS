@@ -272,4 +272,6 @@ try
     db: "sharejs-test-single-ops-collection"
     opsCollectionPerDoc: false
 
-
+try
+  require 'mysql'
+  exports.mysql = test require('../src/server/db/mysql'), options.db
