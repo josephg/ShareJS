@@ -14,3 +14,6 @@ register './text-composable'
 register './text-tp2'
 
 register './json'
+
+exports.testHelpers = require '../../test/helpers'
+
