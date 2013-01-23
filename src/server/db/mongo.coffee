@@ -107,7 +107,17 @@ module.exports = MongoDb = (options) ->
         console.warn "failed to get ops for #{docName}: #{err}" if err
         return callback? err if err
 
-        callback? null, (doc.opData for doc in docs)
+        result = []
+        for doc in docs
+          # This is to support an old schema where ops were stored within an
+          # "opData" object.
+          if doc.opData
+            result.push doc.opData
+          else
+            delete doc._id
+            result.push doc
+
+        callback? null, result
         
   # Write an op to a document.
   #
@@ -125,9 +135,8 @@ module.exports = MongoDb = (options) ->
       return callback? err if err
       
       doc = 
-        opData:
-          op: opData.op
-          meta: opData.meta
+        op: opData.op
+        meta: opData.meta
       
       if options.opsCollectionPerDoc
         doc._id = opData.v
