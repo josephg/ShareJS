@@ -24,6 +24,7 @@ modules = [
 #  'socketio'
   'browserchannel'
   'sockjs'
+  'websocket'
 
   'microevent'
 

@@ -10,6 +10,7 @@ rest = require './rest'
 socketio = require './socketio'
 browserChannel = require './browserchannel'
 sockjs = require './sockjs'
+websocket = require './websocket'
 
 # Create an HTTP server and attach whatever frontends are specified in the options.
 #
@@ -58,6 +59,9 @@ create.attach = attach = (server, options, model = createModel(options)) ->
   # `connect` server
   # SockJS frontend is disabled by default
   sockjs.attach(server, createAgent, options.sockjs or {}) if options.sockjs?
+
+  # WebSocket frontend is disabled by default
+  websocket.attach(server, createAgent, options.websocket or {}) if options.websocket?
 
   server
 
