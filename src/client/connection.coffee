@@ -13,11 +13,20 @@
 
 if WEB?
   types = exports.types
-  {BCSocket, SockJS} = window 
+  {BCSocket, SockJS, WebSocket} = window
+  if BCSocket
+    socketImpl = 'channel'
+  else
+    if SockJS
+      socketImpl = 'sockjs'
+    else
+      socketImpl = 'websocket'
 else
   types = require '../types'
   {BCSocket} = require 'browserchannel'
   Doc = require('./doc').Doc
+  WebSocket = require 'ws'
+  socketImpl = null
 
 class Connection
   constructor: (host, authentication) ->
@@ -32,14 +41,17 @@ class Connection
     # - 'stopped': The connection is closed, and will not reconnect.
     @state = 'connecting'
 
-    @socket = 
-      if useSockJS?
-        new SockJS(host)    
-      else
-        new BCSocket(host, reconnect:true)
+    unless socketImpl?
+      if host.match /^ws:/ then socketImpl = 'websocket'
+
+    @socket = switch socketImpl
+      when 'channel' then new BCSocket(host, reconnect:true)
+      when 'sockjs' then new SockJS(host)
+      when 'websocket' then new WebSocket(host)
+      else new BCSocket(host, reconnect:true)
 
     @socket.onmessage = (msg) =>
-      msg = JSON.parse(msg.data) if useSockJS?
+      msg = JSON.parse(msg.data) if socketImpl in ['sockjs', 'websocket']
       if msg.auth is null
         # Auth failed.
         @lastError = msg.error # 'forbidden'
@@ -110,7 +122,7 @@ class Connection
         @lastSentDoc = docName
 
     #console.warn 'c->s', data
-    data = JSON.stringify(data) if useSockJS?
+    data = JSON.stringify(data) if socketImpl in ['sockjs', 'websocket']
     @socket.send data
 
   disconnect: ->
