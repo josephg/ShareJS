@@ -133,7 +133,7 @@ module.exports = (model, options) ->
             callback? error, v
 
     removeListener: (docName) ->
-      throw new Error 'Document is not open' unless @listeners[docName]
+      return unless @listeners[docName]
       model.removeListener docName, @listeners[docName]
       delete @listeners[docName]
 
