@@ -139,6 +139,8 @@ exports.handler = (session, createAgent) ->
       #p "Registering listener on #{docName} by #{socket.id} at #{version}"
 
       docState[docName].listener = listener = (opData) ->
+        # Listener can be called after close
+        return unless docState?[docName]
         throw new Error 'Consistency violation - doc listener invalid' unless docState[docName].listener == listener
 
         #p "listener doc:#{docName} opdata:#{i opData} v:#{version}"
