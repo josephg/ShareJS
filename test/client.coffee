@@ -498,6 +498,19 @@ genTests = (client) -> testCase
           doc2.close ->
             test.done()
 
+  'Opening a closed document reopens the document': (test) ->
+    @c.open @name, (error, doc1) =>
+      test.ifError error
+      test.ok doc1
+      test.equal doc1.state, 'open'
+      doc1.close =>
+        @c.open @name, 'text', (error, doc2) ->
+          test.ifError error
+          test.ok doc2
+          test.equal doc2.state, 'open'
+          doc2.close ->
+            test.done()
+
    # ** This is missing tests for submitOp receiving an error through its callback
 
 # This isn't working yet. I might have to rethink it.
