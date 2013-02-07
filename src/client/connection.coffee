@@ -189,7 +189,7 @@ class Connection
     switch doc.state
       when 'open' then callback null, doc
       when 'opening' then @on 'open', -> callback null, doc
-      when 'closed' then doc.open -> callback null, doc
+      when 'closed' then doc.open (error) -> callback error, (doc unless error)
     return
 
 # Not currently working.
