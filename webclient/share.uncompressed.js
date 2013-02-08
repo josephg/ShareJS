@@ -930,6 +930,11 @@
         if (error) {
           delete _this.docs[name];
         }
+        if (!error) {
+          doc.on('closed', function() {
+            return delete _this.docs[name];
+          });
+        }
         return callback(error, (!error ? doc : void 0));
       });
     };
@@ -940,7 +945,7 @@
         return callback('connection closed');
       }
       if (this.docs[docName]) {
-        return callback(null, this.docs[docName]);
+        return this._ensureOpenState(this.docs[docName], callback);
       }
       return doc = this.makeDoc(docName, {}, callback);
     };
@@ -973,7 +978,7 @@
       if (this.docs[docName]) {
         doc = this.docs[docName];
         if (doc.type === type) {
-          callback(null, doc);
+          this._ensureOpenState(doc, callback);
         } else {
           callback('Type mismatch', doc);
         }
@@ -983,6 +988,23 @@
         create: true,
         type: type.name
       }, callback);
+    };
+
+    Connection.prototype._ensureOpenState = function(doc, callback) {
+      switch (doc.state) {
+        case 'open':
+          callback(null, doc);
+          break;
+        case 'opening':
+          this.on('open', function() {
+            return callback(null, doc);
+          });
+          break;
+        case 'closed':
+          doc.open(function(error) {
+            return callback(error, (!error ? doc : void 0));
+          });
+      }
     };
 
     return Connection;
