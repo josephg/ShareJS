@@ -34,7 +34,7 @@ module.exports = RedisDb = (options) ->
   client = redis.createClient options.port, options.hostname, options.redisOptions
 
   if options.auth and typeof options.auth == "string"
-    client.auth(if ":" in options.auth and not "redis.irstack.com" in options.auth then options.auth.split(":").pop() else options.auth)
+    client.auth options.auth
 
   client.select 15 if options.testing
 
