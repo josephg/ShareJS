@@ -34,7 +34,7 @@ Run the examples with:
 
 If you want redis support, you'll need to install redis:
 
-    # sudo brew install redis
+    # brew install redis
     # npm install -g redis
 
 ### From source
@@ -43,7 +43,7 @@ Install redis (optional)
     
 * Mac:
 
-        # sudo brew install redis
+        # brew install redis
 
 * Linux:
    
