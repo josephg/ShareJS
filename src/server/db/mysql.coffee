@@ -213,6 +213,6 @@ module.exports = MysqlDb = (options) ->
   # But, its not really a big problem.
   if options.create_tables_automatically
     client.query "SELECT * from #{snapshot_table} LIMIT 0", (error, result) =>
-      @initialize() if error?.message.match "does not exist"
+      @initialize() if error?.message.match "(does not exist|ER_NO_SUCH_TABLE)"
 
   this
