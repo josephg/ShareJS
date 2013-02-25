@@ -1,35 +1,44 @@
 #!/usr/bin/env node
 
 require('coffee-script');
+var util = require('util');
+var fs = require('fs');
+var connect = require('connect');
+var sharejs = require('../src');
 
-var connect = require('connect'),
-	sys = require('sys'),
-	sharejs = require('../src'),
-	server;
+var argv = require('optimist').
+    usage("Usage: $0 -f options.js").
+	demand('f').
+    alias('f','options').
+	argv;
 
-options = require('./options') || {};
+var server;
+
+options = require(argv.options);
 
 if(options.pem) {
     server = connect({
          key : fs.readFileSync(options.pem),
          cert : fs.readFileSync(options.pem)
-     },connect.logger());
+     },connect.logger(),connect.query());
 } else {
-    server = connect(connect.logger());
+    server = connect(connect.logger(),connect.query());
 }
 
-sys.puts("ShareJS server v" + sharejs.version);
+util.puts("ShareJS server v" + sharejs.version);
+util.puts("Options: " + util.inspect(options, true, null));
+
+var port = options.port || 8000;
 
 // Attach the sharejs REST and Socket.io interfaces to the server
 sharejs.server.attach(server, options);
 
-var port = options.port || 8000;
-
 server.listen(port);
-sys.puts('Server running at http://127.0.0.1:' + port + '/');
+
+util.puts("Server running on port: " + port);
 
 process.title = 'sharejs'
 process.on('uncaughtException', function (err) {
-  console.error('An error has occurred. Please file a ticket here: https://github.com/josephg/ShareJS/issues');
-  console.error('Version ' + sharejs.version + ': ' + err.stack);
+  util.puts('An error has occurred...');
+  util.puts('Version ' + sharejs.version + ': ' + err.stack);
 });
