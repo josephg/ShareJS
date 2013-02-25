@@ -1,6 +1,3 @@
-# Text document API for text
-# :tabSize=2:indentSize=2:
-
 if WEB? 
   if window.ShareJS? && window.ShareJS.Changeset?
     Changeset = window.ShareJS.Changeset
@@ -21,14 +18,16 @@ etherpad.api =
   # Get the text contents of a document
   getText: -> @snapshot.text
 
-  mergeTokens: (text, line, modeTokens) ->
+  mergeTokens: (iterTokens, modeTokens) ->
+    @snapshot = etherpad.tryDeserializeSnapshot(@snapshot) if not @snapshot.pool.getAttrib?
+    text = iterTokens.text
     parserPool = new AttributePool();
-    parserAttributes = Changeset.builder(text.length + 1);
+    parserAttributes = Changeset.builder(text.length);
     for attr in modeTokens
       parserAttributes.keep(attr.value.length, 0, [[attr.type, true]], parserPool);
     parserCS = parserAttributes.toString()
-    @snapshot.alines[line] = "" if not @snapshot.alines[line] 
-    docCS = Changeset.pack(text.length+1, text.length+1, @snapshot.alines[line].replace(/\+/g,"="), "")
+
+    docCS = Changeset.pack(text.length, text.length, iterTokens.attribs.replace(/\+/g,"="), "")
     docCS = Changeset.moveOpsToNewPool(docCS, @snapshot.pool, parserPool);
 
     resultCS = Changeset.unpack(Changeset.compose(parserCS, docCS, parserPool));
@@ -49,32 +48,55 @@ etherpad.api =
       )
       tokens[tIndex++] = 
         type : str
-        value : stringIter.take(op.chars);
+        value : stringIter.take(Math.min(op.chars, stringIter.remaining()));
     tokens
 
-  trackLines: ->
-    @snapshot = etherpad.tryDeserializeSnapshot(@snapshot) if not @snapshot.pool.getAttrib?
-    if not @snapshot.lines?
-      @snapshot.lines = [""];
-      @snapshot.alines = [""];
-      cs = Changeset.pack(@getLength(), @getLength(), @snapshot.attribs, @snapshot.text);
-      Changeset.mutateTextLines(cs, @snapshot.lines);
-      Changeset.mutateAttributionLines(cs, @snapshot.alines, @snapshot.pool);
+  cloneIterator: (iter) ->
+    return {
+      textPos : iter.textPos
+      attribPos : iter.attribPos
+      attribConsumed : iter.attribConsumed
+    }
 
-  updateLines: (op) ->
-    return if not @snapshot.lines?
-    Changeset.mutateTextLines(op.changeset, @snapshot.lines);
-    Changeset.mutateAttributionLines(op.changeset, @snapshot.alines, op.pool);
+  consumeIterator: (iter, length) ->
+    return {"attribs":"", "text":""} if length == 0
+
+    text = @snapshot.text.substring(iter.textPos, iter.textPos+length);
+    iter.textPos += length
+
+    opIter = Changeset.opIterator(@snapshot.attribs, iter.attribPos);
+    Changeset.assert(opIter.hasNext(), "iterator out of range");
+    op = opIter.next();
+    Changeset.assert(op.chars > iter.attribConsumed, "consumed <= available");
+    op.chars -= iter.attribConsumed;
+    assem = Changeset.smartOpAssembler();
+    while (op.chars <= length)
+      assem.append(op);
+      iter.attribConsumed = 0;
+      length -= op.chars
+      iter.attribPos = opIter.lastIndex();
+
+      if length == 0
+        break;
+      Changeset.assert(opIter.hasNext(), "iterator out of range");
+      op = opIter.next();
+
+    op.chars = length
+    assem.append(op);
+    iter.attribConsumed += length;
+    return {"attribs": assem.toString(), "text" : text};
+
+  createIterator: (startOffset) ->
+    iter = { attribPos : 0, textPos : 0, attribConsumed : 0};
+    consumeIterator iter, startOffset if startOffset > 0
+    iter
 
   # add attributes [[key1, val1], [key2, val2], ...] to the range starting at offset and with length length
   setAttributes: (startOffset, length, attribs, callback) ->
     @snapshot = etherpad.tryDeserializeSnapshot(@snapshot) if not @snapshot.pool.getAttrib?
-    L1 = @linesToPos(startOffset);
-    L2 = @linesToPos(startOffset+length) - L1;
     op = 
       pool : new AttributePool()
-    op.changeset = Changeset.builder(@getLength()).keep(startOffset, L1).keep(length, L2, attribs, op.pool).toString();
-    @updateLines(op);
+    op.changeset = Changeset.builder(@getLength()).keep(startOffset).keep(length, 0, attribs, op.pool).toString();
     @emit 'refresh', startOffset, length
     @submitOp op, callback
 
@@ -82,36 +104,23 @@ etherpad.api =
   getAttributes: (startOffset, length) ->
     @snapshot = etherpad.tryDeserializeSnapshot(@snapshot) if not @snapshot.pool.getAttrib?
 
-  linesToPos : (pos) ->
-    return 0 if pos == 0
-    cnt = 0;
-    @snapshot.text[0..pos-1].replace("\n", () -> cnt++);
-    cnt
-
   insert: (pos, text, callback) ->
-    L = @linesToPos(pos);
     result = {};
     result.pool = new AttributePool();
-    result.changeset = Changeset.builder(@snapshot.text.length)
-              .keep(pos,L).insert(text, "", result.pool).toString()
-    @updateLines(result);
+    result.changeset = Changeset.builder(@snapshot.text.length).keep(pos).insert(text, "", result.pool).toString()
     @submitOp result, callback
     result
   
   del: (pos, length, callback) ->
-    L1 = @linesToPos(pos);
-    L2 = @linesToPos(pos+length) - L1;
     result = {};
     result.pool = new AttributePool()
-    result.changeset = Changeset.builder(@snapshot.text.length).keep(pos,L1).remove(length,L2).toString()
-    @updateLines(result);
+    result.changeset = Changeset.builder(@snapshot.text.length).keep(pos).remove(length).toString()
     @submitOp result, callback
     result
   
   _register: ->
     @on 'remoteop', (op) ->
       unpacked = Changeset.unpack(op.changeset);
-      @updateLines(op);
       iter = Changeset.opIterator(unpacked.ops)
       strIter = Changeset.stringIterator(unpacked.charBank);
       offset = 0; 

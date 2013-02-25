@@ -24,7 +24,6 @@ applyToShareJS = (editorDoc, delta, doc) ->
     offset + range.start.row
 
   pos = getStartOffsetPosition(delta.range)
-
   switch delta.action
     when 'insertText' then doc.insert pos, delta.text
     when 'removeText' then doc.del pos, delta.text.length
@@ -83,27 +82,28 @@ window.sharejs.extendDoc 'attach_ace', (editor, keepEditorContents) ->
     check()
 
   replaceTokenizer = () ->
-    doc.trackLines()
     oldTokenizer = editor.getSession().getMode().getTokenizer();
     oldGetLineTokens = oldTokenizer.getLineTokens;
     oldTokenizer.getLineTokens = (line, state) ->
       if not state? or typeof state == "string" # first line
-        state = 
-          line : 0
+        cIter = doc.createIterator(0)
+        state =
           modeState : state
+      else
+        cIter = doc.cloneIterator(state.iter)
+        doc.consumeIterator(cIter, 1) # consume the \n from previous line
 
       modeTokens = oldGetLineTokens.apply(oldTokenizer, [line, state.modeState]);
+      docTokens = doc.consumeIterator(cIter, line.length);
 
       return {
-        tokens : doc.mergeTokens(line, state.line, modeTokens.tokens)
+        tokens : doc.mergeTokens(docTokens, modeTokens.tokens)
         state : 
           modeState : modeTokens.state
-          line : state.line + 1
+          iter : doc.cloneIterator(cIter)
       }
 
   replaceTokenizer() if doc.getAttributes?
-
-  console.log(editorDoc);
 
   editorDoc.on 'change', editorListener
 
@@ -145,7 +145,7 @@ window.sharejs.extendDoc 'attach_ace', (editor, keepEditorContents) ->
 
   doc.on 'refresh', refreshListener = (startoffset, length) ->
     range = Range.fromPoints offsetToPos(startoffset), offsetToPos(startoffset + length)
-    editor.renderer.updateLines(range.start.row, range.end.row);
+    editor.getSession().bgTokenizer.start(range.start.row)
 
   doc.detach_ace = ->
     doc.removeListener 'insert', insertListener
