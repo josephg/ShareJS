@@ -1,6 +1,8 @@
 ShareJS
 =======
 
+This repo was cloned off the original ShareJS version 0.5.0.
+
 This is a little server (& client library) to allow concurrent editing of any kind of content. The server runs on NodeJS and the client works in NodeJS or a web browser.
 
 ShareJS currently supports operational transform on plain-text and arbitrary JSON data.
