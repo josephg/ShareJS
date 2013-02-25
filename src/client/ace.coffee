@@ -82,6 +82,29 @@ window.sharejs.extendDoc 'attach_ace', (editor, keepEditorContents) ->
 
     check()
 
+  replaceTokenizer = () ->
+    doc.trackLines()
+    oldTokenizer = editor.getSession().getMode().getTokenizer();
+    oldGetLineTokens = oldTokenizer.getLineTokens;
+    oldTokenizer.getLineTokens = (line, state) ->
+      if not state? or typeof state == "string" # first line
+        state = 
+          line : 0
+          modeState : state
+
+      modeTokens = oldGetLineTokens.apply(oldTokenizer, [line, state.modeState]);
+
+      return {
+        tokens : doc.mergeTokens(line, state.line, modeTokens.tokens)
+        state : 
+          modeState : modeTokens.state
+          line : state.line + 1
+      }
+
+  replaceTokenizer() if doc.getAttributes?
+
+  console.log(editorDoc);
+
   editorDoc.on 'change', editorListener
 
   # Listen for remote ops on the sharejs document
@@ -120,10 +143,15 @@ window.sharejs.extendDoc 'attach_ace', (editor, keepEditorContents) ->
     suppress = false
     check()
 
+  doc.on 'refresh', refreshListener = (startoffset, length) ->
+    range = Range.fromPoints offsetToPos(startoffset), offsetToPos(startoffset + length)
+    editor.renderer.updateLines(range.start.row, range.end.row);
+
   doc.detach_ace = ->
     doc.removeListener 'insert', insertListener
     doc.removeListener 'delete', deleteListener
     doc.removeListener 'remoteop', docListener
+    doc.removeListener 'refresh', refreshListener
     editorDoc.removeListener 'change', editorListener
     delete doc.detach_ace
 

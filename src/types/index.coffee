@@ -14,3 +14,6 @@ register './text-composable'
 register './text-tp2'
 
 register './json'
+
+register './etherpad'
+register './etherpad-api'

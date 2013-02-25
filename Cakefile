@@ -27,6 +27,8 @@ client = [
 	'types/helpers'
 	'types/text'
 	'types/text-api'
+	'types/etherpad'
+	'types/etherpad-api'
 	'client/doc'
 	'client/connection'
 	'client/index'
