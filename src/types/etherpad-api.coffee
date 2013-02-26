@@ -9,6 +9,22 @@ else
   AttributePool = require './../lib-etherpad/AttributePool.js'  
   Changeset = require './../lib-etherpad/Changeset.js'
 
+attribsToTokens = (attribs, text, pool) ->
+  iter = Changeset.opIterator(attribs);
+  tokens = [];
+  stringIter = Changeset.stringIterator(text);
+  while (iter.hasNext())
+    op = iter.next();
+    str = [];
+    op.attribs.replace(/\*([0-9a-z]+)/g, (_, a) ->
+      pair = pool.getAttrib(Changeset.parseNum(a));
+      str.push pair
+    ) 
+    tokens.push 
+      type : str
+      value : stringIter.take(Math.min(op.chars, stringIter.remaining()));
+  tokens
+
 etherpad.api =
   provides:  { text:true }
 
@@ -31,24 +47,15 @@ etherpad.api =
     docCS = Changeset.moveOpsToNewPool(docCS, @snapshot.pool, parserPool);
 
     resultCS = Changeset.unpack(Changeset.compose(parserCS, docCS, parserPool));
-    iter = Changeset.opIterator(resultCS.ops);
-    tokens = [];
-    tIndex = 0;
-    stringIter = Changeset.stringIterator(text);
-    while (iter.hasNext())
-      op = iter.next();
-      str = ""; first = true;
-      op.attribs.replace(/\*([0-9a-z]+)/g, (_, a) ->
-        pair = parserPool.getAttrib(Changeset.parseNum(a));
-        if first
-          str += pair[0]
-          first = false;
+    tokens = attribsToTokens(resultCS.ops, text, parserPool)
+    for token in tokens
+      res = "";
+      for attr,i in token.type
+        if i > 0
+          res += " ace_"+attr[0]
         else
-          str += " ace_"+pair[0];
-      )
-      tokens[tIndex++] = 
-        type : str
-        value : stringIter.take(Math.min(op.chars, stringIter.remaining()));
+          res += attr[0];
+      token.type = res
     tokens
 
   cloneIterator: (iter) ->
@@ -86,9 +93,9 @@ etherpad.api =
     iter.attribConsumed += length;
     return {"attribs": assem.toString(), "text" : text};
 
-  createIterator: (startOffset) ->
+  createIterator: (startOffset = 0) ->
     iter = { attribPos : 0, textPos : 0, attribConsumed : 0};
-    consumeIterator iter, startOffset if startOffset > 0
+    @consumeIterator iter, startOffset if startOffset > 0
     iter
 
   # add attributes [[key1, val1], [key2, val2], ...] to the range starting at offset and with length length
@@ -103,11 +110,17 @@ etherpad.api =
   # getAttributes 
   getAttributes: (startOffset, length) ->
     @snapshot = etherpad.tryDeserializeSnapshot(@snapshot) if not @snapshot.pool.getAttrib?
+    iter = @createIterator(startOffset);
+    op = @consumeIterator(iter, length);
+    attribsToTokens(op.attribs, op.text, @snapshot.pool)
 
   insert: (pos, text, callback) ->
     result = {};
     result.pool = new AttributePool();
-    result.changeset = Changeset.builder(@snapshot.text.length).keep(pos).insert(text, "", result.pool).toString()
+    attribs = [{type:""}];
+    attribs = @getAttributes(pos - 1, 1) if pos > 0
+
+    result.changeset = Changeset.builder(@snapshot.text.length).keep(pos).insert(text, attribs[0].type, result.pool).toString()
     @submitOp result, callback
     result
   
