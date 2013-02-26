@@ -95,7 +95,8 @@ window.sharejs.extendDoc 'attach_ace', (editor, keepEditorContents) ->
 
       modeTokens = oldGetLineTokens.apply(oldTokenizer, [line, state.modeState]);
       docTokens = doc.consumeIterator(cIter, line.length);
-      if (docTokens.text != line) return modeTokens;        
+      if (docTokens.text != line)
+        return modeTokens;
 
       return {
         tokens : doc.mergeTokens(docTokens, modeTokens.tokens)
