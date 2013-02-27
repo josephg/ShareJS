@@ -40,7 +40,7 @@
   };
 
   window.sharejs.extendDoc('attach_ace', function(editor, keepEditorContents) {
-    var check, deleteListener, doc, docListener, editorDoc, editorListener, insertListener, offsetToPos, suppress;
+    var check, deleteListener, doc, docListener, editorDoc, editorListener, insertListener, offsetToPos, refreshListener, replaceTokenizer, suppress;
     if (!this.provides['text']) {
       throw new Error('Only text documents can be attached to ace');
     }
@@ -74,6 +74,38 @@
       applyToShareJS(editorDoc, change.data, doc);
       return check();
     };
+    replaceTokenizer = function() {
+      var oldGetLineTokens, oldTokenizer;
+      oldTokenizer = editor.getSession().getMode().getTokenizer();
+      oldGetLineTokens = oldTokenizer.getLineTokens;
+      return oldTokenizer.getLineTokens = function(line, state) {
+        var cIter, docTokens, modeTokens;
+        if (!(state != null) || typeof state === "string") {
+          cIter = doc.createIterator(0);
+          state = {
+            modeState: state
+          };
+        } else {
+          cIter = doc.cloneIterator(state.iter);
+          doc.consumeIterator(cIter, 1);
+        }
+        modeTokens = oldGetLineTokens.apply(oldTokenizer, [line, state.modeState]);
+        docTokens = doc.consumeIterator(cIter, line.length);
+        if (docTokens.text !== line) {
+          return modeTokens;
+        }
+        return {
+          tokens: doc.mergeTokens(docTokens, modeTokens.tokens),
+          state: {
+            modeState: modeTokens.state,
+            iter: doc.cloneIterator(cIter)
+          }
+        };
+      };
+    };
+    if (doc.getAttributes != null) {
+      replaceTokenizer();
+    }
     editorDoc.on('change', editorListener);
     docListener = function(op) {
       suppress = true;
@@ -111,10 +143,16 @@
       suppress = false;
       return check();
     });
+    doc.on('refresh', refreshListener = function(startoffset, length) {
+      var range;
+      range = Range.fromPoints(offsetToPos(startoffset), offsetToPos(startoffset + length));
+      return editor.getSession().bgTokenizer.start(range.start.row);
+    });
     doc.detach_ace = function() {
       doc.removeListener('insert', insertListener);
       doc.removeListener('delete', deleteListener);
       doc.removeListener('remoteop', docListener);
+      doc.removeListener('refresh', refreshListener);
       editorDoc.removeListener('change', editorListener);
       return delete doc.detach_ace;
     };
