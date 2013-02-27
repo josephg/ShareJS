@@ -136,7 +136,7 @@ etherpad.api =
       unpacked = Changeset.unpack(op.changeset);
       iter = Changeset.opIterator(unpacked.ops)
       strIter = Changeset.stringIterator(unpacked.charBank);
-      offset = 0; 
+      offset = 0; origSnapOffset = 0;
       refreshFirstOffset = 10000000;
       refreshLastOffset = -1;
       while iter.hasNext()
@@ -146,12 +146,14 @@ etherpad.api =
             @emit 'insert', offset, strIter.take(o.chars);
             offset = offset + o.chars
           when '-' 
-            @emit 'delete', offset, { length: o.chars }
+            @emit 'delete', offset, @snapshot.text.substring(origSnapOffset, origSnapOffset+o.chars)
+            origSnapOffset += o.chars;
           when '='
             if o.attribs.length > 0
               refreshFirstOffset = Math.min(offset, refreshFirstOffset);
               refreshLastOffset = Math.max(offset + o.chars, refreshLastOffset);
             offset = offset + o.chars
+            origSnapOffset += o.chars
         if (refreshLastOffset > 0)
           @emit 'refresh', refreshFirstOffset, refreshLastOffset - refreshFirstOffset
 
