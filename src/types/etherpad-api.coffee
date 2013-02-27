@@ -2,8 +2,6 @@ if WEB?
   if window.ShareJS? && window.ShareJS.Changeset?
     Changeset = window.ShareJS.Changeset
     AttributePool = window.ShareJS.AttributePool
-  else
-    console.log("Etherpad library not found. Make sure to include Attributepool.js and Changeset.js in your javascript sourcecode");
 else 
   etherpad = require './etherpad'
   AttributePool = require './../lib-etherpad/AttributePool.js'  
