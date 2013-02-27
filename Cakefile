@@ -27,6 +27,8 @@ client = [
 	'types/helpers'
 	'types/text'
 	'types/text-api'
+	'types/etherpad'
+	'types/etherpad-api'
 	'client/doc'
 	'client/connection'
 	'client/index'
@@ -99,6 +101,7 @@ task 'webclient', 'Build the web client into one file', ->
 	e "coffee --compile --output webclient/ #{extrafiles}", ->
 		# For backwards compatibility. (The ace.js file used to be called share-ace.js)
 		e "cp webclient/ace.js webclient/share-ace.js"
+	e "cp src/lib-etherpad/* webclient/"
 
 #task 'lightwave', ->
 #	buildclosure ['client/web-prelude', 'client/microevent', 'types/text-tp2'], 'lightwave'

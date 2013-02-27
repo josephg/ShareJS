@@ -10,6 +10,7 @@ modules = [
 
   'types/count'
   'types/text'
+  'types/etherpad-api'
   'types/text-composable'
   'types/text-tp2'
   'types/text-api'

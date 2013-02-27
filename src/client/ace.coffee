@@ -24,7 +24,6 @@ applyToShareJS = (editorDoc, delta, doc) ->
     offset + range.start.row
 
   pos = getStartOffsetPosition(delta.range)
-
   switch delta.action
     when 'insertText' then doc.insert pos, delta.text
     when 'removeText' then doc.del pos, delta.text.length
@@ -82,6 +81,32 @@ window.sharejs.extendDoc 'attach_ace', (editor, keepEditorContents) ->
 
     check()
 
+  replaceTokenizer = () ->
+    oldTokenizer = editor.getSession().getMode().getTokenizer();
+    oldGetLineTokens = oldTokenizer.getLineTokens;
+    oldTokenizer.getLineTokens = (line, state) ->
+      if not state? or typeof state == "string" # first line
+        cIter = doc.createIterator(0)
+        state =
+          modeState : state
+      else
+        cIter = doc.cloneIterator(state.iter)
+        doc.consumeIterator(cIter, 1) # consume the \n from previous line
+
+      modeTokens = oldGetLineTokens.apply(oldTokenizer, [line, state.modeState]);
+      docTokens = doc.consumeIterator(cIter, line.length);
+      if (docTokens.text != line)
+        return modeTokens;
+
+      return {
+        tokens : doc.mergeTokens(docTokens, modeTokens.tokens)
+        state : 
+          modeState : modeTokens.state
+          iter : doc.cloneIterator(cIter)
+      }
+
+  replaceTokenizer() if doc.getAttributes?
+
   editorDoc.on 'change', editorListener
 
   # Listen for remote ops on the sharejs document
@@ -120,10 +145,15 @@ window.sharejs.extendDoc 'attach_ace', (editor, keepEditorContents) ->
     suppress = false
     check()
 
+  doc.on 'refresh', refreshListener = (startoffset, length) ->
+    range = Range.fromPoints offsetToPos(startoffset), offsetToPos(startoffset + length)
+    editor.getSession().bgTokenizer.start(range.start.row)
+
   doc.detach_ace = ->
     doc.removeListener 'insert', insertListener
     doc.removeListener 'delete', deleteListener
     doc.removeListener 'remoteop', docListener
+    doc.removeListener 'refresh', refreshListener
     editorDoc.removeListener 'change', editorListener
     delete doc.detach_ace
 
