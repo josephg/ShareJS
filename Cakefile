@@ -103,5 +103,23 @@ task 'webclient', 'Build the web client into one file', ->
 		e "cp webclient/ace.js webclient/share-ace.js"
 	e "cp src/lib-etherpad/* webclient/"
 
+task 'bump', 'Increase the patch level of the version', ->
+  oldVersion = JSON.parse(fs.readFileSync("package.json")).version
+  console.log "Current version is #{oldVersion}"
+  exec "git status --porcelain | grep '^ M'", (err) ->
+    # We should get an error otherwise there's a modified file
+    throw new Error "git status must be clean" if not err
+
+    versions = oldVersion.match(/(\d+)\.(\d+)\.(\d+)/)
+    versions.shift()
+    versions[2]++
+    version = versions.join '.'
+    console.log "New version is #{version}"
+    # Feel free to rewrite this in Coffeescript
+    e "for i in package.json src/index.coffee src/client/web-prelude.coffee; do
+        sed -i~ s/#{oldVersion.replace(".","\\.")}/#{version.replace(".","\\.")}/ \"$i\";
+        rm \"$i~\";
+      done", -> e "cake webclient; git commit -a -m 'Bump to #{version}'"
+
 #task 'lightwave', ->
 #	buildclosure ['client/web-prelude', 'client/microevent', 'types/text-tp2'], 'lightwave'
