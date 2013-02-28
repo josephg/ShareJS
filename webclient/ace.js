@@ -49,13 +49,16 @@
     editorDoc.setNewLineMode('unix');
     check = function() {
       return window.setTimeout(function() {
-        var editorText, otText;
+        var editorText, otText, suppress;
         editorText = editorDoc.getValue();
         otText = doc.getText();
         if (editorText !== otText) {
           console.error("Text does not match!");
           console.error("editor: " + editorText);
-          return console.error("ot:     " + otText);
+          console.error("ot:     " + otText);
+          suppress = true;
+          editorDoc.setValue(otText);
+          return suppress = false;
         }
       }, 0);
     };
