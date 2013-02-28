@@ -100,7 +100,7 @@ module.exports = MysqlDb = (options) ->
       snapshot:   JSON.stringify(docData.snapshot),
       meta:       JSON.stringify(docData.meta),
       type:       docData.type,
-      created_at: Date.now()
+      created_at: new Date
     client.query sql, values, (error, result) ->
       if !error?
         callback?()
@@ -112,14 +112,14 @@ module.exports = MysqlDb = (options) ->
   @delete = (docName, dbMeta, callback) ->
     sql = """
       DELETE FROM #{operations_table}
-      WHERE "doc" = ?
+      WHERE doc = ?
     """
     values = [docName]
     client.query sql, values, (error, result) ->
       if !error?
         sql = """
           DELETE FROM #{snapshot_table}
-          WHERE "doc" = ?
+          WHERE doc = ?
         """
         client.query sql, values, (error, result) ->
           if !error? and result.length > 0
@@ -135,8 +135,8 @@ module.exports = MysqlDb = (options) ->
     sql = """
       SELECT *
       FROM #{snapshot_table}
-      WHERE "doc" = ?
-      ORDER BY "v" DESC
+      WHERE doc = ?
+      ORDER BY v DESC
       LIMIT 1
     """
     values = [docName]
@@ -158,7 +158,7 @@ module.exports = MysqlDb = (options) ->
     sql = """
       UPDATE #{snapshot_table}
       SET ?
-      WHERE "doc" = ?
+      WHERE doc = ?
     """
     values =
       v:        docData.v
@@ -175,9 +175,9 @@ module.exports = MysqlDb = (options) ->
     sql = """
       SELECT *
       FROM #{operations_table}
-      WHERE "v" BETWEEN ? AND ?
-      AND "doc" = ?
-      ORDER BY "v" ASC
+      WHERE v BETWEEN ? AND ?
+      AND doc = ?
+      ORDER BY v ASC
     """
     values = [start, end, docName]
     client.query sql, values, (error, result) ->
