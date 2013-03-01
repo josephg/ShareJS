@@ -8,7 +8,9 @@
 	<body>
 		<div id="header">
 			<div id="htext">
-				Editing <b>hello</b></input> <button id="bold">Bold</button>
+				Editing <b>hello</b>
+				<button class="format-btn" data-attr="bold">Bold</button>
+				<button class="format-btn" data-attr="italic">Italic</button>
 			</div>
 		</div>
 
@@ -44,14 +46,21 @@ sharejs.open('hello', 'etherpad', function(error, doc) {
     	return offset + range.row;
   	};
 
-	document.getElementById("bold").onclick = function () {
-		range = editor.getSelectionRange();
-		if (range.isEmpty())
-			return;
-		offset = getOffsetPosition(range.start);
-		offsetEnd = getOffsetPosition(range.end);
-		doc.setAttributes(offset, offsetEnd-offset, [["bold", true]]);
-	};
+  	var buttons = document.getElementsByClassName("format-btn");
+
+  	for(var i = 0; i < buttons.length; i++) {
+  		buttons[i].onclick = function (e) {
+			range = editor.getSelectionRange();
+			if (range.isEmpty())
+				return;
+			offset = getOffsetPosition(range.start);
+			offsetEnd = getOffsetPosition(range.end);
+
+			var btn = e.target;
+			doc.setAttributes(offset, offsetEnd-offset, [[btn.dataset.attr, true]]);
+		};
+  	}
+
 	doc.attach_ace(editor);
 });
 		</script>
