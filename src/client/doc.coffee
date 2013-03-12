@@ -236,17 +236,21 @@ class Doc
         [@inflightOp, docOp] = @_xf @inflightOp, docOp if @inflightOp
         [@pendingOp, docOp] = @_xf @pendingOp, docOp if @pendingOp
 
+        #console.log "op", docOp, "from #{msg.meta.source}"
+        #console.log @cdata(), "\tme: #{@cursor}", "doc length: #{@snapshot.length}"
         for cid, cursor of @cursors
-          @cursors[cid] = @type.transformCursor cursor, op, cid == msg.meta.source.toString()
-        @cursor = @type.transformCursor @cursor, op, false if @cursor
+          @cursors[cid] = @type.transformCursor cursor, docOp, cid == msg.meta.source.toString()
+        @cursor = @type.transformCursor @cursor, docOp, false if @cursor
           
         @version++
         # Finally, apply the op to @snapshot and trigger any event listeners
         @_otApply docOp, true
-
+        
+        #console.log "->", @cdata(), "\tme: #{@cursor}", "doc length: #{@snapshot.length}"
         @emit 'cursors'
 
       when msg.cursor
+        #console.log msg
         # msg.cursor contains a map of changed data.
         for id, c of msg.cursor
           if c is null
@@ -256,6 +260,7 @@ class Doc
             c = @type.transformCursor c, @pendingOp, false if @pendingOp
             @cursors[id] = c
 
+        #console.log @cdata(), @cursor
         @emit 'cursors'
 
       when msg.meta
@@ -290,8 +295,15 @@ class Doc
   flushCursor: =>
     return if @cursorDirty == false or @inflightOp
 
+    #console.log "flushCursor: #{@cursor}"
     @connection.send {doc:@name, cursor:@cursor, v:@version}
     @cursorDirty = false
+
+  cdata: ->
+    data = []
+    for id, c of @cursors
+      data.push "#{id}: #{c}"
+    data.join ', '
 
   # Submit an op to the server. The op maybe held for a little while before being sent, as only one
   # op can be inflight at any time.
@@ -301,10 +313,12 @@ class Doc
     # If this throws an exception, no changes should have been made to the doc
     @snapshot = @type.apply @snapshot, op
 
+    #console.log 'submitOp', @cdata(), @cursor
     for cid, cursor of @cursors
       @cursors[cid] = @type.transformCursor cursor, op, false
     @cursor = @type.transformCursor @cursor, op, true if @cursor and @type.transformCursor
     @cursorDirty = false # Is this correct?
+    #console.log '->', @cdata(), @cursor
 
     if @pendingOp != null
       @pendingOp = @type.compose(@pendingOp, op)
