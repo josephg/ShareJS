@@ -80,6 +80,7 @@ client = [
   'types/etherpad'
   'types/etherpad-api'
   'client/doc'
+  'client/reconnecting_websocket'
   'client/connection'
   'client/index'
 ]
