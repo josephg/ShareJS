@@ -42,10 +42,11 @@ etc...
 
 It is API compatible with the standard WebSocket API.
 
+Inspired from: https://github.com/joewalnes/reconnecting-websocket/
 Contributors:
 - Joe Walnes
 - Didier Colens
-
+- Wout Mertens
 ###
 class ReconnectingWebSocket
   constructor: (url, protocols, Socket) ->
@@ -60,72 +61,72 @@ class ReconnectingWebSocket
     @reconnectInterval = 1000
     @timeoutInterval = 2000
 
-    forcedClose = false
-    timedOut = false
+    @forcedClose = false
 
     @url = url
     @protocols = protocols
     @readyState = Socket.CONNECTING
     @URL = url # Public API
   
-    @onopen = (event) ->
-    @onclose = (event) ->
-    @onconnecting = (event) ->
-    @onmessage = (event) ->
-    @onerror = (event) ->
-  
+    timedOut = false
     connect = (reconnectAttempt) =>
-      @ws = new Socket(url)
-      console.debug "ReconnectingWebSocket", "attempt-connect", url  if @debug
-      localWs = @ws
-      timeout = setTimeout(->
-        console.debug "ReconnectingWebSocket", "connection-timeout", url  if @debug
+      @ws = new Socket(@url)
+      console.debug "ReconnectingWebSocket", "attempt-connect", @url  if @debug
+
+      timeout = setTimeout(=>
+        console.debug "ReconnectingWebSocket", "connection-timeout", @url  if @debug
         timedOut = true
-        localWs.close()
+        @ws.close()
         timedOut = false
       , @timeoutInterval)
 
-      @ws.onopen = (event) ->
+      @ws.onopen = (event) =>
         clearTimeout timeout
-        console.debug "ReconnectingWebSocket", "onopen", url  if @debug
+        console.debug "ReconnectingWebSocket", "onopen", @url  if @debug
         @readyState = Socket.OPEN
         reconnectAttempt = false
         @onopen event
 
-      @ws.onclose = (event) ->
+      @ws.onclose = (event) =>
         clearTimeout timeout
         @ws = null
-        if forcedClose
+        if @forcedClose
           @readyState = Socket.CLOSED
           @onclose event
         else
           @readyState = Socket.CONNECTING
           @onconnecting event
           if not reconnectAttempt and not timedOut
-            console.debug "ReconnectingWebSocket", "onclose", url  if @debug
+            console.debug "ReconnectingWebSocket", "onclose", @url  if @debug
             @onclose event
           setTimeout (-> connect true ), @reconnectInterval
 
-      @ws.onmessage = (event) ->
-        console.debug "ReconnectingWebSocket", "onmessage", url, event.data  if @debug
+      @ws.onmessage = (event) =>
+        console.debug "ReconnectingWebSocket", "onmessage", @url, event.data  if @debug
         @onmessage event
 
-      @ws.onerror = (event) ->
-        console.debug "ReconnectingWebSocket", "onerror", url, event  if @debug
+      @ws.onerror = (event) =>
+        console.debug "ReconnectingWebSocket", "onerror", @url, event  if @debug
         @onerror event
 
-    connect url
+    connect @url
+
+  onopen: (event) ->
+  onclose: (event) ->
+  onconnecting: (event) ->
+  onmessage: (event) ->
+  onerror: (event) ->
 
   send: (data) ->
     if @ws
-      console.debug "ReconnectingWebSocket", "send", url, data  if @debug
+      console.debug "ReconnectingWebSocket", "send", @url, data  if @debug
       @ws.send data
     else
       throw "INVALID_STATE_ERR : Pausing to reconnect websocket"
 
   close: ->
     if @ws
-      forcedClose = true
+      @forcedClose = true
       @ws.close()
 
   ###
