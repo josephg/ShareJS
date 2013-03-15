@@ -29,6 +29,9 @@ module.exports =
     browserchannel: "*"
     ws: "*"
 
+    # Server works with v1 or v2
+    connect: "<3.x"
+
     # CouchDB Backend
     request: ">= 2.1.1"
 
