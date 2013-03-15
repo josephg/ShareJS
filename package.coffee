@@ -6,7 +6,7 @@ module.exports =
   name: "share"
 
   # Change version with "cake [-V newversion] bump"
-  version: "0.5.5"
+  version: "0.6.0"
   description: "A database for concurrent document editing"
   keywords: [
   	"operational transformation"
