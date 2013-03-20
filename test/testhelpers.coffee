@@ -1,26 +1,30 @@
+assert = require 'assert'
+
 helpers = require './helpers'
 
-newDocName = helpers.newDocName
-makePassPart = helpers.makePassPart
-
 # Testing tool tests
-module.exports = {
-  'create new doc name with each invocation of newDocName()': (test) ->
-    test.notStrictEqual newDocName(), newDocName()
-    test.strictEqual typeof newDocName(), 'string'
-    test.done()
+describe 'helpers', ->
+  describe '#newDocName()', ->
+    it 'creates a new doc name with each invocation', ->
+      assert.notStrictEqual helpers.newDocName(), helpers.newDocName()
+      assert.strictEqual typeof helpers.newDocName(), 'string'
   
-  'makePassPart': (test) ->
-    timesCalled = 0
-    faketest = {
-      done: ->
-        test.strictEqual timesCalled, 3
-        test.done()
-    }
-    
-    passPart = makePassPart test, 3
-    passPart()
-    passPart()
-    passPart()
-}
+  describe '#makePassPart()', ->
+    it '#makePassPart() works', (done) ->
+      passPart = helpers.makePassPart 3, done
+      passPart()
+      passPart()
+      passPart()
+
+  describe '#randomInt()', ->
+    it 'never returns a value outside its range', ->
+      for [1..1000]
+        assert 0 <= helpers.randomInt(100) < 100
+
+    it 'always returns an integer', ->
+      for [1..1000]
+        val = helpers.randomInt(100)
+        assert.equal val, Math.floor val
+
+
 

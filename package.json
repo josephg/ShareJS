@@ -13,10 +13,6 @@
   "homepage": "",
   "author": "Joseph Gentle <josephg@gmail.com>",
   "dependencies": {
-    "sockjs": ">= 0.3.1",
-    "socket.io": "~0.8",
-    "socket.io-client": "~0.8",
-    "browserchannel": "*",
     "ws": "*",
     "connect": "<3.x",
     "request": ">= 2.1.1",
@@ -26,7 +22,7 @@
   "devDependencies": {
     "express": "~ 3.x",
     "optimist": ">= 0.2.4",
-    "nodeunit": "*",
+    "mocha": "*",
     "shelljs": "*",
     "uglify-js": "~1",
     "websocket": "*"
