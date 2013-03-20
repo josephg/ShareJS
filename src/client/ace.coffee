@@ -62,7 +62,6 @@ window.sharejs.extendDoc 'attach_ace', (editor, keepEditorContents) ->
           suppress = true
           editorDoc.setValue(otText)
           suppress = false
-          # Should probably also replace the editor text with the doc snapshot.
       , 0
 
   if keepEditorContents
