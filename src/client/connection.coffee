@@ -46,8 +46,8 @@ class Connection
 
     @socket = switch socketImpl
       when 'channel' then new BCSocket(host, reconnect:true)
-      when 'sockjs' then new SockJS(host)
-      when 'websocket' then new WebSocket(host)
+      when 'sockjs' then new ReconnectingWebSocket(host, SockJS)
+      when 'websocket' then new ReconnectingWebSocket(host)
       else new BCSocket(host, reconnect:true)
 
     @socket.onmessage = (msg) =>
