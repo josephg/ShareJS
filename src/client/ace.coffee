@@ -59,7 +59,9 @@ window.sharejs.extendDoc 'attach_ace', (editor, keepEditorContents) ->
           console.error "Text does not match!"
           console.error "editor: #{editorText}"
           console.error "ot:     #{otText}"
-          # Should probably also replace the editor text with the doc snapshot.
+          suppress = true
+          editorDoc.setValue(otText)
+          suppress = false
       , 0
 
   if keepEditorContents
