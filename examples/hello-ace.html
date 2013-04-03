@@ -18,11 +18,12 @@
     <script src="/channel/bcsocket.js"></script>
 		<script src="/share/share.uncompressed.js"></script>
 		<script src="/share/ace.js"></script>
+		<script src="/share/text2.js"></script>
 
 		<script>
 var editor = ace.edit("editor");
 
-sharejs.open('hello', 'text', function(error, doc) {
+sharejs.open('helloace', 'text2', function(error, doc) {
 	doc.attach_ace(editor);
 });
 		</script>
