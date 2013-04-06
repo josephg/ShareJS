@@ -6,7 +6,7 @@ var createdb = require('../src/server/db');
 var options = require('./options');
 console.log(options);
 if (options.db.type !== 'mysql') {
-  throw new Error('You must configure your server to use postgresql before using this script');
+  throw new Error('You must configure your server to use mysql before using this script');
 }
 
 var db = createdb(options.db);
