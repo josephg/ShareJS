@@ -26,7 +26,7 @@ sharejs.open('hello', 'text', function(error, doc) {
 
   function addShout(txt) {
     li = document.createElement('li');
-    li.innerText = txt;
+    li.textContent = txt;
     shouts.appendChild(li);
   }
  
