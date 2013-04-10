@@ -37,6 +37,26 @@ module.exports = testCase
       test.expect 1
       test.done()
 
+  'doc emits a cursor event when a cursor is updated': (test) ->
+    docName = helpers.newDocName()
+    @model.create docName, 'simple', (error)=>
+      assert.fail error if error
+      @model.listen docName, (event)->
+        test.deepEqual event, {cursor: {fake_sesion_id: [ 5, 5 ]}, meta: {source: 'fake_sesion_id'}}
+        test.done()
+      @model.updateCursor docName, "fake_sesion_id", [5,5]
+
+  'doc emits a cursor event when a listener is removed': (test)->
+    docName = helpers.newDocName()
+    @model.create docName, 'simple', (error)=>
+      assert.fail error if error
+      listener = ->
+      @model.listen docName, listener
+      @model.listen docName, (event)->
+        test.deepEqual event, {cursor: {fake_session_id: null}, meta: {source: 'fake_session_id'}}
+        test.done()
+      @model.removeListener docName, listener, 'fake_session_id'
+
   'listen on a nonexistant doc returns null and ignore the document': (test) ->
     @model.listen @unused, (-> throw new Error 'should not receive any ops'), (error, v) =>
       test.strictEqual error, 'Document does not exist'

@@ -251,12 +251,12 @@ transformPosition = (cursor, op) ->
   # in the document. It cannot be an array.
   pos = 0
   for c in op
-    break if cursor <= pos
+    break if cursor < pos
   
     # I could actually use the op_iter stuff above - but I think its simpler like this.
     switch typeof c
       when 'number'
-        if cursor <= pos + c
+        if cursor < pos + c
           return cursor
         pos += c
       when 'string'

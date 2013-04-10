@@ -501,6 +501,16 @@ module.exports = Model = (db, options) ->
         refreshReapingTimeout docName
         callback? error, newVersion
 
+  @updateCursor = (docName, sessionId, cursorData, callback)->
+    load docName, (error, doc) ->
+      return callback error if error
+      doc.cursors ?= {}
+      doc.cursors[sessionId] = cursorData
+      data = {}
+      data[sessionId] = cursorData
+      doc.eventEmitter.emit "cursor", {cursor: data, meta: {source: sessionId}}
+      callback? null
+
   # TODO: store (some) metadata in DB
   # TODO: op and meta should be combineable in the op that gets sent
   @applyMetaOp = (docName, metaOpData, callback) ->
@@ -551,6 +561,7 @@ module.exports = Model = (db, options) ->
           return callback? error if error
 
           doc.eventEmitter.on 'op', listener
+          doc.eventEmitter.on 'cursor', listener
           callback? null, version
           for op in data
             listener op
@@ -561,20 +572,33 @@ module.exports = Model = (db, options) ->
 
       else # Version is null / undefined. Just add the listener.
         doc.eventEmitter.on 'op', listener
+        doc.eventEmitter.on 'cursor', listener
         callback? null, doc.v
+
+      if doc.cursors
+        for sessionId, data of doc.cursors
+          cursorData = {}
+          cursorData[sessionId] = data
+          doc.eventEmitter.emit "cursor", {cursor: cursorData, meta: {source: sessionId}}
 
   # Remove a listener for a particular document.
   #
-  # removeListener(docName, listener)
+  # removeListener(docName, listener, sessionId)
   #
   # This is synchronous.
-  @removeListener = (docName, listener) ->
+  @removeListener = (docName, listener, sessionId) ->
     # The document should already be loaded.
     doc = docs[docName]
     throw new Error 'removeListener called but document not loaded' unless doc
-
     doc.eventEmitter.removeListener 'op', listener
+    doc.eventEmitter.removeListener 'cursor', listener
     refreshReapingTimeout docName
+
+    #remove the cursor and emit an event so all clients remove it from their doc
+    delete doc.cursors[sessionId] if doc.cursors
+    cursorData = {}
+    cursorData[sessionId] = null
+    doc.eventEmitter.emit "cursor", {cursor: cursorData, meta: {source: sessionId}}
 
   # Flush saves all snapshot data to the database. I'm not sure whether or not this is actually needed -
   # sharejs will happily replay uncommitted ops when documents are re-opened anyway.

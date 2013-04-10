@@ -1,1 +1,7846 @@
-function initBaseUrls(a){require.tlns=a}function initSender(){var a=require("pilot/event_emitter").EventEmitter,b=require("pilot/oop"),c=function(){};return function(){b.implement(this,a),this.callback=function(a,b){postMessage({type:"call",id:b,data:a})},this.emit=function(a,b){postMessage({type:"event",name:a,data:b})}}.call(c.prototype),new c}var console={log:function(a){postMessage({type:"log",data:a})}},window={console:console},require=function(a){var b=require.modules[a];if(b)return b.initialized||(b.exports=b.factory().exports,b.initialized=!0),b.exports;var c=a.split("/");return c[0]=require.tlns[c[0]]||c[0],path=c.join("/")+".js",require.id=a,importScripts(path),require(a)};require.modules={},require.tlns={};var define=function(a,b,c){arguments.length==2?c=b:arguments.length==1&&(c=a,a=require.id);if(a.indexOf("text!")===0)return;require.modules[a]={factory:function(){var a={exports:{}},b=c(require,a.exports,a);return b&&(a.exports=b),a}}},main,sender;onmessage=function(a){var b=a.data;if(b.command)main[b.command].apply(main,b.args);else if(b.init){initBaseUrls(b.tlns),require("pilot/fixoldbrowsers"),sender=initSender();var c=require(b.module)[b.classname];main=new c(sender)}else b.event&&sender&&sender._dispatchEvent(b.event,b.data)},define("pilot/fixoldbrowsers",["require","exports","module","pilot/regexp","pilot/es5-shim"],function(a,b,c){a("pilot/regexp"),a("pilot/es5-shim")}),define("pilot/regexp",["require","exports","module"],function(a,b,c){function g(a){return(a.global?"g":"")+(a.ignoreCase?"i":"")+(a.multiline?"m":"")+(a.extended?"x":"")+(a.sticky?"y":"")}function h(a,b,c){if(Array.prototype.indexOf)return a.indexOf(b,c);for(var d=c||0;d<a.length;d++)if(a[d]===b)return d;return-1}var d={exec:RegExp.prototype.exec,test:RegExp.prototype.test,match:String.prototype.match,replace:String.prototype.replace,split:String.prototype.split},e=d.exec.call(/()??/,"")[1]===undefined,f=function(){var a=/^/g;return d.test.call(a,""),!a.lastIndex}();RegExp.prototype.exec=function(a){var b=d.exec.apply(this,arguments),c,i;if(b){!e&&b.length>1&&h(b,"")>-1&&(i=RegExp(this.source,d.replace.call(g(this),"g","")),d.replace.call(a.slice(b.index),i,function(){for(var a=1;a<arguments.length-2;a++)arguments[a]===undefined&&(b[a]=undefined)}));if(this._xregexp&&this._xregexp.captureNames)for(var j=1;j<b.length;j++)c=this._xregexp.captureNames[j-1],c&&(b[c]=b[j]);!f&&this.global&&!b[0].length&&this.lastIndex>b.index&&this.lastIndex--}return b},f||(RegExp.prototype.test=function(a){var b=d.exec.call(this,a);return b&&this.global&&!b[0].length&&this.lastIndex>b.index&&this.lastIndex--,!!b})}),define("pilot/es5-shim",["require","exports","module"],function(a,b,c){function p(a){try{return Object.defineProperty(a,"sentinel",{}),"sentinel"in a}catch(b){}}Function.prototype.bind||(Function.prototype.bind=function(a){var b=this;if(typeof b!="function")throw new TypeError;var c=g.call(arguments,1),d=function(){if(this instanceof d){var e=function(){};e.prototype=b.prototype;var f=new e,h=b.apply(f,c.concat(g.call(arguments)));return h!==null&&Object(h)===h?h:f}return b.apply(a,c.concat(g.call(arguments)))};return d});var d=Function.prototype.call,e=Array.prototype,f=Object.prototype,g=e.slice,h=d.bind(f.toString),i=d.bind(f.hasOwnProperty),j,k,l,m,n;if(n=i(f,"__defineGetter__"))j=d.bind(f.__defineGetter__),k=d.bind(f.__defineSetter__),l=d.bind(f.__lookupGetter__),m=d.bind(f.__lookupSetter__);Array.isArray||(Array.isArray=function(a){return h(a)=="[object Array]"}),Array.prototype.forEach||(Array.prototype.forEach=function(a){var b=G(this),c=arguments[1],d=0,e=b.length>>>0;if(h(a)!="[object Function]")throw new TypeError;while(d<e)d in b&&a.call(c,b[d],d,b),d++}),Array.prototype.map||(Array.prototype.map=function(a){var b=G(this),c=b.length>>>0,d=Array(c),e=arguments[1];if(h(a)!="[object Function]")throw new TypeError;for(var f=0;f<c;f++)f in b&&(d[f]=a.call(e,b[f],f,b));return d}),Array.prototype.filter||(Array.prototype.filter=function(a){var b=G(this),c=b.length>>>0,d=[],e=arguments[1];if(h(a)!="[object Function]")throw new TypeError;for(var f=0;f<c;f++)f in b&&a.call(e,b[f],f,b)&&d.push(b[f]);return d}),Array.prototype.every||(Array.prototype.every=function(a){var b=G(this),c=b.length>>>0,d=arguments[1];if(h(a)!="[object Function]")throw new TypeError;for(var e=0;e<c;e++)if(e in b&&!a.call(d,b[e],e,b))return!1;return!0}),Array.prototype.some||(Array.prototype.some=function(a){var b=G(this),c=b.length>>>0,d=arguments[1];if(h(a)!="[object Function]")throw new TypeError;for(var e=0;e<c;e++)if(e in b&&a.call(d,b[e],e,b))return!0;return!1}),Array.prototype.reduce||(Array.prototype.reduce=function(a){var b=G(this),c=b.length>>>0;if(h(a)!="[object Function]")throw new TypeError;if(!c&&arguments.length==1)throw new TypeError;var d=0,e;if(arguments.length>=2)e=arguments[1];else do{if(d in b){e=b[d++];break}if(++d>=c)throw new TypeError}while(!0);for(;d<c;d++)d in b&&(e=a.call(void 0,e,b[d],d,b));return e}),Array.prototype.reduceRight||(Array.prototype.reduceRight=function(a){var b=G(this),c=b.length>>>0;if(h(a)!="[object Function]")throw new TypeError;if(!c&&arguments.length==1)throw new TypeError;var d,e=c-1;if(arguments.length>=2)d=arguments[1];else do{if(e in b){d=b[e--];break}if(--e<0)throw new TypeError}while(!0);do e in this&&(d=a.call(void 0,d,b[e],e,b));while(e--);return d}),Array.prototype.indexOf||(Array.prototype.indexOf=function(a){var b=G(this),c=b.length>>>0;if(!c)return-1;var d=0;arguments.length>1&&(d=E(arguments[1])),d=d>=0?d:Math.max(0,c+d);for(;d<c;d++)if(d in b&&b[d]===a)return d;return-1}),Array.prototype.lastIndexOf||(Array.prototype.lastIndexOf=function(a){var b=G(this),c=b.length>>>0;if(!c)return-1;var d=c-1;arguments.length>1&&(d=Math.min(d,E(arguments[1]))),d=d>=0?d:c-Math.abs(d);for(;d>=0;d--)if(d in b&&a===b[d])return d;return-1}),Object.getPrototypeOf||(Object.getPrototypeOf=function(a){return a.__proto__||(a.constructor?a.constructor.prototype:f)});if(!Object.getOwnPropertyDescriptor){var o="Object.getOwnPropertyDescriptor called on a non-object: ";Object.getOwnPropertyDescriptor=function(a,b){if(typeof a!="object"&&typeof a!="function"||a===null)throw new TypeError(o+a);if(!i(a,b))return;var c,d,e;c={enumerable:!0,configurable:!0};if(n){var g=a.__proto__;a.__proto__=f;var d=l(a,b),e=m(a,b);a.__proto__=g;if(d||e)return d&&(c.get=d),e&&(c.set=e),c}return c.value=a[b],c}}Object.getOwnPropertyNames||(Object.getOwnPropertyNames=function(a){return Object.keys(a)}),Object.create||(Object.create=function(a,b){var c;if(a===null)c={"__proto__":null};else{if(typeof a!="object")throw new TypeError("typeof prototype["+typeof a+"] != 'object'");var d=function(){};d.prototype=a,c=new d,c.__proto__=a}return b!==void 0&&Object.defineProperties(c,b),c});if(Object.defineProperty){var q=p({}),r=typeof document=="undefined"||p(document.createElement("div"));if(!q||!r)var s=Object.defineProperty}if(!Object.defineProperty||s){var t="Property description must be an object: ",u="Object.defineProperty called on non-object: ",v="getters & setters can not be defined on this javascript engine";Object.defineProperty=function(a,b,c){if(typeof a!="object"&&typeof a!="function"||a===null)throw new TypeError(u+a);if(typeof c!="object"&&typeof c!="function"||c===null)throw new TypeError(t+c);if(s)try{return s.call(Object,a,b,c)}catch(d){}if(i(c,"value"))if(n&&(l(a,b)||m(a,b))){var e=a.__proto__;a.__proto__=f,delete a[b],a[b]=c.value,a.__proto__=e}else a[b]=c.value;else{if(!n)throw new TypeError(v);i(c,"get")&&j(a,b,c.get),i(c,"set")&&k(a,b,c.set)}return a}}Object.defineProperties||(Object.defineProperties=function(a,b){for(var c in b)i(b,c)&&Object.defineProperty(a,c,b[c]);return a}),Object.seal||(Object.seal=function(a){return a}),Object.freeze||(Object.freeze=function(a){return a});try{Object.freeze(function(){})}catch(w){Object.freeze=function(a){return function b(b){return typeof b=="function"?b:a(b)}}(Object.freeze)}Object.preventExtensions||(Object.preventExtensions=function(a){return a}),Object.isSealed||(Object.isSealed=function(a){return!1}),Object.isFrozen||(Object.isFrozen=function(a){return!1}),Object.isExtensible||(Object.isExtensible=function(a){if(Object(a)===a)throw new TypeError;var b="";while(i(a,b))b+="?";a[b]=!0;var c=i(a,b);return delete a[b],c});if(!Object.keys){var x=!0,y=["toString","toLocaleString","valueOf","hasOwnProperty","isPrototypeOf","propertyIsEnumerable","constructor"],z=y.length;for(var A in{toString:null})x=!1;Object.keys=function bd(a){if(typeof a!="object"&&typeof a!="function"||a===null)throw new TypeError("Object.keys called on a non-object");var bd=[];for(var b in a)i(a,b)&&bd.push(b);if(x)for(var c=0,d=z;c<d;c++){var e=y[c];i(a,e)&&bd.push(e)}return bd}}if(!Date.prototype.toISOString||(new Date(-621987552e5)).toISOString().indexOf("-000001")===-1)Date.prototype.toISOString=function(){var a,b,c,d;if(!isFinite(this))throw new RangeError;a=[this.getUTCMonth()+1,this.getUTCDate(),this.getUTCHours(),this.getUTCMinutes(),this.getUTCSeconds()],d=this.getUTCFullYear(),d=(d<0?"-":d>9999?"+":"")+("00000"+Math.abs(d)).slice(0<=d&&d<=9999?-4:-6),b=a.length;while(b--)c=a[b],c<10&&(a[b]="0"+c);return d+"-"+a.slice(0,2).join("-")+"T"+a.slice(2).join(":")+"."+("000"+this.getUTCMilliseconds()).slice(-3)+"Z"};Date.now||(Date.now=function(){return(new Date).getTime()}),Date.prototype.toJSON||(Date.prototype.toJSON=function(a){if(typeof this.toISOString!="function")throw new TypeError;return this.toISOString()}),Date.parse("+275760-09-13T00:00:00.000Z")!==864e13&&(Date=function(a){var b=function e(b,c,d,f,g,h,i){var j=arguments.length;if(this instanceof a){var k=j==1&&String(b)===b?new a(e.parse(b)):j>=7?new a(b,c,d,f,g,h,i):j>=6?new a(b,c,d,f,g,h):j>=5?new a(b,c,d,f,g):j>=4?new a(b,c,d,f):j>=3?new a(b,c,d):j>=2?new a(b,c):j>=1?new a(b):new a;return k.constructor=e,k}return a.apply(this,arguments)},c=new RegExp("^(\\d{4}|[+-]\\d{6})(?:-(\\d{2})(?:-(\\d{2})(?:T(\\d{2}):(\\d{2})(?::(\\d{2})(?:\\.(\\d{3}))?)?(?:Z|(?:([-+])(\\d{2}):(\\d{2})))?)?)?)?$");for(var d in a)b[d]=a[d];return b.now=a.now,b.UTC=a.UTC,b.prototype=a.prototype,b.prototype.constructor=b,b.parse=function f(b){var d=c.exec(b);if(d){d.shift();for(var e=1;e<7;e++)d[e]=+(d[e]||(e<3?1:0)),e==1&&d[e]--;var f=+d.pop(),g=+d.pop(),h=d.pop(),i=0;if(h){if(g>23||f>59)return NaN;i=(g*60+f)*6e4*(h=="+"?-1:1)}var j=+d[0];return 0<=j&&j<=99?(d[0]=j+400,a.UTC.apply(this,d)+i-126227808e5):a.UTC.apply(this,d)+i}return a.parse.apply(this,arguments)},b}(Date));var B="\t\n\f\r   ᠎             　\u2028\u2029﻿";if(!String.prototype.trim||B.trim()){B="["+B+"]";var C=new RegExp("^"+B+B+"*"),D=new RegExp(B+B+"*$");String.prototype.trim=function(){return String(this).replace(C,"").replace(D,"")}}var E=function(a){return a=+a,a!==a?a=0:a!==0&&a!==1/0&&a!==-Infinity&&(a=(a>0||-1)*Math.floor(Math.abs(a))),a},F="a"[0]!="a",G=function(a){if(a==null)throw new TypeError;return F&&typeof a=="string"&&a?a.split(""):Object(a)}}),define("pilot/event_emitter",["require","exports","module"],function(a,b,c){var d={};d._emit=d._dispatchEvent=function(a,b){this._eventRegistry=this._eventRegistry||{},this._defaultHandlers=this._defaultHandlers||{};var c=this._eventRegistry[a]||[],d=this._defaultHandlers[a];if(!c.length&&!d)return;b=b||{},b.type=a,b.stopPropagation||(b.stopPropagation=function(){this.propagationStopped=!0}),b.preventDefault||(b.preventDefault=function(){this.defaultPrevented=!0});for(var e=0;e<c.length;e++){c[e](b);if(b.propagationStopped)break}d&&!b.defaultPrevented&&d(b)},d.setDefaultHandler=function(a,b){this._defaultHandlers=this._defaultHandlers||{};if(this._defaultHandlers[a])throw new Error("The default handler for '"+a+"' is already set");this._defaultHandlers[a]=b},d.on=d.addEventListener=function(a,b){this._eventRegistry=this._eventRegistry||{};var c=this._eventRegistry[a];if(!c)var c=this._eventRegistry[a]=[];c.indexOf(b)==-1&&c.push(b)},d.removeListener=d.removeEventListener=function(a,b){this._eventRegistry=this._eventRegistry||{};var c=this._eventRegistry[a];if(!c)return;var d=c.indexOf(b);d!==-1&&c.splice(d,1)},d.removeAllListeners=function(a){this._eventRegistry&&(this._eventRegistry[a]=[])},b.EventEmitter=d}),define("pilot/oop",["require","exports","module"],function(a,b,c){b.inherits=function(){var a=function(){};return function(b,c){a.prototype=c.prototype,b.super_=c.prototype,b.prototype=new a,b.prototype.constructor=b}}(),b.mixin=function(a,b){for(var c in b)a[c]=b[c]},b.implement=function(a,c){b.mixin(a,c)}}),define("ace/mode/css_worker",["require","exports","module","pilot/oop","ace/worker/mirror","ace/mode/css/csslint"],function(a,b,c){var d=a("pilot/oop"),e=a("ace/worker/mirror").Mirror,f=a("ace/mode/css/csslint").CSSLint,g=b.Worker=function(a){e.call(this,a),this.setTimeout(200)};d.inherits(g,e),function(){this.onUpdate=function(){var a=this.doc.getValue();result=f.verify(a),this.sender.emit("csslint",result.messages.map(function(a){return delete a.rule,a}))}}.call(g.prototype)}),define("ace/worker/mirror",["require","exports","module","ace/document","pilot/lang"],function(a,b,c){var d=a("ace/document").Document,e=a("pilot/lang"),f=b.Mirror=function(a){this.sender=a;var b=this.doc=new d(""),c=this.deferredUpdate=e.deferredCall(this.onUpdate.bind(this)),f=this;a.on("change",function(a){b.applyDeltas([a.data]),c.schedule(f.$timeout)})};(function(){this.$timeout=500,this.setTimeout=function(a){this.$timeout=a},this.setValue=function(a){this.doc.setValue(a),this.deferredUpdate.schedule(this.$timeout)},this.getValue=function(a){this.sender.callback(this.doc.getValue(),a)},this.onUpdate=function(){}}).call(f.prototype)}),define("ace/document",["require","exports","module","pilot/oop","pilot/event_emitter","ace/range","ace/anchor"],function(a,b,c){var d=a("pilot/oop"),e=a("pilot/event_emitter").EventEmitter,f=a("ace/range").Range,g=a("ace/anchor").Anchor,h=function(a){this.$lines=[],Array.isArray(a)?this.insertLines(0,a):a.length==0?this.$lines=[""]:this.insert({row:0,column:0},a)};(function(){d.implement(this,e),this.setValue=function(a){var b=this.getLength();this.remove(new f(0,0,b,this.getLine(b-1).length)),this.insert({row:0,column:0},a)},this.getValue=function(){return this.getAllLines().join(this.getNewLineCharacter())},this.createAnchor=function(a,b){return new g(this,a,b)},"aaa".split(/a/).length==0?this.$split=function(a){return a.replace(/\r\n|\r/g,"\n").split("\n")}:this.$split=function(a){return a.split(/\r\n|\r|\n/)},this.$detectNewLine=function(a){var b=a.match(/^.*?(\r\n|\r|\n)/m);b?this.$autoNewLine=b[1]:this.$autoNewLine="\n"},this.getNewLineCharacter=function(){switch(this.$newLineMode){case"windows":return"\r\n";case"unix":return"\n";case"auto":return this.$autoNewLine}},this.$autoNewLine="\n",this.$newLineMode="auto",this.setNewLineMode=function(a){if(this.$newLineMode===a)return;this.$newLineMode=a},this.getNewLineMode=function(){return this.$newLineMode},this.isNewLine=function(a){return a=="\r\n"||a=="\r"||a=="\n"},this.getLine=function(a){return this.$lines[a]||""},this.getLines=function(a,b){return this.$lines.slice(a,b+1)},this.getAllLines=function(){return this.getLines(0,this.getLength())},this.getLength=function(){return this.$lines.length},this.getTextRange=function(a){if(a.start.row==a.end.row)return this.$lines[a.start.row].substring(a.start.column,a.end.column);var b=[];return b.push(this.$lines[a.start.row].substring(a.start.column)),b.push.apply(b,this.getLines(a.start.row+1,a.end.row-1)),b.push(this.$lines[a.end.row].substring(0,a.end.column)),b.join(this.getNewLineCharacter())},this.$clipPosition=function(a){var b=this.getLength();return a.row>=b&&(a.row=Math.max(0,b-1),a.column=this.getLine(b-1).length),a},this.insert=function(a,b){if(b.length==0)return a;a=this.$clipPosition(a),this.getLength()<=1&&this.$detectNewLine(b);var c=this.$split(b),d=c.splice(0,1)[0],e=c.length==0?null:c.splice(c.length-1,1)[0];return a=this.insertInLine(a,d),e!==null&&(a=this.insertNewLine(a),a=this.insertLines(a.row,c),a=this.insertInLine(a,e||"")),a},this.insertLines=function(a,b){if(b.length==0)return{row:a,column:0};var c=[a,0];c.push.apply(c,b),this.$lines.splice.apply(this.$lines,c);var d=new f(a,0,a+b.length,0),e={action:"insertLines",range:d,lines:b};return this._dispatchEvent("change",{data:e}),d.end},this.insertNewLine=function(a){a=this.$clipPosition(a);var b=this.$lines[a.row]||"";this.$lines[a.row]=b.substring(0,a.column),this.$lines.splice(a.row+1,0,b.substring(a.column,b.length));var c={row:a.row+1,column:0},d={action:"insertText",range:f.fromPoints(a,c),text:this.getNewLineCharacter()};return this._dispatchEvent("change",{data:d}),c},this.insertInLine=function(a,b){if(b.length==0)return a;var c=this.$lines[a.row]||"";this.$lines[a.row]=c.substring(0,a.column)+b+c.substring(a.column);var d={row:a.row,column:a.column+b.length},e={action:"insertText",range:f.fromPoints(a,d),text:b};return this._dispatchEvent("change",{data:e}),d},this.remove=function(a){a.start=this.$clipPosition(a.start),a.end=this.$clipPosition(a.end);if(a.isEmpty())return a.start;var b=a.start.row,c=a.end.row;if(a.isMultiLine()){var d=a.start.column==0?b:b+1,e=c-1;a.end.column>0&&this.removeInLine(c,0,a.end.column),e>=d&&this.removeLines(d,e),d!=b&&(this.removeInLine(b,a.start.column,this.getLine(b).length),this.removeNewLine(a.start.row))}else this.removeInLine(b,a.start.column,a.end.column);return a.start},this.removeInLine=function(a,b,c){if(b==c)return;var d=new f(a,b,a,c),e=this.getLine(a),g=e.substring(b,c),h=e.substring(0,b)+e.substring(c,e.length);this.$lines.splice(a,1,h);var i={action:"removeText",range:d,text:g};return this._dispatchEvent("change",{data:i}),d.start},this.removeLines=function(a,b){var c=new f(a,0,b+1,0),d=this.$lines.splice(a,b-a+1),e={action:"removeLines",range:c,nl:this.getNewLineCharacter(),lines:d};return this._dispatchEvent("change",{data:e}),d},this.removeNewLine=function(a){var b=this.getLine(a),c=this.getLine(a+1),d=new f(a,b.length,a+1,0),e=b+c;this.$lines.splice(a,2,e);var g={action:"removeText",range:d,text:this.getNewLineCharacter()};this._dispatchEvent("change",{data:g})},this.replace=function(a,b){if(b.length==0&&a.isEmpty())return a.start;if(b==this.getTextRange(a))return a.end;this.remove(a);if(b)var c=this.insert(a.start,b);else c=a.start;return c},this.applyDeltas=function(a){for(var b=0;b<a.length;b++){var c=a[b],d=f.fromPoints(c.range.start,c.range.end);c.action=="insertLines"?this.insertLines(d.start.row,c.lines):c.action=="insertText"?this.insert(d.start,c.text):c.action=="removeLines"?this.removeLines(d.start.row,d.end.row-1):c.action=="removeText"&&this.remove(d)}},this.revertDeltas=function(a){for(var b=a.length-1;b>=0;b--){var c=a[b],d=f.fromPoints(c.range.start,c.range.end);c.action=="insertLines"?this.removeLines(d.start.row,d.end.row-1):c.action=="insertText"?this.remove(d):c.action=="removeLines"?this.insertLines(d.start.row,c.lines):c.action=="removeText"&&this.insert(d.start,c.text)}}}).call(h.prototype),b.Document=h}),define("ace/range",["require","exports","module"],function(a,b,c){var d=function(a,b,c,d){this.start={row:a,column:b},this.end={row:c,column:d}};(function(){this.toString=function(){return"Range: ["+this.start.row+"/"+this.start.column+"] -> ["+this.end.row+"/"+this.end.column+"]"},this.contains=function(a,b){return this.compare(a,b)==0},this.compareRange=function(a){var b,c=a.end,d=a.start;return b=this.compare(c.row,c.column),b==1?(b=this.compare(d.row,d.column),b==1?2:b==0?1:0):b==-1?-2:(b=this.compare(d.row,d.column),b==-1?-1:b==1?42:0)},this.containsRange=function(a){var b=this.compareRange(a);return b==-1||b==0||b==1},this.isEnd=function(a,b){return this.end.row==a&&this.end.column==b},this.isStart=function(a,b){return this.start.row==a&&this.start.column==b},this.setStart=function(a,b){typeof a=="object"?(this.start.column=a.column,this.start.row=a.row):(this.start.row=a,this.start.column=b)},this.setEnd=function(a,b){typeof a=="object"?(this.end.column=a.column,this.end.row=a.row):(this.end.row=a,this.end.column=b)},this.inside=function(a,b){return this.compare(a,b)==0?this.isEnd(a,b)||this.isStart(a,b)?!1:!0:!1},this.insideStart=function(a,b){return this.compare(a,b)==0?this.isEnd(a,b)?!1:!0:!1},this.insideEnd=function(a,b){return this.compare(a,b)==0?this.isStart(a,b)?!1:!0:!1},this.compare=function(a,b){return!this.isMultiLine()&&a===this.start.row?b<this.start.column?-1:b>this.end.column?1:0:a<this.start.row?-1:a>this.end.row?1:this.start.row===a?b>=this.start.column?0:-1:this.end.row===a?b<=this.end.column?0:1:0},this.compareStart=function(a,b){return this.start.row==a&&this.start.column==b?-1:this.compare(a,b)},this.compareEnd=function(a,b){return this.end.row==a&&this.end.column==b?1:this.compare(a,b)},this.compareInside=function(a,b){return this.end.row==a&&this.end.column==b?1:this.start.row==a&&this.start.column==b?-1:this.compare(a,b)},this.clipRows=function(a,b){if(this.end.row>b)var c={row:b+1,column:0};if(this.start.row>b)var e={row:b+1,column:0};if(this.start.row<a)var e={row:a,column:0};if(this.end.row<a)var c={row:a,column:0};return d.fromPoints(e||this.start,c||this.end)},this.extend=function(a,b){var c=this.compare(a,b);if(c==0)return this;if(c==-1)var e={row:a,column:b};else var f={row:a,column:b};return d.fromPoints(e||this.start,f||this.end)},this.isEmpty=function(){return this.start.row==this.end.row&&this.start.column==this.end.column},this.isMultiLine=function(){return this.start.row!==this.end.row},this.clone=function(){return d.fromPoints(this.start,this.end)},this.collapseRows=function(){return this.end.column==0?new d(this.start.row,0,Math.max(this.start.row,this.end.row-1),0):new d(this.start.row,0,this.end.row,0)},this.toScreenRange=function(a){var b=a.documentToScreenPosition(this.start),c=a.documentToScreenPosition(this.end);return new d(b.row,b.column,c.row,c.column)}}).call(d.prototype),d.fromPoints=function(a,b){return new d(a.row,a.column,b.row,b.column)},b.Range=d}),define("ace/anchor",["require","exports","module","pilot/oop","pilot/event_emitter"],function(a,b,c){var d=a("pilot/oop"),e=a("pilot/event_emitter").EventEmitter,f=b.Anchor=function(a,b,c){this.document=a,typeof c=="undefined"?this.setPosition(b.row,b.column):this.setPosition(b,c),this.$onChange=this.onChange.bind(this),a.on("change",this.$onChange)};(function(){d.implement(this,e),this.getPosition=function(){return this.$clipPositionToDocument(this.row,this.column)},this.getDocument=function(){return this.document},this.onChange=function(a){var b=a.data,c=b.range;if(c.start.row==c.end.row&&c.start.row!=this.row)return;if(c.start.row>this.row)return;if(c.start.row==this.row&&c.start.column>this.column)return;var d=this.row,e=this.column;b.action==="insertText"?c.start.row===d&&c.start.column<=e?c.start.row===c.end.row?e+=c.end.column-c.start.column:(e-=c.start.column,d+=c.end.row-c.start.row):c.start.row!==c.end.row&&c.start.row<d&&(d+=c.end.row-c.start.row):b.action==="insertLines"?c.start.row<=d&&(d+=c.end.row-c.start.row):b.action=="removeText"?c.start.row==d&&c.start.column<e?c.end.column>=e?e=c.start.column:e=Math.max(0,e-(c.end.column-c.start.column)):c.start.row!==c.end.row&&c.start.row<d?(c.end.row==d&&(e=Math.max(0,e-c.end.column)+c.start.column),d-=c.end.row-c.start.row):c.end.row==d&&(d-=c.end.row-c.start.row,e=Math.max(0,e-c.end.column)+c.start.column):b.action=="removeLines"&&c.start.row<=d&&(c.end.row<=d?d-=c.end.row-c.start.row:(d=c.start.row,e=0)),this.setPosition(d,e,!0)},this.setPosition=function(a,b,c){var d;c?d={row:a,column:b}:d=this.$clipPositionToDocument(a,b);if(this.row==d.row&&this.column==d.column)return;var e={row:this.row,column:this.column};this.row=d.row,this.column=d.column,this._dispatchEvent("change",{old:e,value:d})},this.detach=function(){this.document.removeEventListener("change",this.$onChange)},this.$clipPositionToDocument=function(a,b){var c={};return a>=this.document.getLength()?(c.row=Math.max(0,this.document.getLength()-1),c.column=this.document.getLine(c.row).length):a<0?(c.row=0,c.column=0):(c.row=a,c.column=Math.min(this.document.getLine(c.row).length,Math.max(0,b))),b<0&&(c.column=0),c}}).call(f.prototype)}),define("pilot/lang",["require","exports","module"],function(a,b,c){b.stringReverse=function(a){return a.split("").reverse().join("")},b.stringRepeat=function(a,b){return(new Array(b+1)).join(a)};var d=/^\s\s*/,e=/\s\s*$/;b.stringTrimLeft=function(a){return a.replace(d,"")},b.stringTrimRight=function(a){return a.replace(e,"")},b.copyObject=function(a){var b={};for(var c in a)b[c]=a[c];return b},b.copyArray=function(a){var b=[];for(i=0,l=a.length;i<l;i++)a[i]&&typeof a[i]=="object"?b[i]=this.copyObject(a[i]):b[i]=a[i];return b},b.deepCopy=function(a){if(typeof a!="object")return a;var b=a.constructor();for(var c in a)typeof a[c]=="object"?b[c]=this.deepCopy(a[c]):b[c]=a[c];return b},b.arrayToMap=function(a){var b={};for(var c=0;c<a.length;c++)b[a[c]]=1;return b},b.arrayRemove=function(a,b){for(var c=0;c<=a.length;c++)b===a[c]&&a.splice(c,1)},b.escapeRegExp=function(a){return a.replace(/([.*+?^${}()|[\]\/\\])/g,"\\$1")},b.deferredCall=function(a){var b=null,c=function(){b=null,a()},d=function(a){return d.cancel(),b=setTimeout(c,a||0),d};return d.schedule=d,d.call=function(){return this.cancel(),a(),d},d.cancel=function(){return clearTimeout(b),b=null,d},d}}),define("ace/mode/css/csslint",["require","exports","module"],function(require,exports,module){function Reporter(a){this.messages=[],this.stats=[],this.lines=a}function mix(a,b){var c;for(c in b)b.hasOwnProperty(c)&&(receiver[c]=b[c]);return c}function indexOf(a,b){if(a.indexOf)return a.indexOf(b);for(var c=0,d=a.length;c<d;c++)if(a[c]===b)return c;return-1}var parserlib={};(function(){function a(){this._listeners={}}function b(a){this._input=a.replace(/\n\r?/g,"\n"),this._line=1,this._col=1,this._cursor=0}function c(a,b,c){this.col=c,this.line=b,this.message=a}function d(a,b,c){this.col=c,this.line=b,this.text=a}function e(a,c){this._reader=a?new b(a.toString()):null,this._token=null,this._tokenData=c,this._lt=[],this._ltIndex=0,this._ltIndexCache=[]}a.prototype={constructor:a,addListener:function(a,b){this._listeners[a]||(this._listeners[a]=[]),this._listeners[a].push(b)},fire:function(a){typeof a=="string"&&(a={type:a}),a.target||(a.target=this);if(!a.type)throw new Error("Event object missing 'type' property.");if(this._listeners[a.type]){var b=this._listeners[a.type].concat();for(var c=0,d=b.length;c<d;c++)b[c].call(this,a)}},removeListener:function(a,b){if(this._listeners[a]){var c=this._listeners[a];for(var d=0,e=c.length;d<e;d++)if(c[d]===b){c.splice(d,1);break}}}},b.prototype={constructor:b,getCol:function(){return this._col},getLine:function(){return this._line},eof:function(){return this._cursor==this._input.length},peek:function(a){var b=null;return a=typeof a=="undefined"?1:a,this._cursor<this._input.length&&(b=this._input.charAt(this._cursor+a-1)),b},read:function(){var a=null;return this._cursor<this._input.length&&(this._input.charAt(this._cursor)=="\n"?(this._line++,this._col=1):this._col++,a=this._input.charAt(this._cursor++)),a},mark:function(){this._bookmark={cursor:this._cursor,line:this._line,col:this._col}},reset:function(){this._bookmark&&(this._cursor=this._bookmark.cursor,this._line=this._bookmark.line,this._col=this._bookmark.col,delete this._bookmark)},readTo:function(a){var b="",c;while(b.length<a.length||b.lastIndexOf(a)!=b.length-a.length){c=this.read();if(c)b+=c;else throw new Error('Expected "'+a+'" at line '+this._line+", col "+this._col+".")}return b},readWhile:function(a){var b="",c=this.read();while(c!==null&&a(c))b+=c,c=this.read();return b},readMatch:function(a){var b=this._input.substring(this._cursor),c=null;return typeof a=="string"?b.indexOf(a)===0&&(c=this.readCount(a.length)):a instanceof RegExp&&a.test(b)&&(c=this.readCount(RegExp.lastMatch.length)),c},readCount:function(a){var b="";while(a--)b+=this.read();return b}},c.prototype=new Error,d.fromToken=function(a){return new d(a.value,a.startLine,a.startCol)},d.prototype={constructor:d,valueOf:function(){return this.toString()},toString:function(){return this.text}},e.createTokenData=function(a){var b=[],c={},d=a.concat([]),e=0,f=d.length+1;d.UNKNOWN=-1,d.unshift({name:"EOF"});for(;e<f;e++)b.push(d[e].name),d[d[e].name]=e,d[e].text&&(c[d[e].text]=e);return d.name=function(a){return b[a]},d.type=function(a){return c[a]},d},e.prototype={constructor:e,match:function(a,b){a instanceof Array||(a=[a]);var c=this.get(b),d=0,e=a.length;while(d<e)if(c==a[d++])return!0;return this.unget(),!1},mustMatch:function(a,b){a instanceof Array||(a=[a]);if(!this.match.apply(this,arguments))throw token=this.LT(1),new c("Expected "+this._tokenData[a[0]].name+" at line "+token.startLine+", col "+token.startCol+".",token.startLine,token.startCol)},advance:function(a,b){while(this.LA(0)!=0&&!this.match(a,b))this.get();return this.LA(0)},get:function(a){var b=this._tokenData,c=this._reader,d,e=0,f=b.length,g=!1,h,i;if(this._lt.length&&this._ltIndex>=0&&this._ltIndex<this._lt.length){e++,this._token=this._lt[this._ltIndex++],i=b[this._token.type];while(i.channel!==undefined&&a!==i.channel&&this._ltIndex<this._lt.length)this._token=this._lt[this._ltIndex++],i=b[this._token.type],e++;if((i.channel===undefined||a===i.channel)&&this._ltIndex<=this._lt.length)return this._ltIndexCache.push(e),this._token.type}return h=this._getToken(),h.type>-1&&!b[h.type].hide&&(h.channel=b[h.type].channel,this._token=h,this._lt.push(h),this._ltIndexCache.push(this._lt.length-this._ltIndex+e),this._lt.length>5&&this._lt.shift(),this._ltIndexCache.length>5&&this._ltIndexCache.shift(),this._ltIndex=this._lt.length),i=b[h.type],i&&(i.hide||i.channel!==undefined&&a!==i.channel)?this.get(a):h.type},LA:function(a){var b=a,c;if(a>0){if(a>5)throw new Error("Too much lookahead.");while(b)c=this.get(),b--;while(b<a)this.unget(),b++}else if(a<0)if(this._lt[this._ltIndex+a])c=this._lt[this._ltIndex+a].type;else throw new Error("Too much lookbehind.");else c=this._token.type;return c},LT:function(a){return this.LA(a),this._lt[this._ltIndex+a-1]},peek:function(){return this.LA(1)},token:function(){return this._token},tokenName:function(a){return a<0||a>this._tokenData.length?"UNKNOWN_TOKEN":this._tokenData[a].name},tokenType:function(a){return this._tokenData[a]||-1},unget:function(){if(this._ltIndexCache.length)this._ltIndex-=this._ltIndexCache.pop(),this._token=this._lt[this._ltIndex-1];else throw new Error("Too much lookahead.")}},parserlib.util={StringReader:b,SyntaxError:c,SyntaxUnit:d,EventTarget:a,TokenStreamBase:e}})(),function(){function Combinator(a,b,c){SyntaxUnit.call(this,a,b,c),this.type="unknown",/^\s+$/.test(a)?this.type="descendant":a==">"?this.type="child":a=="+"?this.type="adjacent-sibling":a=="~"&&(this.type="sibling")}function MediaFeature(a,b){SyntaxUnit.call(this,"("+a+(b!==null?":"+b:"")+")",a.startLine,a.startCol),this.name=a,this.value=b}function MediaQuery(a,b,c,d,e){SyntaxUnit.call(this,(a?a+" ":"")+(b?b+" ":"")+c.join(" and "),d,e),this.modifier=a,this.mediaType=b,this.features=c}function Parser(a){EventTarget.call(this),this.options=a||{},this._tokenStream=null}function PropertyName(a,b,c,d){SyntaxUnit.call(this,(b||"")+a,c,d),this.hack=b}function PropertyValue(a,b,c){SyntaxUnit.call(this,a.join(" "),b,c),this.parts=a}function PropertyValuePart(text,line,col){SyntaxUnit.apply(this,arguments),this.type="unknown";var temp;if(/^([+\-]?[\d\.]+)([a-z]+)$/i.test(text)){this.type="dimension",this.value=+RegExp.$1,this.units=RegExp.$2;switch(this.units.toLowerCase()){case"em":case"rem":case"ex":case"px":case"cm":case"mm":case"in":case"pt":case"pc":this.type="length";break;case"deg":case"rad":case"grad":this.type="angle";break;case"ms":case"s":this.type="time";break;case"hz":case"khz":this.type="frequency";break;case"dpi":case"dpcm":this.type="resolution"}}else/^([+\-]?[\d\.]+)%$/i.test(text)?(this.type="percentage",this.value=+RegExp.$1):/^([+\-]?[\d\.]+)%$/i.test(text)?(this.type="percentage",this.value=+RegExp.$1):/^([+\-]?\d+)$/i.test(text)?(this.type="integer",this.value=+RegExp.$1):/^([+\-]?[\d\.]+)$/i.test(text)?(this.type="number",this.value=+RegExp.$1):/^#([a-f0-9]{3,6})/i.test(text)?(this.type="color",temp=RegExp.$1,temp.length==3?(this.red=parseInt(temp.charAt(0)+temp.charAt(0),16),this.green=parseInt(temp.charAt(1)+temp.charAt(1),16),this.blue=parseInt(temp.charAt(2)+temp.charAt(2),16)):(this.red=parseInt(temp.substring(0,2),16),this.green=parseInt(temp.substring(2,4),16),this.blue=parseInt(temp.substring(4,6),16))):/^rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/i.test(text)?(this.type="color",this.red=+RegExp.$1,this.green=+RegExp.$2,this.blue=+RegExp.$3):/^rgb\(\s*(\d+)%\s*,\s*(\d+)%\s*,\s*(\d+)%\s*\)/i.test(text)?(this.type="color",this.red=+RegExp.$1*255/100,this.green=+RegExp.$2*255/100,this.blue=+RegExp.$3*255/100):/^url\(["']?([^\)"']+)["']?\)/i.test(text)?(this.type="uri",this.uri=RegExp.$1):/^["'][^"']*["']/.test(text)?(this.type="string",this.value=eval(text)):Colors[text.toLowerCase()]?(this.type="color",temp=Colors[text.toLowerCase()].substring(1),this.red=parseInt(temp.substring(0,2),16),this.green=parseInt(temp.substring(2,4),16),this.blue=parseInt(temp.substring(4,6),16)):/^[\,\/]$/.test(text)?(this.type="operator",this.value=text):/^[a-z\-\u0080-\uFFFF][a-z0-9\-\u0080-\uFFFF]*$/i.test(text)&&(this.type="identifier",this.value=text)}function Selector(a,b,c){SyntaxUnit.call(this,a.join(" "),b,c),this.parts=a}function SelectorPart(a,b,c,d,e){SyntaxUnit.call(this,c,d,e),this.elementName=a,this.modifiers=b}function SelectorSubPart(a,b,c,d){SyntaxUnit.call(this,a,c,d),this.type=b,this.args=[]}function isHexDigit(a){return a!=null&&h.test(a)}function isDigit(a){return a!=null&&/\d/.test(a)}function isWhitespace(a){return a!=null&&/\s/.test(a)}function isNewLine(a){return a!=null&&nl.test(a)}function isNameStart(a){return a!=null&&/[a-z_\u0080-\uFFFF\\]/i.test(a)}function isNameChar(a){return a!=null&&(isNameStart(a)||/[0-9\-\\]/.test(a))}function isIdentStart(a){return a!=null&&(isNameStart(a)||/\-\\/.test(a))}function mix(a,b){for(var c in b)b.hasOwnProperty(c)&&(a[c]=b[c]);return a}function TokenStream(a){TokenStreamBase.call(this,a,Tokens)}var EventTarget=parserlib.util.EventTarget,TokenStreamBase=parserlib.util.TokenStreamBase,StringReader=parserlib.util.StringReader,SyntaxError=parserlib.util.SyntaxError,SyntaxUnit=parserlib.util.SyntaxUnit,Colors={aliceblue:"#f0f8ff",antiquewhite:"#faebd7",aqua:"#00ffff",aquamarine:"#7fffd4",azure:"#f0ffff",beige:"#f5f5dc",bisque:"#ffe4c4",black:"#000000",blanchedalmond:"#ffebcd",blue:"#0000ff",blueviolet:"#8a2be2",brown:"#a52a2a",burlywood:"#deb887",cadetblue:"#5f9ea0",chartreuse:"#7fff00",chocolate:"#d2691e",coral:"#ff7f50",cornflowerblue:"#6495ed",cornsilk:"#fff8dc",crimson:"#dc143c",cyan:"#00ffff",darkblue:"#00008b",darkcyan:"#008b8b",darkgoldenrod:"#b8860b",darkgray:"#a9a9a9",darkgreen:"#006400",darkkhaki:"#bdb76b",darkmagenta:"#8b008b",darkolivegreen:"#556b2f",darkorange:"#ff8c00",darkorchid:"#9932cc",darkred:"#8b0000",darksalmon:"#e9967a",darkseagreen:"#8fbc8f",darkslateblue:"#483d8b",darkslategray:"#2f4f4f",darkturquoise:"#00ced1",darkviolet:"#9400d3",deeppink:"#ff1493",deepskyblue:"#00bfff",dimgray:"#696969",dodgerblue:"#1e90ff",firebrick:"#b22222",floralwhite:"#fffaf0",forestgreen:"#228b22",fuchsia:"#ff00ff",gainsboro:"#dcdcdc",ghostwhite:"#f8f8ff",gold:"#ffd700",goldenrod:"#daa520",gray:"#808080",green:"#008000",greenyellow:"#adff2f",honeydew:"#f0fff0",hotpink:"#ff69b4",indianred:"#cd5c5c",indigo:"#4b0082",ivory:"#fffff0",khaki:"#f0e68c",lavender:"#e6e6fa",lavenderblush:"#fff0f5",lawngreen:"#7cfc00",lemonchiffon:"#fffacd",lightblue:"#add8e6",lightcoral:"#f08080",lightcyan:"#e0ffff",lightgoldenrodyellow:"#fafad2",lightgrey:"#d3d3d3",lightgreen:"#90ee90",lightpink:"#ffb6c1",lightsalmon:"#ffa07a",lightseagreen:"#20b2aa",lightskyblue:"#87cefa",lightslategray:"#778899",lightsteelblue:"#b0c4de",lightyellow:"#ffffe0",lime:"#00ff00",limegreen:"#32cd32",linen:"#faf0e6",magenta:"#ff00ff",maroon:"#800000",mediumaquamarine:"#66cdaa",mediumblue:"#0000cd",mediumorchid:"#ba55d3",mediumpurple:"#9370d8",mediumseagreen:"#3cb371",mediumslateblue:"#7b68ee",mediumspringgreen:"#00fa9a",mediumturquoise:"#48d1cc",mediumvioletred:"#c71585",midnightblue:"#191970",mintcream:"#f5fffa",mistyrose:"#ffe4e1",moccasin:"#ffe4b5",navajowhite:"#ffdead",navy:"#000080",oldlace:"#fdf5e6",olive:"#808000",olivedrab:"#6b8e23",orange:"#ffa500",orangered:"#ff4500",orchid:"#da70d6",palegoldenrod:"#eee8aa",palegreen:"#98fb98",paleturquoise:"#afeeee",palevioletred:"#d87093",papayawhip:"#ffefd5",peachpuff:"#ffdab9",peru:"#cd853f",pink:"#ffc0cb",plum:"#dda0dd",powderblue:"#b0e0e6",purple:"#800080",red:"#ff0000",rosybrown:"#bc8f8f",royalblue:"#4169e1",saddlebrown:"#8b4513",salmon:"#fa8072",sandybrown:"#f4a460",seagreen:"#2e8b57",seashell:"#fff5ee",sienna:"#a0522d",silver:"#c0c0c0",skyblue:"#87ceeb",slateblue:"#6a5acd",slategray:"#708090",snow:"#fffafa",springgreen:"#00ff7f",steelblue:"#4682b4",tan:"#d2b48c",teal:"#008080",thistle:"#d8bfd8",tomato:"#ff6347",turquoise:"#40e0d0",violet:"#ee82ee",wheat:"#f5deb3",white:"#ffffff",whitesmoke:"#f5f5f5",yellow:"#ffff00",yellowgreen:"#9acd32"};Combinator.prototype=new SyntaxUnit,Combinator.prototype.constructor=Combinator;var Level1Properties={background:1,"background-attachment":1,"background-color":1,"background-image":1,"background-position":1,"background-repeat":1,border:1,"border-bottom":1,"border-bottom-width":1,"border-color":1,"border-left":1,"border-left-width":1,"border-right":1,"border-right-width":1,"border-style":1,"border-top":1,"border-top-width":1,"border-width":1,clear:1,color:1,display:1,"float":1,font:1,"font-family":1,"font-size":1,"font-style":1,"font-variant":1,"font-weight":1,height:1,"letter-spacing":1,"line-height":1,"list-style":1,"list-style-image":1,"list-style-position":1,"list-style-type":1,margin:1,"margin-bottom":1,"margin-left":1,"margin-right":1,"margin-top":1,padding:1,"padding-bottom":1,"padding-left":1,"padding-right":1,"padding-top":1,"text-align":1,"text-decoration":1,"text-indent":1,"text-transform":1,"vertical-align":1,"white-space":1,width:1,"word-spacing":1},Level2Properties={azimuth:1,"cue-after":1,"cue-before":1,cue:1,elevation:1,"pause-after":1,"pause-before":1,pause:1,"pitch-range":1,pitch:1,"play-during":1,richness:1,"speak-header":1,"speak-numeral":1,"speak-punctuation":1,speak:1,"speech-rate":1,stress:1,"voice-family":1,volume:1,orphans:1,"page-break-after":1,"page-break-before":1,"page-break-inside":1,widows:1,cursor:1,"outline-color":1,"outline-style":1,"outline-width":1,outline:1,"background-attachment":1,"background-color":1,"background-image":1,"background-position":1,"background-repeat":1,background:1,"border-collapse":1,"border-color":1,"border-spacing":1,"border-style":1,"border-top":1,"border-top-color":1,"border-top-style":1,"border-top-width":1,"border-width":1,border:1,bottom:1,"caption-side":1,clear:1,clip:1,color:1,content:1,"counter-increment":1,"counter-reset":1,direction:1,display:1,"empty-cells":1,"float":1,"font-family":1,"font-size":1,"font-style":1,"font-variant":1,"font-weight":1,font:1,height:1,left:1,"letter-spacing":1,"line-height":1,"list-style-image":1,"list-style-position":1,"list-style-type":1,"list-style":1,"margin-right":1,"margin-top":1,margin:1,"max-height":1,"max-width":1,"min-height":1,"min-width":1,overflow:1,"padding-top":1,padding:1,position:1,quotes:1,right:1,"table-layout":1,"text-align":1,"text-decoration":1,"text-indent":1,"text-transform":1,top:1,"unicode-bidi":1,"vertical-align":1,visibility:1,"white-space":1,width:1,"word-spacing":1,"z-index":1};MediaFeature.prototype=new SyntaxUnit,MediaFeature.prototype.constructor=MediaFeature,MediaQuery.prototype=new SyntaxUnit,MediaQuery.prototype.constructor=MediaQuery,Parser.prototype=function(){var a=new EventTarget,b,c={constructor:Parser,_stylesheet:function(){var a=this._tokenStream,b=null,c,d;this.fire("startstylesheet"),this._charset(),this._skipCruft();while(a.peek()==Tokens.IMPORT_SYM)this._import(),this._skipCruft();while(a.peek()==Tokens.NAMESPACE_SYM)this._namespace(),this._skipCruft();d=a.peek();while(d>Tokens.EOF){try{switch(d){case Tokens.MEDIA_SYM:this._media(),this._skipCruft();break;case Tokens.PAGE_SYM:this._page(),this._skipCruft();break;case Tokens.FONT_FACE_SYM:this._font_face(),this._skipCruft();break;case Tokens.KEYFRAMES_SYM:this._keyframes(),this._skipCruft();break;case Tokens.S:this._readWhitespace();break;default:if(!this._ruleset())switch(d){case Tokens.CHARSET_SYM:throw c=a.LT(1),this._charset(!1),new SyntaxError("@charset not allowed here.",c.startLine,c.startCol);case Tokens.IMPORT_SYM:throw c=a.LT(1),this._import(!1),new SyntaxError("@import not allowed here.",c.startLine,c.startCol);case Tokens.NAMESPACE_SYM:throw c=a.LT(1),this._namespace(!1),new SyntaxError("@namespace not allowed here.",c.startLine,c.startCol);default:a.get(),this._unexpectedToken(a.token())}}}catch(e){if(e instanceof SyntaxError&&!this.options.strict)this.fire({type:"error",error:e,message:e.message,line:e.line,col:e.col});else throw e}d=a.peek()}d!=Tokens.EOF&&this._unexpectedToken(a.token()),this.fire("endstylesheet")},_charset:function(a){var b=this._tokenStream,c,d,e,f;b.match(Tokens.CHARSET_SYM)&&(e=b.token().startLine,f=b.token().startCol,this._readWhitespace(),b.mustMatch(Tokens.STRING),d=b.token(),c=d.value,this._readWhitespace(),b.mustMatch(Tokens.SEMICOLON),a!==!1&&this.fire({type:"charset",charset:c,line:e,col:f}))},_import:function(a){var b=this._tokenStream,c,d,e,f=[];b.mustMatch(Tokens.IMPORT_SYM),e=b.token(),this._readWhitespace(),b.mustMatch([Tokens.STRING,Tokens.URI]),d=b.token().value.replace(/(?:url\()?["']([^"']+)["']\)?/,"$1"),this._readWhitespace(),f=this._media_query_list(),b.mustMatch(Tokens.SEMICOLON),this._readWhitespace(),a!==!1&&this.fire({type:"import",uri:d,media:f,line:e.startLine,col:e.startCol})},_namespace:function(a){var b=this._tokenStream,c,d,e,f;b.mustMatch(Tokens.NAMESPACE_SYM),c=b.token().startLine,d=b.token().startCol,this._readWhitespace(),b.match(Tokens.IDENT)&&(e=b.token().value,this._readWhitespace()),b.mustMatch([Tokens.STRING,Tokens.URI]),f=b.token().value.replace(/(?:url\()?["']([^"']+)["']\)?/,"$1"),this._readWhitespace(),b.mustMatch(Tokens.SEMICOLON),this._readWhitespace(),a!==!1&&this.fire({type:"namespace",prefix:e,uri:f,line:c,col:d})},_media:function(){var a=this._tokenStream,b,c,d;a.mustMatch(Tokens.MEDIA_SYM),b=a.token().startLine,c=a.token().startCol,this._readWhitespace(),d=this._media_query_list(),a.mustMatch(Tokens.LBRACE),this._readWhitespace(),this.fire({type:"startmedia",media:d,line:b,col:c});for(;;)if(a.peek()==Tokens.PAGE_SYM)this._page();else if(!this._ruleset())break;a.mustMatch(Tokens.RBRACE),this._readWhitespace(),this.fire({type:"endmedia",media:d,line:b,col:c})},_media_query_list:function(){var a=this._tokenStream,b=[];this._readWhitespace(),(a.peek()==Tokens.IDENT||a.peek()==Tokens.LPAREN)&&b.push(this._media_query());while(a.match(Tokens.COMMA))this._readWhitespace(),b.push(this._media_query());return b},_media_query:function(){var a=this._tokenStream,b=null,c=null,d=null,e=[];a.match(Tokens.IDENT)&&(c=a.token().value.toLowerCase(),c!="only"&&c!="not"?(a.unget(),c=null):d=a.token()),this._readWhitespace(),a.peek()==Tokens.IDENT?(b=this._media_type(),d===null&&(d=a.token())):a.peek()==Tokens.LPAREN&&(d===null&&(d=a.LT(1)),e.push(this._media_expression()));if(b===null&&e.length===0)return null;this._readWhitespace();while(a.match(Tokens.IDENT))a.token().value.toLowerCase()!="and"&&this._unexpectedToken(a.token()),this._readWhitespace(),e.push(this._media_expression());return new MediaQuery(c,b,e,d.startLine,d.startCol)},_media_type:function(){return this._media_feature()},_media_expression:function(){var a=this._tokenStream,b=null,c,d=null;return a.mustMatch(Tokens.LPAREN),b=this._media_feature(),this._readWhitespace(),a.match(Tokens.COLON)&&(this._readWhitespace(),c=a.LT(1),d=this._expression()),a.mustMatch(Tokens.RPAREN),this._readWhitespace(),new MediaFeature(b,d?new SyntaxUnit(d,c.startLine,c.startCol):null)},_media_feature:function(){var a=this._tokenStream;return a.mustMatch(Tokens.IDENT),SyntaxUnit.fromToken(a.token())},_page:function(){var a=this._tokenStream,b,c,d=null,e=null;a.mustMatch(Tokens.PAGE_SYM),b=a.token().startLine,c=a.token().startCol,this._readWhitespace(),a.match(Tokens.IDENT)&&(d=a.token().value,d.toLowerCase()==="auto"&&this._unexpectedToken(a.token())),a.peek()==Tokens.COLON&&(e=this._pseudo_page()),this._readWhitespace(),this.fire({type:"startpage",id:d,pseudo:e,line:b,col:c}),this._readDeclarations(!0,!0),this.fire({type:"endpage",id:d,pseudo:e,line:b,col:c})},_margin:function(){var a=this._tokenStream,b,c,d=this._margin_sym();return d?(b=a.token().startLine,c=a.token().startCol,this.fire({type:"startpagemargin",margin:d,line:b,col:c}),this._readDeclarations(!0),this.fire({type:"endpagemargin",margin:d,line:b,col:c}),!0):!1},_margin_sym:function(){var a=this._tokenStream;return a.match([Tokens.TOPLEFTCORNER_SYM,Tokens.TOPLEFT_SYM,Tokens.TOPCENTER_SYM,Tokens.TOPRIGHT_SYM,Tokens.TOPRIGHTCORNER_SYM,Tokens.BOTTOMLEFTCORNER_SYM,Tokens.BOTTOMLEFT_SYM,Tokens.BOTTOMCENTER_SYM,Tokens.BOTTOMRIGHT_SYM,Tokens.BOTTOMRIGHTCORNER_SYM,Tokens.LEFTTOP_SYM,Tokens.LEFTMIDDLE_SYM,Tokens.LEFTBOTTOM_SYM,Tokens.RIGHTTOP_SYM,Tokens.RIGHTMIDDLE_SYM,Tokens.RIGHTBOTTOM_SYM])?SyntaxUnit.fromToken(a.token()):null},_pseudo_page:function(){var a=this._tokenStream;return a.mustMatch(Tokens.COLON),a.mustMatch(Tokens.IDENT),a.token().value},_font_face:function(){var a=this._tokenStream,b,c;a.mustMatch(Tokens.FONT_FACE_SYM),b=a.token().startLine,c=a.token().startCol,this._readWhitespace(),this.fire({type:"startfontface",line:b,col:c}),this._readDeclarations(!0),this.fire({type:"endfontface",line:b,col:c})},_operator:function(){var a=this._tokenStream,b=null;return a.match([Tokens.SLASH,Tokens.COMMA])&&(b=a.token(),this._readWhitespace()),b?PropertyValuePart.fromToken(b):null},_combinator:function(){var a=this._tokenStream,b=null,c;return a.match([Tokens.PLUS,Tokens.GREATER,Tokens.TILDE])&&(c=a.token(),b=new Combinator(c.value,c.startLine,c.startCol),this._readWhitespace()),b},_unary_operator:function(){var a=this._tokenStream;return a.match([Tokens.MINUS,Tokens.PLUS])?a.token().value:null},_property:function(){var a=this._tokenStream,b=null,c=null,d,e,f,g;return a.peek()==Tokens.STAR&&this.options.starHack&&(a.get(),e=a.token(),c=e.value,f=e.startLine,g=e.startCol),a.match(Tokens.IDENT)&&(e=a.token(),d=e.value,d.charAt(0)=="_"&&this.options.underscoreHack&&(c="_",d=d.substring(1)),b=new PropertyName(d,c,f||e.startLine,g||e.startCol),this._readWhitespace()),b},_ruleset:function(){var a=this._tokenStream,b,c;try{c=this._selectors_group()}catch(d){if(d instanceof SyntaxError&&!this.options.strict){this.fire({type:"error",error:d,message:d.message,line:d.line,col:d.col}),b=a.advance([Tokens.RBRACE]);if(b!=Tokens.RBRACE)throw d;return!0}throw d}return c&&(this.fire({type:"startrule",selectors:c,line:c[0].line,col:c[0].col}),this._readDeclarations(!0),this.fire({type:"endrule",selectors:c,line:c[0].line,col:c[0].col})),c},_selectors_group:function(){var a=this._tokenStream,b=[],c;c=this._selector();if(c!==null){b.push(c);while(a.match(Tokens.COMMA))this._readWhitespace(),c=this._selector(),c!==null?b.push(c):this._unexpectedToken(a.LT(1))}return b.length?b:null},_selector:function(){var a=this._tokenStream,b=[],c=null,d=null,e=null;c=this._simple_selector_sequence();if(c===null)return null;b.push(c);do{d=this._combinator();if(d!==null)b.push(d),c=this._simple_selector_sequence(),c===null?this._unexpectedToken(this.LT(1)):b.push(c);else if(this._readWhitespace())e=new Combinator(a.token().value,a.token().startLine,a.token().startCol),d=this._combinator(),c=this._simple_selector_sequence(),c===null?d!==null&&this._unexpectedToken(a.LT(1)):(d!==null?b.push(d):b.push(e),b.push(c));else break}while(!0);return new Selector(b,b[0].line,b[0].col)},_simple_selector_sequence:function(){var a=this._tokenStream,b=null,c=[],d="",e=[function(){return a.match(Tokens.HASH)?new SelectorSubPart(a.token().value,"id",a.token().startLine,a.token().startCol):null},this._class,this._attrib,this._pseudo,this._negation],f=0,g=e.length,h=null,i=!1,j,k;j=a.LT(1).startLine,k=a.LT(1).startCol,b=this._type_selector(),b||(b=this._universal()),b!==null&&(d+=b);for(;;){if(a.peek()===Tokens.S)break;while(f<g&&h===null)h=e[f++].call(this);if(h===null){if(d==="")return null;break}f=0,c.push(h),d+=h.toString(),h=null}return d!==""?new SelectorPart(b,c,d,j,k):null},_type_selector:function(){var a=this._tokenStream,b=this._namespace_prefix(),c=this._element_name();return c?(b&&(c.text=b+c.text,c.col-=b.length),c):(b&&(a.unget(),b.length>1&&a.unget()),null)},_class:function(){var a=this._tokenStream,b;return a.match(Tokens.DOT)?(a.mustMatch(Tokens.IDENT),b=a.token(),new SelectorSubPart("."+b.value,"class",b.startLine,b.startCol-1)):null},_element_name:function(){var a=this._tokenStream,b;return a.match(Tokens.IDENT)?(b=a.token(),new SelectorSubPart(b.value,"elementName",b.startLine,b.startCol)):null},_namespace_prefix:function(){var a=this._tokenStream,b="";if(a.LA(1)===Tokens.PIPE||a.LA(2)===Tokens.PIPE)a.match([Tokens.IDENT,Tokens.STAR])&&(b+=a.token().value),a.mustMatch(Tokens.PIPE),b+="|";return b.length?b:null},_universal:function(){var a=this._tokenStream,b="",c;return c=this._namespace_prefix(),c&&(b+=c),a.match(Tokens.STAR)&&(b+="*"),b.length?b:null},_attrib:function(){var a=this._tokenStream,b=null,c,d;return a.match(Tokens.LBRACKET)?(d=a.token(),b=d.value,b+=this._readWhitespace(),c=this._namespace_prefix(),c&&(b+=c),a.mustMatch(Tokens.IDENT),b+=a.token().value,b+=this._readWhitespace(),a.match([Tokens.PREFIXMATCH,Tokens.SUFFIXMATCH,Tokens.SUBSTRINGMATCH,Tokens.EQUALS,Tokens.INCLUDES,Tokens.DASHMATCH])&&(b+=a.token().value,b+=this._readWhitespace(),a.mustMatch([Tokens.IDENT,Tokens.STRING]),b+=a.token().value,b+=this._readWhitespace()),a.mustMatch(Tokens.RBRACKET),new SelectorSubPart(b+"]","attribute",d.startLine,d.startCol)):null},_pseudo:function(){var a=this._tokenStream,b=null,c=":",d,e;return a.match(Tokens.COLON)&&(a.match(Tokens.COLON)&&(c+=":"),a.match(Tokens.IDENT)?(b=a.token().value,d=a.token().startLine,e=a.token().startCol-c.length):a.peek()==Tokens.FUNCTION&&(d=a.LT(1).startLine,e=a.LT(1).startCol-c.length,b=this._functional_pseudo()),b&&(b=new SelectorSubPart(c+b,"pseudo",d,e))),b},_functional_pseudo:function(){var a=this._tokenStream,b=null;return a.match(Tokens.FUNCTION)&&(b=a.token().value,b+=this._readWhitespace(),b+=this._expression(),a.mustMatch(Tokens.RPAREN),b+=")"),b},_expression:function(){var a=this._tokenStream,b="";while(a.match([Tokens.PLUS,Tokens.MINUS,Tokens.DIMENSION,Tokens.NUMBER,Tokens.STRING,Tokens.IDENT,Tokens.LENGTH,Tokens.FREQ,Tokens.ANGLE,Tokens.TIME,Tokens.RESOLUTION]))b+=a.token().value,b+=this._readWhitespace();return b.length?b:null},_negation:function(){var a=this._tokenStream,b,c,d="",e,f=null;return a.match(Tokens.NOT)&&(d=a.token().value,b=a.token().startLine,c=a.token().startCol,d+=this._readWhitespace(),e=this._negation_arg(),d+=e,d+=this._readWhitespace(),a.match(Tokens.RPAREN),d+=a.token().value,f=new SelectorSubPart(d,"not",b,c),f.args.push(e)),f},_negation_arg:function(){var a=this._tokenStream,b=[this._type_selector,this._universal,function(){return a.match(Tokens.HASH)?new SelectorSubPart(a.token().value,"id",a.token().startLine,a.token().startCol):null},this._class,this._attrib,this._pseudo],c=null,d=0,e=b.length,f,g,h,i;g=a.LT(1).startLine,h=a.LT(1).startCol;while(d<e&&c===null)c=b[d].call(this),d++;return c===null&&this._unexpectedToken(a.LT(1)),c.type=="elementName"?i=new SelectorPart(c,[],c.toString(),g,h):i=new SelectorPart(null,[c],c.toString(),g,h),i},_declaration:function(){var a=this._tokenStream,b=null,c=null,d=null;return b=this._property(),b!==null?(a.mustMatch(Tokens.COLON),this._readWhitespace(),c=this._expr(),(!c||c.length===0)&&this._unexpectedToken(a.LT(1)),d=this._prio(),this.fire({type:"property",property:b,value:c,important:d,line:b.line,col:b.col}),!0):!1},_prio:function(){var a=this._tokenStream,b=a.match(Tokens.IMPORTANT_SYM);return this._readWhitespace(),b},_expr:function(){var a=this._tokenStream,b=[],c=null,d=null;c=this._term();if(c!==null){b.push(c);do{d=this._operator(),d&&b.push(d),c=this._term();if(c===null)break;b.push(c)}while(!0)}return b.length>0?new PropertyValue(b,b[0].startLine,b[0].startCol):null},_term:function(){var a=this._tokenStream,b=null,c=null,d,e;return b=this._unary_operator(),b!==null&&(d=a.token().startLine,e=a.token().startCol),a.peek()==Tokens.IE_FUNCTION&&this.options.ieFilters?(c=this._ie_function(),b===null&&(d=a.token().startLine,e=a.token().startCol)):a.match([Tokens.NUMBER,Tokens.PERCENTAGE,Tokens.LENGTH,Tokens.ANGLE,Tokens.TIME,Tokens.FREQ,Tokens.STRING,Tokens.IDENT,Tokens.URI,Tokens.UNICODE_RANGE])?(c=a.token().value,b===null&&(d=a.token().startLine,e=a.token().startCol),this._readWhitespace()):(c=this._hexcolor(),c===null?(b===null&&(d=a.LT(1).startLine,e=a.LT(1).startCol),c===null&&(a.LA(3)==Tokens.EQUALS&&this.options.ieFilters?c=this._ie_function():c=this._function())):b===null&&(d=a.token().startLine,e=a.token().startCol)),c!==null?new PropertyValuePart(b!==null?b+c:c,d,e):null},_function:function(){var a=this._tokenStream,b=null,c=null;return a.match(Tokens.FUNCTION)&&(b=a.token().value,this._readWhitespace(),c=this._expr(),a.match(Tokens.RPAREN),b+=c+")",this._readWhitespace()),b},_ie_function:function(){var a=this._tokenStream,b=null,c=null,d;if(a.match([Tokens.IE_FUNCTION,Tokens.FUNCTION])){b=a.token().value;do{this._readWhitespace()&&(b+=a.token().value),a.LA(0)==Tokens.COMMA&&(b+=a.token().value),a.match(Tokens.IDENT),b+=a.token().value,a.match(Tokens.EQUALS),b+=a.token().value,d=a.peek();while(d!=Tokens.COMMA&&d!=Tokens.S&&d!=Tokens.RPAREN)a.get(),b+=a.token().value,d=a.peek()}while(a.match([Tokens.COMMA,Tokens.S]));a.match(Tokens.RPAREN),b+=")",this._readWhitespace()}return b},_hexcolor:function(){var a=this._tokenStream,b,c=null;if(a.match(Tokens.HASH)){b=a.token(),c=b.value;if(!/#[a-f0-9]{3,6}/i.test(c))throw new SyntaxError("Expected a hex color but found '"+c+"' at line "+b.startLine+", col "+b.startCol+".",b.startLine,b.startCol);this._readWhitespace()}return c},_keyframes:function(){var a=this._tokenStream,b,c,d;a.mustMatch(Tokens.KEYFRAMES_SYM),this._readWhitespace(),d=this._keyframe_name(),this._readWhitespace(),a.mustMatch(Tokens.LBRACE),this.fire({type:"startkeyframes",name:d,line:d.line,col:d.col}),this._readWhitespace(),c=a.peek();while(c==Tokens.IDENT||c==Tokens.PERCENTAGE)this._keyframe_rule(),this._readWhitespace(),c=a.peek();this.fire({type:"endkeyframes",name:d,line:d.line,col:d.col}),this._readWhitespace(),a.mustMatch(Tokens.RBRACE)},_keyframe_name:function(){var a=this._tokenStream,b;return a.mustMatch([Tokens.IDENT,Tokens.STRING]),SyntaxUnit.fromToken(a.token())},_keyframe_rule:function(){var a=this._tokenStream,b,c=this._key_list();this.fire({type:"startkeyframerule",keys:c,line:c[0].line,col:c[0].col}),this._readDeclarations(!0),this.fire({type:"endkeyframerule",keys:c,line:c[0].line,col:c[0].col})},_key_list:function(){var a=this._tokenStream,b,c,d=[];d.push(this._key()),this._readWhitespace();while(a.match(Tokens.COMMA))this._readWhitespace(),d.push(this._key()),this._readWhitespace();return d},_key:function(){var a=this._tokenStream,b;if(a.match(Tokens.PERCENTAGE))return SyntaxUnit.fromToken(a.token());if(a.match(Tokens.IDENT)){b=a.token();if(/from|to/i.test(b.value))return SyntaxUnit.fromToken(b);a.unget()}this._unexpectedToken(a.LT(1))},_skipCruft:function(){while(this._tokenStream.match([Tokens.S,Tokens.CDO,Tokens.CDC]));},_readDeclarations:function(a,b){var c=this._tokenStream,d;this._readWhitespace(),a&&c.mustMatch(Tokens.LBRACE),this._readWhitespace();try{for(;;){if(!b||!this._margin()){if(!this._declaration())break;if(!c.match(Tokens.SEMICOLON))break}this._readWhitespace()}c.mustMatch(Tokens.RBRACE),this._readWhitespace()}catch(e){if(!(e instanceof SyntaxError&&!this.options.strict))throw e;this.fire({type:"error",error:e,message:e.message,line:e.line,col:e.col}),d=c.advance([Tokens.SEMICOLON,Tokens.RBRACE]);if(d==Tokens.SEMICOLON)this._readDeclarations(!1,b);else if(d!=Tokens.RBRACE)throw e}},_readWhitespace:function(){var a=this._tokenStream,b="";while(a.match(Tokens.S))b+=a.token().value;return b},_unexpectedToken:function(a){throw new SyntaxError("Unexpected token '"+a.value+"' at line "+a.startLine+", col "+a.startCol+".",a.startLine,a.startCol)},_verifyEnd:function(){this._tokenStream.LA(1)!=Tokens.EOF&&this._unexpectedToken(this._tokenStream.LT(1))},parse:function(a){this._tokenStream=new TokenStream(a,Tokens),this._stylesheet()},parseStyleSheet:function(a){return this.parse(a)},parseMediaQuery:function(a){this._tokenStream=new TokenStream(a,Tokens);var b=this._media_query();return this._verifyEnd(),b},parsePropertyValue:function(a){this._tokenStream=new TokenStream(a,Tokens),this._readWhitespace();var b=this._expr();return this._readWhitespace(),this._verifyEnd(),b},parseRule:function(a){this._tokenStream=new TokenStream(a,Tokens),this._readWhitespace();var b=this._ruleset();return this._readWhitespace(),this._verifyEnd(),b},parseSelector:function(a){this._tokenStream=new TokenStream(a,Tokens),this._readWhitespace();var b=this._selector();return this._readWhitespace(),this._verifyEnd(),b}};for(b in c)a[b]=c[b];return a}(),PropertyName.prototype=new SyntaxUnit,PropertyName.prototype.constructor=PropertyName,PropertyValue.prototype=new SyntaxUnit,PropertyValue.prototype.constructor=PropertyValue,PropertyValuePart.prototype=new SyntaxUnit,PropertyValuePart.prototype.constructor=PropertyValue,PropertyValuePart.fromToken=function(a){return new PropertyValuePart(a.value,a.startLine,a.startCol)},Selector.prototype=new SyntaxUnit,Selector.prototype.constructor=Selector,SelectorPart.prototype=new SyntaxUnit,SelectorPart.prototype.constructor=SelectorPart,SelectorSubPart.prototype=new SyntaxUnit,SelectorSubPart.prototype.constructor=SelectorSubPart;var h=/^[0-9a-fA-F]$/,nonascii=/^[\u0080-\uFFFF]$/,nl=/\n|\r\n|\r|\f/;TokenStream.prototype=mix(new TokenStreamBase,{_getToken:function(a){var b,c=this._reader,d=null,e=c.getLine(),f=c.getCol();b=c.read();while(b){switch(b){case"/":c.peek()=="*"?d=this.commentToken(b,e,f):d=this.charToken(b,e,f);break;case"|":case"~":case"^":case"$":case"*":c.peek()=="="?d=this.comparisonToken(b,e,f):d=this.charToken(b,e,f);break;case'"':case"'":d=this.stringToken(b,e,f);break;case"#":isNameChar(c.peek())?d=this.hashToken(b,e,f):d=this.charToken(b,e,f);break;case".":isDigit(c.peek())?d=this.numberToken(b,e,f):d=this.charToken(b,e,f);break;case"-":c.peek()=="-"?d=this.htmlCommentEndToken(b,e,f):isNameStart(c.peek())?d=this.identOrFunctionToken(b,e,f):d=this.charToken(b,e,f);break;case"!":d=this.importantToken(b,e,f);break;case"@":d=this.atRuleToken(b,e,f);break;case":":d=this.notToken(b,e,f);break;case"<":d=this.htmlCommentStartToken(b,e,f);break;case"U":case"u":if(c.peek()=="+"){d=this.unicodeRangeToken(b,e,f);break};default:isDigit(b)?d=this.numberToken(b,e,f):isWhitespace(b)?d=this.whitespaceToken(b,e,f):isIdentStart(b)?d=this.identOrFunctionToken(b,e,f):d=this.charToken(b,e,f)}break}return!d&&b==null&&(d=this.createToken(Tokens.EOF,null,e,f)),d},createToken:function(a,b,c,d,e){var f=this._reader;return e=e||{},{value:b,type:a,channel:e.channel,hide:e.hide||!1,startLine:c,startCol:d,endLine:f.getLine(),endCol:f.getCol()}},atRuleToken:function(a,b,c){var d=a,e=this._reader,f=Tokens.CHAR,g=!1,h,i;e.mark(),h=this.readName(),d=a+h,f=Tokens.type(d.toLowerCase());if(f==Tokens.CHAR||f==Tokens.UNKNOWN)f=Tokens.CHAR,d=a,e.reset();return this.createToken(f,d,b,c)},charToken:function(a,b,c){var d=Tokens.type(a);return d==-1&&(d=Tokens.CHAR),this.createToken(d,a,b,c)},commentToken:function(a,b,c){var d=this._reader,e=this.readComment(a);return this.createToken(Tokens.COMMENT,e,b,c)},comparisonToken:function(a,b,c){var d=this._reader,e=a+d.read(),f=Tokens.type(e)||Tokens.CHAR;return this.createToken(f,e,b,c)},hashToken:function(a,b,c){var d=this._reader,e=this.readName(a);return this.createToken(Tokens.HASH,e,b,c)},htmlCommentStartToken:function(a,b,c){var d=this._reader,e=a;return d.mark(),e+=d.readCount(3),e=="<!--"?this.createToken(Tokens.CDO,e,b,c):(d.reset(),this.charToken(a,b,c))},htmlCommentEndToken:function(a,b,c){var d=this._reader,e=a;return d.mark(),e+=d.readCount(2),e=="-->"?this.createToken(Tokens.CDC,e,b,c):(d.reset(),this.charToken(a,b,c))},identOrFunctionToken:function(a,b,c){var d=this._reader,e=this.readName(a),f=Tokens.IDENT;return d.peek()=="("?(e+=d.read(),e.toLowerCase()=="url("?(f=Tokens.URI,e=this.readURI(e),e.toLowerCase()=="url("&&(f=Tokens.FUNCTION)):f=Tokens.FUNCTION):d.peek()==":"&&e.toLowerCase()=="progid"&&(e+=d.readTo("("),f=Tokens.IE_FUNCTION),this.createToken(f,e,b,c)},importantToken:function(a,b,c){var d=this._reader,e=a,f=Tokens.CHAR,g,h;d.mark(),h=d.read();while(h){if(h=="/"){if(d.peek()!="*")break;g=this.readComment(h);if(g=="")break}else if(isWhitespace(h))e+=h+this.readWhitespace();else{if(/i/i.test(h)){g=d.readCount(8),/mportant/i.test(g)&&(e+=h+g,f=Tokens.IMPORTANT_SYM);break}break}h=d.read()}return f==Tokens.CHAR?(d.reset(),this.charToken(a,b,c)):this.createToken(f,e,b,c)},notToken:function(a,b,c){var d=this._reader,e=a;return d.mark(),e+=d.readCount(4),e.toLowerCase()==":not("?this.createToken(Tokens.NOT,e,b,c):(d.reset(),this.charToken(a,b,c))},numberToken:function(a,b,c){var d=this._reader,e=this.readNumber(a),f,g=Tokens.NUMBER,h=d.peek();return isIdentStart(h)?(f=this.readName(d.read()),e+=f,/^em$|^ex$|^px$|^gd$|^rem$|^vw$|^vh$|^vm$|^ch$|^cm$|^mm$|^in$|^pt$|^pc$/i.test(f)?g=Tokens.LENGTH:/^deg|^rad$|^grad$/i.test(f)?g=Tokens.ANGLE:/^ms$|^s$/i.test(f)?g=Tokens.TIME:/^hz$|^khz$/i.test(f)?g=Tokens.FREQ:/^dpi$|^dpcm$/i.test(f)?g=Tokens.RESOLUTION:g=Tokens.DIMENSION):h=="%"&&(e+=d.read(),g=Tokens.PERCENTAGE),this.createToken(g,e,b,c)},stringToken:function(a,b,c){var d=a,e=a,f=this._reader,g=a,h=Tokens.STRING,i=f.read();while(i){e+=i;if(i==d&&g!="\\")break;if(isNewLine(f.peek())&&i!="\\"){h=Tokens.INVALID;break}g=i,i=f.read()}return i==null&&(h=Tokens.INVALID),this.createToken(h,e,b,c)},unicodeRangeToken:function(a,b,c){var d=this._reader,e=a,f,g=Tokens.CHAR;return d.peek()=="+"&&(d.mark(),e+=d.read(),e+=this.readUnicodeRangePart(!0),e.length==2?d.reset():(g=Tokens.UNICODE_RANGE,e.indexOf("?")==-1&&d.peek()=="-"&&(d.mark(),f=d.read(),f+=this.readUnicodeRangePart(!1),f.length==1?d.reset():e+=f))),this.createToken(g,e,b,c)},whitespaceToken:function(a,b,c){var d=this._reader,e=a+this.readWhitespace();return this.createToken(Tokens.S,e,b,c)},readUnicodeRangePart:function(a){var b=this._reader,c="",d=b.peek();while(isHexDigit(d)&&c.length<6)b.read(),c+=d,d=b.peek();if(a)while(d=="?"&&c.length<6)b.read(),c+=d,d=b.peek();return c},readWhitespace:function(){var a=this._reader,b="",c=a.peek();while(isWhitespace(c))a.read(),b+=c,c=a.peek();return b},readNumber:function(a){var b=this._reader,c=a,d=a==".",e=b.peek();while(e){if(isDigit(e))c+=b.read();else{if(e!=".")break;if(d)break;d=!0,c+=b.read()}e=b.peek()}return c},readString:function(){var a=this._reader,b=a.read(),c=b,d=b,e=a.peek();while(e){e=a.read(),c+=e;if(e==b&&d!="\\")break;if(isNewLine(a.peek())&&e!="\\"){c="";break}d=e,e=a.peek()}return e==null&&(c=""),c},readURI:function(a){var b=this._reader,c=a,d="",e=b.peek();b.mark();while(e&&isWhitespace(e))b.read(),e=b.peek();e=="'"||e=='"'?d=this.readString():d=this.readURL(),e=b.peek();while(e&&isWhitespace(e))b.read(),e=b.peek();return d==""||e!=")"?(c=a,b.reset()):c+=d+b.read(),c},readURL:function(){var a=this._reader,b="",c=a.peek();while(/^[!#$%&\\*-~]$/.test(c))b+=a.read(),c=a.peek();return b},readName:function(a){var b=this._reader,c=a||"",d=b.peek();for(;;)if(d=="\\")c+=this.readEscape(b.read()),d=b.peek();else if(d&&isNameChar(d))c+=b.read(),d=b.peek();else break;return c},readEscape:function(a){var b=this._reader,c=a||"",d=0,e=b.peek();if(isHexDigit(e))do c+=b.read(),e=b.peek();while(e&&isHexDigit(e)&&++d<6);return c.length==3&&/\s/.test(e)||c.length==7||c.length==1?b.read():e="",c+e},readComment:function(a){var b=this._reader,c=a||"",d=b.read();if(d=="*"){while(d){c+=d;if(d=="*"&&b.peek()=="/"){c+=b.read();break}d=b.read()}return c}return""}});var Tokens=[{name:"CDO"},{name:"CDC"},{name:"S",whitespace:!0},{name:"COMMENT",comment:!0,hide:!0,channel:"comment"},{name:"INCLUDES",text:"~="},{name:"DASHMATCH",text:"|="},{name:"PREFIXMATCH",text:"^="},{name:"SUFFIXMATCH",text:"$="},{name:"SUBSTRINGMATCH",text:"*="},{name:"STRING"},{name:"IDENT"},{name:"HASH"},{name:"IMPORT_SYM",text:"@import"},{name:"PAGE_SYM",text:"@page"},{name:"MEDIA_SYM",text:"@media"},{name:"FONT_FACE_SYM",text:"@font-face"},{name:"CHARSET_SYM",text:"@charset"},{name:"NAMESPACE_SYM",text:"@namespace"},{name:"KEYFRAMES_SYM",text:["@keyframes","@-webkit-keyframes","@-moz-keyframes"]},{name:"IMPORTANT_SYM"},{name:"LENGTH"},{name:"ANGLE"},{name:"TIME"},{name:"FREQ"},{name:"DIMENSION"},{name:"PERCENTAGE"},{name:"NUMBER"},{name:"URI"},{name:"FUNCTION"},{name:"UNICODE_RANGE"},{name:"INVALID"},{name:"PLUS",text:"+"},{name:"GREATER",text:">"},{name:"COMMA",text:","},{name:"TILDE",text:"~"},{name:"NOT"},{name:"TOPLEFTCORNER_SYM",text:"@top-left-corner"},{name:"TOPLEFT_SYM",text:"@top-left"},{name:"TOPCENTER_SYM",text:"@top-center"},{name:"TOPRIGHT_SYM",text:"@top-right"},{name:"TOPRIGHTCORNER_SYM",text:"@top-right-corner"},{name:"BOTTOMLEFTCORNER_SYM",text:"@bottom-left-corner"},{name:"BOTTOMLEFT_SYM",text:"@bottom-left"},{name:"BOTTOMCENTER_SYM",text:"@bottom-center"},{name:"BOTTOMRIGHT_SYM",text:"@bottom-right"},{name:"BOTTOMRIGHTCORNER_SYM",text:"@bottom-right-corner"},{name:"LEFTTOP_SYM",text:"@left-top"},{name:"LEFTMIDDLE_SYM",text:"@left-middle"},{name:"LEFTBOTTOM_SYM",text:"@left-bottom"},{name:"RIGHTTOP_SYM",text:"@right-top"},{name:"RIGHTMIDDLE_SYM",text:"@right-middle"},{name:"RIGHTBOTTOM_SYM",text:"@right-bottom"},{name:"RESOLUTION",state:"media"},{name:"IE_FUNCTION"},{name:"CHAR"},{name:"PIPE",text:"|"},{name:"SLASH",text:"/"},{name:"MINUS",text:"-"},{name:"STAR",text:"*"},{name:"LBRACE",text:"{"},{name:"RBRACE",text:"}"},{name:"LBRACKET",text:"["},{name:"RBRACKET",text:"]"},{name:"EQUALS",text:"="},{name:"COLON",text:":"},{name:"SEMICOLON",text:";"},{name:"LPAREN",text:"("},{name:"RPAREN",text:")"},{name:"DOT",text:"."}];(function(){var a=[],b={};Tokens.UNKNOWN=-1,Tokens.unshift({name:"EOF"});for(var c=0,d=Tokens.length;c<d;c++){a.push(Tokens[c].name),Tokens[Tokens[c].name]=c;if(Tokens[c].text)if(Tokens[c].text instanceof Array)for(var e=0;e<Tokens[c].text.length;e++)b[Tokens[c].text[e]]=c;else b[Tokens[c].text]=c}Tokens.name=function(b){return a[b]},Tokens.type=function(a){return b[a]||-1}})(),parserlib.css={Colors:Colors,Combinator:Combinator,Parser:Parser,PropertyName:PropertyName,PropertyValue:PropertyValue,PropertyValuePart:PropertyValuePart,MediaFeature:MediaFeature,MediaQuery:MediaQuery,Selector:Selector,SelectorPart:SelectorPart,SelectorSubPart:SelectorSubPart,TokenStream:TokenStream,Tokens:Tokens}}();var CSSLint=function(){var a=[],b=[],c=new parserlib.util.EventTarget;return c.version="@VERSION@",c.addRule=function(b){a.push(b),a[b.id]=b},c.clearRules=function(){a=[]},c.addFormatter=function(a){b[a.id]=a},c.getFormatter=function(a){return b[a]},c.format=function(a,b,c){var d=this.getFormatter(c),e=null;return d&&(e=d.startFormat(),e+=d.formatResults(a,b),e+=d.endFormat()),e},c.hasFormat=function(a){return b.hasOwnProperty(a)},c.verify=function(b,c){var d=0,e=a.length,f,g,h=new parserlib.css.Parser({starHack:!0,ieFilters:!0,underscoreHack:!0,strict:!1});g=b.split(/\n\r?/g),f=new Reporter(g);if(!c)while(d<e)a[d++].init(h,f);else{c.errors=1;for(d in c)c.hasOwnProperty(d)&&a[d]&&a[d].init(h,f)}try{h.parse(b)}catch(i){f.error("Fatal error, cannot continue: "+i.message,i.line,i.col)}return{messages:f.messages,stats:f.stats}},c}();Reporter.prototype={constructor:Reporter,error:function(a,b,c,d){this.messages.push({type:"error",line:b,col:c,message:a,evidence:this.lines[b-1],rule:d})},warn:function(a,b,c,d){this.messages.push({type:"warning",line:b,col:c,message:a,evidence:this.lines[b-1],rule:d})},info:function(a,b,c,d){this.messages.push({type:"info",line:b,col:c,message:a,evidence:this.lines[b-1],rule:d})},rollupError:function(a,b){this.messages.push({type:"error",rollup:!0,message:a,rule:b})},rollupWarn:function(a,b){this.messages.push({type:"warning",rollup:!0,message:a,rule:b})},stat:function(a,b){this.stats[a]=b}},CSSLint.addRule({id:"adjoining-classes",name:"Adjoining Classes",desc:"Don't use adjoining classes.",browsers:"IE6",init:function(a,b){var c=this;a.addListener("startrule",function(a){var d=a.selectors,e,f,g,h,i,j,k;for(i=0;i<d.length;i++){e=d[i];for(j=0;j<e.parts.length;j++){f=e.parts[j];if(f instanceof parserlib.css.SelectorPart){h=0;for(k=0;k<f.modifiers.length;k++)g=f.modifiers[k],g.type=="class"&&h++,h>1&&b.warn("Don't use adjoining classes.",f.line,f.col,c)}}}})}}),CSSLint.addRule({id:"box-model",name:"Box Model",desc:"Don't use width or height when using padding or border.",browsers:"All",init:function(a,b){var c=this,d={border:1,"border-left":1,"border-right":1,padding:1,"padding-left":1,"padding-right":1},e={border:1,"border-bottom":1,"border-top":1,padding:1,"padding-bottom":1,"padding-top":1},f;a.addListener("startrule",function(){f={}}),a.addListener("property",function(a){var b=a.property.text.toLowerCase();if(e[b]||d[b])!/^0\S*$/.test(a.value)&&(b!="border"||a.value!="none")&&(f[b]={line:a.property.line,col:a.property.col,value:a.value});else if(b=="width"||b=="height")f[b]=1}),a.addListener("endrule",function(){var a;if(f.height)for(a in e)e.hasOwnProperty(a)&&f[a]&&(a!="padding"||f[a].value.parts.length!=2||f[a].value.parts[0].value!=0)&&b.warn("Broken box model: using height with "+a+".",f[a].line,f[a].col,c);if(f.width)for(a in d)d.hasOwnProperty(a)&&f[a]&&(a!="padding"||f[a].value.parts.length!=2||f[a].value.parts[1].value!=0)&&b.warn("Broken box model: using width with "+a+".",f[a].line,f[a].col,c)})}}),CSSLint.addRule({id:"compatible-vendor-prefixes",name:"Compatible Vendor Prefixes",desc:"Include all compatible vendor prefixes to reach a wider range of users.",browsers:"All",init:function(a,b){var c=this,d,e,f,g,h,i,j,k=Array.prototype.push,l=[];d={animation:"webkit moz","animation-delay":"webkit moz","animation-direction":"webkit moz","animation-duration":"webkit moz","animation-fill-mode":"webkit moz","animation-iteration-count":"webkit moz","animation-name":"webkit moz","animation-play-state":"webkit moz","animation-timing-function":"webkit moz",appearance:"webkit moz","border-end":"webkit moz","border-end-color":"webkit moz","border-end-style":"webkit moz","border-end-width":"webkit moz","border-image":"webkit moz o","border-radius":"webkit moz","border-start":"webkit moz","border-start-color":"webkit moz","border-start-style":"webkit moz","border-start-width":"webkit moz","box-align":"webkit moz ms","box-direction":"webkit moz ms","box-flex":"webkit moz ms","box-lines":"webkit ms","box-ordinal-group":"webkit moz ms","box-orient":"webkit moz ms","box-pack":"webkit moz ms","box-sizing":"webkit moz","box-shadow":"webkit moz","column-count":"webkit moz","column-gap":"webkit moz","column-rule":"webkit moz","column-rule-color":"webkit moz","column-rule-style":"webkit moz","column-rule-width":"webkit moz","column-width":"webkit moz",hyphens:"epub moz","line-break":"webkit ms","margin-end":"webkit moz","margin-start":"webkit moz","marquee-speed":"webkit wap","marquee-style":"webkit wap","padding-end":"webkit moz","padding-start":"webkit moz","tab-size":"moz o","text-size-adjust":"webkit ms",transform:"webkit moz ms o","transform-origin":"webkit moz ms o",transition:"webkit moz o","transition-delay":"webkit moz o","transition-duration":"webkit moz o","transition-property":"webkit moz o","transition-timing-function":"webkit moz o","user-modify":"webkit moz","user-select":"webkit moz","word-break":"epub ms","writing-mode":"epub ms"};for(f in d)if(d.hasOwnProperty(f)){g=[],h=d[f].split(" ");for(i=0,j=h.length;i<j;i++)g.push("-"+h[i]+"-"+f);d[f]=g,k.apply(l,g)}a.addListener("startrule",function(){e=[]}),a.addListener("property",function(a){var b=a.property.text;l.indexOf(b)>-1&&e.push(b)}),a.addListener("endrule",function(a){if(!e.length)return;var f={},g,h,i,j,k,l,m,n,o,p;for(g=0,h=e.length;g<h;g++){i=e[g];for(j in d)d.hasOwnProperty(j)&&(k=d[j],k.indexOf(i)>-1&&(f[j]===undefined&&(f[j]={full:k.slice(0),actual:[]}),f[j].actual.indexOf(i)===-1&&f[j].actual.push(i)))}for(j in f)if(f.hasOwnProperty(j)){l=f[j],m=l.full,n=l.actual;if(m.length>n.length)for(g=0,h=m.length;g<h;g++)o=m[g],n.indexOf(o)===-1&&(p=n.length===1?n[0]:n.length==2?n.join(" and "):n.join(", "),b.warn("The property "+o+" is compatible with "+p+" and should be included as well.",a.selectors[0].line,a.selectors[0].col,c))}})}}),CSSLint.addRule({id:"display-property-grouping",name:"Display Property Grouping",desc:"Certain properties shouldn't be used with certain display property values.",browsers:"All",init:function(a,b){function f(a,f,g){e[a]&&(typeof d[a]!="string"||e[a].value.toLowerCase()!=d[a])&&b.warn(g||a+" can't be used with display: "+f+".",e[a].line,e[a].col,c)}var c=this,d={display:1,"float":"none",height:1,width:1,margin:1,"margin-left":1,"margin-right":1,"margin-bottom":1,"margin-top":1,padding:1,"padding-left":1,"padding-right":1,"padding-bottom":1,"padding-top":1,"vertical-align":1},e;a.addListener("startrule",function(){e={}}),a.addListener("property",function(a){var b=a.property.text.toLowerCase();d[b]&&(e[b]={value:a.value.text,line:a.property.line,col:a.property.col})}),a.addListener("endrule",function(){var a=e.display?e.display.value:null;if(a)switch(a){case"inline":f("height",a),f("width",a),f("margin",a),f("margin-top",a),f("margin-bottom",a),f("float",a,"display:inline has no effect on floated elements (but may be used to fix the IE6 double-margin bug).");break;case"block":f("vertical-align",a);break;case"inline-block":f("float",a);break;default:a.indexOf("table-")==0&&(f("margin",a),f("margin-left",a),f("margin-right",a),f("margin-top",a),f("margin-bottom",a),f("float",a))}})}}),CSSLint.addRule({id:"duplicate-properties",name:"Duplicate Properties",desc:"Duplicate properties must appear one after the other.",browsers:"All",init:function(a,b){function f(a){d={}}var c=this,d,e;a.addListener("startrule",f),a.addListener("startfontface",f),a.addListener("startpage",f),a.addListener("property",function(a){var f=a.property,g=f.text.toLowerCase();d[g]&&(e!=g||d[g]==a.value.text)&&b.warn("Duplicate property '"+a.property+"' found.",a.line,a.col,c),d[g]=a.value.text,e=g})}}),CSSLint.addRule({id:"empty-rules",name:"Empty Rules",desc:"Rules without any properties specified should be removed.",browsers:"All",init:function(a,b){var c=this,d=0;a.addListener("startrule",function(){d=0}),a.addListener("property",function(){d++}),a.addListener("endrule",function(a){var e=a.selectors;d==0&&b.warn("Rule is empty.",e[0].line,e[0].col,c)})}}),CSSLint.addRule({id:"errors",name:"Parsing Errors",desc:"This rule looks for recoverable syntax errors.",browsers:"All",init:function(a,b){var c=this;a.addListener("error",function(a){b.error(a.message,a.line,a.col,c)})}}),CSSLint.addRule({id:"floats",name:"Floats",desc:"This rule tests if the float property is used too many times",browsers:"All",init:function(a,b){var c=this,d=0;a.addListener("property",function(a){a.property.text.toLowerCase()=="float"&&a.value.text.toLowerCase()!="none"&&d++}),a.addListener("endstylesheet",function(){b.stat("floats",d),d>=10&&b.rollupWarn("Too many floats ("+d+"), you're probably using them for layout. Consider using a grid system instead.",c)})}}),CSSLint.addRule({id:"font-faces",name:"Font Faces",desc:"Too many different web fonts in the same stylesheet.",browsers:"All",init:function(a,b){var c=this,d=0;a.addListener("startfontface",function(){d++}),a.addListener("endstylesheet",function(){d>5&&b.rollupWarn("Too many @font-face declarations ("+d+").",c)})}}),CSSLint.addRule({id:"font-sizes",name:"Font Sizes",desc:"Checks the number of font-size declarations.",browsers:"All",init:function(a,b){var c=this,d=0;a.addListener("property",function(a){a.property=="font-size"&&d++}),a.addListener("endstylesheet",function(){b.stat("font-sizes",d),d>=10&&b.rollupWarn("Too many font-size declarations ("+d+"), abstraction needed.",c)})}}),CSSLint.addRule({id:"gradients",name:"Gradients",desc:"When using a vendor-prefixed gradient, make sure to use them all.",browsers:"All",init:function(a,b){var c=this,d;a.addListener("startrule",function(){d={moz:0,webkit:0,ms:0,o:0}}),a.addListener("property",function(a){/\-(moz|ms|o|webkit)(?:\-(?:linear|radial))\-gradient/.test(a.value)&&(d[RegExp.$1]=1)}),a.addListener("endrule",function(a){var e=[];d.moz||e.push("Firefox 3.6+"),d.webkit||e.push("Webkit (Safari, Chrome)"),d.ms||e.push("Internet Explorer 10+"),d.o||e.push("Opera 11.1+"),e.length&&e.length<4&&b.warn("Missing vendor-prefixed CSS gradients for "+e.join(", ")+".",a.selectors[0].line,a.selectors[0].col,c)})}}),CSSLint.addRule({id:"ids",name:"IDs",desc:"Selectors should not contain IDs.",browsers:"All",init:function(a,b){var c=this;a.addListener("startrule",function(a){var d=a.selectors,e,f,g,h,i,j,k;for(i=0;i<d.length;i++){e=d[i],h=0;for(j=0;j<e.parts.length;j++){f=e.parts[j];if(f instanceof parserlib.css.SelectorPart)for(k=0;k<f.modifiers.length;k++)g=f.modifiers[k],g.type=="id"&&h++}h==1?b.warn("Don't use IDs in selectors.",e.line,e.col,c):h>1&&b.warn(h+" IDs in the selector, really?",e.line,e.col,c)}})}}),CSSLint.addRule({id:"import",name:"@import",desc:"Don't use @import, use <link> instead.",browsers:"All",init:function(a,b){var c=this;a.addListener("import",function(a){b.warn("@import prevents parallel downloads, use <link> instead.",a.line,a.col,c)})}}),CSSLint.addRule({id:"important",name:"Important",desc:"Be careful when using !important declaration",browsers:"All",init:function(a,b){var c=this,d=0;a.addListener("property",function(a){a.important===!0&&(d++,b.warn("Use of !important",a.line,a.col,c))}),a.addListener("endstylesheet",function(){b.stat("important",d),d>=10&&b.rollupWarn("Too many !important declarations ("+d+"), try to use less than 10 to avoid specifity issues.",c)})}}),CSSLint.addRule({id:"known-properties",name:"Known Properties",desc:"Properties should be known (listed in CSS specification) or be a vendor-prefixed property.",browsers:"All",init:function(a,b){var c=this,d={"alignment-adjust":1,"alignment-baseline":1,animation:1,"animation-delay":1,"animation-direction":1,"animation-duration":1,"animation-iteration-count":1,"animation-name":1,"animation-play-state":1,"animation-timing-function":1,appearance:1,azimuth:1,"backface-visibility":1,background:1,"background-attachment":1,"background-break":1,"background-clip":1,"background-color":1,"background-image":1,"background-origin":1,"background-position":1,"background-repeat":1,"background-size":1,"baseline-shift":1,binding:1,bleed:1,"bookmark-label":1,"bookmark-level":1,"bookmark-state":1,"bookmark-target":1,border:1,"border-bottom":1,"border-bottom-color":1,"border-bottom-left-radius":1,"border-bottom-right-radius":1,"border-bottom-style":1,"border-bottom-width":1,"border-collapse":1,"border-color":1,"border-image":1,"border-image-outset":1,"border-image-repeat":1,"border-image-slice":1,"border-image-source":1,"border-image-width":1,"border-left":1,"border-left-color":1,"border-left-style":1,"border-left-width":1,"border-radius":1,"border-right":1,"border-right-color":1,"border-right-style":1,"border-right-width":1,"border-spacing":1,"border-style":1,"border-top":1,"border-top-color":1,"border-top-left-radius":1,"border-top-right-radius":1,"border-top-style":1,"border-top-width":1,"border-width":1,bottom:1,"box-align":1,"box-decoration-break":1,"box-direction":1,"box-flex":1,"box-flex-group":1,"box-lines":1,"box-ordinal-group":1,"box-orient":1,"box-pack":1,"box-shadow":1,"box-sizing":1,"break-after":1,"break-before":1,"break-inside":1,"caption-side":1,clear:1,clip:1,color:1,"color-profile":1,"column-count":1,"column-fill":1,"column-gap":1,"column-rule":1,"column-rule-color":1,"column-rule-style":1,"column-rule-width":1,"column-span":1,"column-width":1,columns:1,content:1,"counter-increment":1,"counter-reset":1,crop:1,cue:1,"cue-after":1,"cue-before":1,cursor:1,direction:1,display:1,"dominant-baseline":1,"drop-initial-after-adjust":1,"drop-initial-after-align":1,"drop-initial-before-adjust":1,"drop-initial-before-align":1,"drop-initial-size":1,"drop-initial-value":1,elevation:1,"empty-cells":1,fit:1,"fit-position":1,"float":1,"float-offset":1,font:1,"font-family":1,"font-size":1,"font-size-adjust":1,"font-stretch":1,"font-style":1,"font-variant":1,"font-weight":1,"grid-columns":1,"grid-rows":1,"hanging-punctuation":1,height:1,"hyphenate-after":1,"hyphenate-before":1,"hyphenate-character":1,"hyphenate-lines":1,"hyphenate-resource":1,hyphens:1,icon:1,"image-orientation":1,"image-rendering":1,"image-resolution":1,"inline-box-align":1,left:1,"letter-spacing":1,"line-height":1,"line-stacking":1,"line-stacking-ruby":1,"line-stacking-shift":1,"line-stacking-strategy":1,"list-style":1,"list-style-image":1,"list-style-position":1,"list-style-type":1,margin:1,"margin-bottom":1,"margin-left":1,"margin-right":1,"margin-top":1,mark:1,"mark-after":1,"mark-before":1,marks:1,"marquee-direction":1,"marquee-play-count":1,"marquee-speed":1,"marquee-style":1,"max-height":1,"max-width":1,"min-height":1,"min-width":1,"move-to":1,"nav-down":1,"nav-index":1,"nav-left":1,"nav-right":1,"nav-up":1,opacity:1,orphans:1,outline:1,"outline-color":1,"outline-offset":1,"outline-style":1,"outline-width":1,overflow:1,"overflow-style":1,"overflow-x":1,"overflow-y":1,padding:1,"padding-bottom":1,"padding-left":1,"padding-right":1,"padding-top":1,page:1,"page-break-after":1,"page-break-before":1,"page-break-inside":1,"page-policy":1,pause:1,"pause-after":1,"pause-before":1,perspective:1,"perspective-origin":1,phonemes:1,pitch:1,"pitch-range":1,"play-during":1,position:1,"presentation-level":1,"punctuation-trim":1,quotes:1,"rendering-intent":1,resize:1,rest:1,"rest-after":1,"rest-before":1,richness:1,right:1,rotation:1,"rotation-point":1,"ruby-align":1,"ruby-overhang":1,"ruby-position":1,"ruby-span":1,size:1,speak:1,"speak-header":1,"speak-numeral":1,"speak-punctuation":1,"speech-rate":1,stress:1,"string-set":1,"table-layout":1,target:1,"target-name":1,"target-new":1,"target-position":1,"text-align":1,"text-align-last":1,"text-decoration":1,"text-emphasis":1,"text-height":1,"text-indent":1,"text-justify":1,"text-outline":1,"text-shadow":1,"text-transform":1,"text-wrap":1,top:1,transform:1,"transform-origin":1,"transform-style":1,transition:1,"transition-delay":1,"transition-duration":1,"transition-property":1,"transition-timing-function":1,"unicode-bidi":1,"vertical-align":1,visibility:1,"voice-balance":1,"voice-duration":1,"voice-family":1,"voice-pitch":1,"voice-pitch-range":1,"voice-rate":1,"voice-stress":1,"voice-volume":1,volume:1,"white-space":1,"white-space-collapse":1,widows:1,width:1,"word-break":1,"word-spacing":1,"word-wrap":1,"z-index":1,filter:1,zoom:1};a.addListener("property",function(a){var e=a.property.text.toLowerCase();!d[e]&&e.charAt(0)!="-"&&b.error("Unknown property '"+a.property+"'.",a.line,a.col,c)})}}),CSSLint.addRule({id:"overqualified-elements",name:"Overqualified Elements",desc:"Don't use classes or IDs with elements (a.foo or a#foo).",browsers:"All",init:function(a,b){var c=this,d={};a.addListener("startrule",function(a){var e=a.selectors,f,g,h,i,j,k;for(i=0;i<e.length;i++){f=e[i];for(j=0;j<f.parts.length;j++){g=f.parts[j];if(g instanceof parserlib.css.SelectorPart)for(k=0;k<g.modifiers.length;k++)h=g.modifiers[k],g.elementName&&h.type=="id"?b.warn("Element ("+g+") is overqualified, just use "+h+" without element name.",g.line,g.col,c):h.type=="class"&&(d[h]||(d[h]=[]),d[h].push({modifier:h,part:g}))}}}),a.addListener("endstylesheet",function(){var a;for(a in d)d.hasOwnProperty(a)&&d[a].length==1&&d[a][0].part.elementName&&b.warn("Element ("+d[a][0].part+") is overqualified, just use "+d[a][0].modifier+" without element name.",d[a][0].part.line,d[a][0].part.col,c)})}}),CSSLint.addRule({id:"qualified-headings",name:"Qualified Headings",desc:"Headings should not be qualified (namespaced).",browsers:"All",init:function(a,b){var c=this;a.addListener("startrule",function(a){var d=a.selectors,e,f,g,h;for(g=0;g<d.length;g++){e=d[g];for(h=0;h<e.parts.length;h++)f=e.parts[h],f instanceof parserlib.css.SelectorPart&&f.elementName&&/h[1-6]/.test(f.elementName.toString())&&h>0&&b.warn("Heading ("+f.elementName+") should not be qualified.",f.line,f.col,c)}})}}),CSSLint.addRule({id:"regex-selectors",name:"Regex Selectors",desc:"Selectors that look like regular expressions are slow and should be avoided.",browsers:"All",init:function(a,b){var c=this;a.addListener("startrule",function(a){var d=a.selectors,e,f,g,h,i,j;for(h=0;h<d.length;h++){e=d[h];for(i=0;i<e.parts.length;i++){f=e.parts[i];if(f instanceof parserlib.css.SelectorPart)for(j=0;j<f.modifiers.length;j++)g=f.modifiers[j],g.type=="attribute"&&/([\~\|\^\$\*]=)/.test(g)&&b.warn("Attribute selectors with "+RegExp.$1+" are slow!",g.line,g.col,c)}}})}}),CSSLint.addRule({id:"rules-count",name:"Rules Count",desc:"Track how many rules there are.",browsers:"All",init:function(a,b){var c=this,d=0;a.addListener("startrule",function(){d++}),a.addListener("endstylesheet",function(){b.stat("rule-count",d)})}}),CSSLint.addRule({id:"text-indent",name:"Text Indent",desc:"Checks for text indent less than -99px",browsers:"All",init:function(a,b){var c=this;a.addListener("property",function(a){var d=a.property,e=a.value.parts[0].value;d=="text-indent"&&e<-99&&b.warn("Negative text-indent doesn't work well with RTL. If you use text-indent for image replacement explicitly set text-direction for that item to ltr.",d.line,d.col,c)})}}),CSSLint.addRule({id:"unique-headings",name:"Unique Headings",desc:"Headings should be defined only once.",browsers:"All",init:function(a,b){var c=this,d={h1:0,h2:0,h3:0,h4:0,h5:0,h6:0};a.addListener("startrule",function(a){var e=a.selectors,f,g,h;for(h=0;h<e.length;h++)f=e[h],g=f.parts[f.parts.length-1],g.elementName&&/(h[1-6])/.test(g.elementName.toString())&&(d[RegExp.$1]++,d[RegExp.$1]>1&&b.warn("Heading ("+g.elementName+") has already been defined.",g.line,g.col,c))})}}),CSSLint.addRule({id:"universal-selector",name:"Universal Selector",desc:"The universal selector (*) is known to be slow.",browsers:"All",init:function(a,b){var c=this;a.addListener("startrule",function(a){var d=a.selectors,e,f,g,h,i,j;for(h=0;h<d.length;h++)e=d[h],f=e.parts[e.parts.length-1],f.elementName=="*"&&b.warn(c.desc,f.line,f.col,c)})}}),CSSLint.addRule({id:"vendor-prefix",name:"Vendor Prefix",desc:"When using a vendor-prefixed property, make sure to include the standard one.",browsers:"All",init:function(a,b){function g(){d={},e=1}function h(a){var e,g,h,i,j,k,l=[];for(e in d)f[e]&&l.push({actual:e,needed:f[e]});for(g=0,h=l.length;g<h;g++)j=l[g].needed,k=l[g].actual,d[j]?d[j][0].pos<d[k][0].pos&&b.warn("Standard property '"+j+"' should come after vendor-prefixed property '"+k+"'.",a.line,a.col,c):b.warn("Missing standard property '"+j+"' to go along with '"+k+"'.",a.line,a.col,c)}var c=this,d,e,f={"-moz-border-radius":"border-radius","-webkit-border-radius":"border-radius","-webkit-border-top-left-radius":"border-top-left-radius","-webkit-border-top-right-radius":"border-top-right-radius","-webkit-border-bottom-left-radius":"border-bottom-left-radius","-webkit-border-bottom-right-radius":"border-bottom-right-radius","-moz-border-radius-topleft":"border-top-left-radius","-moz-border-radius-topright":"border-top-right-radius","-moz-border-radius-bottomleft":"border-bottom-left-radius","-moz-border-radius-bottomright":"border-bottom-right-radius","-moz-box-shadow":"box-shadow","-webkit-box-shadow":"box-shadow","-moz-transform":"transform","-webkit-transform":"transform","-o-transform":"transform","-ms-transform":"transform","-moz-box-sizing":"box-sizing","-webkit-box-sizing":"box-sizing","-moz-user-select":"user-select","-khtml-user-select":"user-select","-webkit-user-select":"user-select"};a.addListener("startrule",g),a.addListener("startfontface",g),a.addListener("property",function(a){var b=a.property.text.toLowerCase();d[b]||(d[b]=[]),d[b].push({name:a.property,value:a.value,pos:e++})}),a.addListener("endrule",h),a.addListener("endfontface",h)}}),CSSLint.addRule({id:"zero-units",name:"Zero Units",desc:"You don't need to specify units when a value is 0.",browsers:"All",init:function(a,b){var c=this;a.addListener("property",function(a){var d=a.value.parts,e=0,f=d.length;while(e<f)(d[e].units||d[e].type=="percentage")&&d[e].value===0&&b.warn("Values of 0 shouldn't have units specified.",d[e].line,d[e].col,c),e++})}}),exports.CSSLint=CSSLint})
+"no use strict";
+;(function(window) {
+if (typeof window.window != "undefined" && window.document) {
+    return;
+}
+
+window.console = {
+    log: function() {
+        var msgs = Array.prototype.slice.call(arguments, 0);
+        postMessage({type: "log", data: msgs});
+    },
+    error: function() {
+        var msgs = Array.prototype.slice.call(arguments, 0);
+        postMessage({type: "log", data: msgs});
+    }
+};
+window.window = window;
+window.ace = window;
+
+window.normalizeModule = function(parentId, moduleName) {
+    // normalize plugin requires
+    if (moduleName.indexOf("!") !== -1) {
+        var chunks = moduleName.split("!");
+        return normalizeModule(parentId, chunks[0]) + "!" + normalizeModule(parentId, chunks[1]);
+    }
+    // normalize relative requires
+    if (moduleName.charAt(0) == ".") {
+        var base = parentId.split("/").slice(0, -1).join("/");
+        moduleName = base + "/" + moduleName;
+        
+        while(moduleName.indexOf(".") !== -1 && previous != moduleName) {
+            var previous = moduleName;
+            moduleName = moduleName.replace(/\/\.\//, "/").replace(/[^\/]+\/\.\.\//, "");
+        }
+    }
+    
+    return moduleName;
+};
+
+window.require = function(parentId, id) {
+    if (!id.charAt)
+        throw new Error("worker.js require() accepts only (parentId, id) as arguments");
+
+    id = normalizeModule(parentId, id);
+
+    var module = require.modules[id];
+    if (module) {
+        if (!module.initialized) {
+            module.initialized = true;
+            module.exports = module.factory().exports;
+        }
+        return module.exports;
+    }
+    
+    var chunks = id.split("/");
+    chunks[0] = require.tlns[chunks[0]] || chunks[0];
+    var path = chunks.join("/") + ".js";
+    
+    require.id = id;
+    importScripts(path);
+    return require(parentId, id);    
+};
+
+require.modules = {};
+require.tlns = {};
+
+window.define = function(id, deps, factory) {
+    if (arguments.length == 2) {
+        factory = deps;
+        if (typeof id != "string") {
+            deps = id;
+            id = require.id;
+        }
+    } else if (arguments.length == 1) {
+        factory = id;
+        id = require.id;
+    }
+
+    if (id.indexOf("text!") === 0) 
+        return;
+    
+    var req = function(deps, factory) {
+        return require(id, deps, factory);
+    };
+
+    require.modules[id] = {
+        factory: function() {
+            var module = {
+                exports: {}
+            };
+            var returnExports = factory(req, module.exports, module);
+            if (returnExports)
+                module.exports = returnExports;
+            return module;
+        }
+    };
+};
+
+window.initBaseUrls  = function initBaseUrls(topLevelNamespaces) {
+    require.tlns = topLevelNamespaces;
+}
+
+window.initSender = function initSender() {
+
+    var EventEmitter = require(null, "ace/lib/event_emitter").EventEmitter;
+    var oop = require(null, "ace/lib/oop");
+    
+    var Sender = function() {};
+    
+    (function() {
+        
+        oop.implement(this, EventEmitter);
+                
+        this.callback = function(data, callbackId) {
+            postMessage({
+                type: "call",
+                id: callbackId,
+                data: data
+            });
+        };
+    
+        this.emit = function(name, data) {
+            postMessage({
+                type: "event",
+                name: name,
+                data: data
+            });
+        };
+        
+    }).call(Sender.prototype);
+    
+    return new Sender();
+}
+
+window.main = null;
+window.sender = null;
+
+window.onmessage = function(e) {
+    var msg = e.data;
+    if (msg.command) {
+        if (main[msg.command])
+            main[msg.command].apply(main, msg.args);
+        else
+            throw new Error("Unknown command:" + msg.command);
+    }
+    else if (msg.init) {        
+        initBaseUrls(msg.tlns);
+        require(null, "ace/lib/fixoldbrowsers");
+        sender = initSender();
+        var clazz = require(null, msg.module)[msg.classname];
+        main = new clazz(sender);
+    } 
+    else if (msg.event && sender) {
+        sender._emit(msg.event, msg.data);
+    }
+};
+})(this);// vim:set ts=4 sts=4 sw=4 st:
+
+define('ace/lib/fixoldbrowsers', ['require', 'exports', 'module' , 'ace/lib/regexp', 'ace/lib/es5-shim'], function(require, exports, module) {
+
+
+require("./regexp");
+require("./es5-shim");
+
+});
+ 
+define('ace/lib/regexp', ['require', 'exports', 'module' ], function(require, exports, module) {
+
+    var real = {
+            exec: RegExp.prototype.exec,
+            test: RegExp.prototype.test,
+            match: String.prototype.match,
+            replace: String.prototype.replace,
+            split: String.prototype.split
+        },
+        compliantExecNpcg = real.exec.call(/()??/, "")[1] === undefined, // check `exec` handling of nonparticipating capturing groups
+        compliantLastIndexIncrement = function () {
+            var x = /^/g;
+            real.test.call(x, "");
+            return !x.lastIndex;
+        }();
+
+    if (compliantLastIndexIncrement && compliantExecNpcg)
+        return;
+    RegExp.prototype.exec = function (str) {
+        var match = real.exec.apply(this, arguments),
+            name, r2;
+        if ( typeof(str) == 'string' && match) {
+            if (!compliantExecNpcg && match.length > 1 && indexOf(match, "") > -1) {
+                r2 = RegExp(this.source, real.replace.call(getNativeFlags(this), "g", ""));
+                real.replace.call(str.slice(match.index), r2, function () {
+                    for (var i = 1; i < arguments.length - 2; i++) {
+                        if (arguments[i] === undefined)
+                            match[i] = undefined;
+                    }
+                });
+            }
+            if (this._xregexp && this._xregexp.captureNames) {
+                for (var i = 1; i < match.length; i++) {
+                    name = this._xregexp.captureNames[i - 1];
+                    if (name)
+                       match[name] = match[i];
+                }
+            }
+            if (!compliantLastIndexIncrement && this.global && !match[0].length && (this.lastIndex > match.index))
+                this.lastIndex--;
+        }
+        return match;
+    };
+    if (!compliantLastIndexIncrement) {
+        RegExp.prototype.test = function (str) {
+            var match = real.exec.call(this, str);
+            if (match && this.global && !match[0].length && (this.lastIndex > match.index))
+                this.lastIndex--;
+            return !!match;
+        };
+    }
+
+    function getNativeFlags (regex) {
+        return (regex.global     ? "g" : "") +
+               (regex.ignoreCase ? "i" : "") +
+               (regex.multiline  ? "m" : "") +
+               (regex.extended   ? "x" : "") + // Proposed for ES4; included in AS3
+               (regex.sticky     ? "y" : "");
+    }
+
+    function indexOf (array, item, from) {
+        if (Array.prototype.indexOf) // Use the native array method if available
+            return array.indexOf(item, from);
+        for (var i = from || 0; i < array.length; i++) {
+            if (array[i] === item)
+                return i;
+        }
+        return -1;
+    }
+
+});
+
+define('ace/lib/es5-shim', ['require', 'exports', 'module' ], function(require, exports, module) {
+
+function Empty() {}
+
+if (!Function.prototype.bind) {
+    Function.prototype.bind = function bind(that) { // .length is 1
+        var target = this;
+        if (typeof target != "function") {
+            throw new TypeError("Function.prototype.bind called on incompatible " + target);
+        }
+        var args = slice.call(arguments, 1); // for normal call
+        var bound = function () {
+
+            if (this instanceof bound) {
+
+                var result = target.apply(
+                    this,
+                    args.concat(slice.call(arguments))
+                );
+                if (Object(result) === result) {
+                    return result;
+                }
+                return this;
+
+            } else {
+                return target.apply(
+                    that,
+                    args.concat(slice.call(arguments))
+                );
+
+            }
+
+        };
+        if(target.prototype) {
+            Empty.prototype = target.prototype;
+            bound.prototype = new Empty();
+            Empty.prototype = null;
+        }
+        return bound;
+    };
+}
+var call = Function.prototype.call;
+var prototypeOfArray = Array.prototype;
+var prototypeOfObject = Object.prototype;
+var slice = prototypeOfArray.slice;
+var _toString = call.bind(prototypeOfObject.toString);
+var owns = call.bind(prototypeOfObject.hasOwnProperty);
+var defineGetter;
+var defineSetter;
+var lookupGetter;
+var lookupSetter;
+var supportsAccessors;
+if ((supportsAccessors = owns(prototypeOfObject, "__defineGetter__"))) {
+    defineGetter = call.bind(prototypeOfObject.__defineGetter__);
+    defineSetter = call.bind(prototypeOfObject.__defineSetter__);
+    lookupGetter = call.bind(prototypeOfObject.__lookupGetter__);
+    lookupSetter = call.bind(prototypeOfObject.__lookupSetter__);
+}
+if ([1,2].splice(0).length != 2) {
+    if(function() { // test IE < 9 to splice bug - see issue #138
+        function makeArray(l) {
+            var a = new Array(l+2);
+            a[0] = a[1] = 0;
+            return a;
+        }
+        var array = [], lengthBefore;
+        
+        array.splice.apply(array, makeArray(20));
+        array.splice.apply(array, makeArray(26));
+
+        lengthBefore = array.length; //46
+        array.splice(5, 0, "XXX"); // add one element
+
+        lengthBefore + 1 == array.length
+
+        if (lengthBefore + 1 == array.length) {
+            return true;// has right splice implementation without bugs
+        }
+    }()) {//IE 6/7
+        var array_splice = Array.prototype.splice;
+        Array.prototype.splice = function(start, deleteCount) {
+            if (!arguments.length) {
+                return [];
+            } else {
+                return array_splice.apply(this, [
+                    start === void 0 ? 0 : start,
+                    deleteCount === void 0 ? (this.length - start) : deleteCount
+                ].concat(slice.call(arguments, 2)))
+            }
+        };
+    } else {//IE8
+        Array.prototype.splice = function(pos, removeCount){
+            var length = this.length;
+            if (pos > 0) {
+                if (pos > length)
+                    pos = length;
+            } else if (pos == void 0) {
+                pos = 0;
+            } else if (pos < 0) {
+                pos = Math.max(length + pos, 0);
+            }
+
+            if (!(pos+removeCount < length))
+                removeCount = length - pos;
+
+            var removed = this.slice(pos, pos+removeCount);
+            var insert = slice.call(arguments, 2);
+            var add = insert.length;            
+            if (pos === length) {
+                if (add) {
+                    this.push.apply(this, insert);
+                }
+            } else {
+                var remove = Math.min(removeCount, length - pos);
+                var tailOldPos = pos + remove;
+                var tailNewPos = tailOldPos + add - remove;
+                var tailCount = length - tailOldPos;
+                var lengthAfterRemove = length - remove;
+
+                if (tailNewPos < tailOldPos) { // case A
+                    for (var i = 0; i < tailCount; ++i) {
+                        this[tailNewPos+i] = this[tailOldPos+i];
+                    }
+                } else if (tailNewPos > tailOldPos) { // case B
+                    for (i = tailCount; i--; ) {
+                        this[tailNewPos+i] = this[tailOldPos+i];
+                    }
+                } // else, add == remove (nothing to do)
+
+                if (add && pos === lengthAfterRemove) {
+                    this.length = lengthAfterRemove; // truncate array
+                    this.push.apply(this, insert);
+                } else {
+                    this.length = lengthAfterRemove + add; // reserves space
+                    for (i = 0; i < add; ++i) {
+                        this[pos+i] = insert[i];
+                    }
+                }
+            }
+            return removed;
+        };
+    }
+}
+if (!Array.isArray) {
+    Array.isArray = function isArray(obj) {
+        return _toString(obj) == "[object Array]";
+    };
+}
+var boxedString = Object("a"),
+    splitString = boxedString[0] != "a" || !(0 in boxedString);
+
+if (!Array.prototype.forEach) {
+    Array.prototype.forEach = function forEach(fun /*, thisp*/) {
+        var object = toObject(this),
+            self = splitString && _toString(this) == "[object String]" ?
+                this.split("") :
+                object,
+            thisp = arguments[1],
+            i = -1,
+            length = self.length >>> 0;
+        if (_toString(fun) != "[object Function]") {
+            throw new TypeError(); // TODO message
+        }
+
+        while (++i < length) {
+            if (i in self) {
+                fun.call(thisp, self[i], i, object);
+            }
+        }
+    };
+}
+if (!Array.prototype.map) {
+    Array.prototype.map = function map(fun /*, thisp*/) {
+        var object = toObject(this),
+            self = splitString && _toString(this) == "[object String]" ?
+                this.split("") :
+                object,
+            length = self.length >>> 0,
+            result = Array(length),
+            thisp = arguments[1];
+        if (_toString(fun) != "[object Function]") {
+            throw new TypeError(fun + " is not a function");
+        }
+
+        for (var i = 0; i < length; i++) {
+            if (i in self)
+                result[i] = fun.call(thisp, self[i], i, object);
+        }
+        return result;
+    };
+}
+if (!Array.prototype.filter) {
+    Array.prototype.filter = function filter(fun /*, thisp */) {
+        var object = toObject(this),
+            self = splitString && _toString(this) == "[object String]" ?
+                this.split("") :
+                    object,
+            length = self.length >>> 0,
+            result = [],
+            value,
+            thisp = arguments[1];
+        if (_toString(fun) != "[object Function]") {
+            throw new TypeError(fun + " is not a function");
+        }
+
+        for (var i = 0; i < length; i++) {
+            if (i in self) {
+                value = self[i];
+                if (fun.call(thisp, value, i, object)) {
+                    result.push(value);
+                }
+            }
+        }
+        return result;
+    };
+}
+if (!Array.prototype.every) {
+    Array.prototype.every = function every(fun /*, thisp */) {
+        var object = toObject(this),
+            self = splitString && _toString(this) == "[object String]" ?
+                this.split("") :
+                object,
+            length = self.length >>> 0,
+            thisp = arguments[1];
+        if (_toString(fun) != "[object Function]") {
+            throw new TypeError(fun + " is not a function");
+        }
+
+        for (var i = 0; i < length; i++) {
+            if (i in self && !fun.call(thisp, self[i], i, object)) {
+                return false;
+            }
+        }
+        return true;
+    };
+}
+if (!Array.prototype.some) {
+    Array.prototype.some = function some(fun /*, thisp */) {
+        var object = toObject(this),
+            self = splitString && _toString(this) == "[object String]" ?
+                this.split("") :
+                object,
+            length = self.length >>> 0,
+            thisp = arguments[1];
+        if (_toString(fun) != "[object Function]") {
+            throw new TypeError(fun + " is not a function");
+        }
+
+        for (var i = 0; i < length; i++) {
+            if (i in self && fun.call(thisp, self[i], i, object)) {
+                return true;
+            }
+        }
+        return false;
+    };
+}
+if (!Array.prototype.reduce) {
+    Array.prototype.reduce = function reduce(fun /*, initial*/) {
+        var object = toObject(this),
+            self = splitString && _toString(this) == "[object String]" ?
+                this.split("") :
+                object,
+            length = self.length >>> 0;
+        if (_toString(fun) != "[object Function]") {
+            throw new TypeError(fun + " is not a function");
+        }
+        if (!length && arguments.length == 1) {
+            throw new TypeError("reduce of empty array with no initial value");
+        }
+
+        var i = 0;
+        var result;
+        if (arguments.length >= 2) {
+            result = arguments[1];
+        } else {
+            do {
+                if (i in self) {
+                    result = self[i++];
+                    break;
+                }
+                if (++i >= length) {
+                    throw new TypeError("reduce of empty array with no initial value");
+                }
+            } while (true);
+        }
+
+        for (; i < length; i++) {
+            if (i in self) {
+                result = fun.call(void 0, result, self[i], i, object);
+            }
+        }
+
+        return result;
+    };
+}
+if (!Array.prototype.reduceRight) {
+    Array.prototype.reduceRight = function reduceRight(fun /*, initial*/) {
+        var object = toObject(this),
+            self = splitString && _toString(this) == "[object String]" ?
+                this.split("") :
+                object,
+            length = self.length >>> 0;
+        if (_toString(fun) != "[object Function]") {
+            throw new TypeError(fun + " is not a function");
+        }
+        if (!length && arguments.length == 1) {
+            throw new TypeError("reduceRight of empty array with no initial value");
+        }
+
+        var result, i = length - 1;
+        if (arguments.length >= 2) {
+            result = arguments[1];
+        } else {
+            do {
+                if (i in self) {
+                    result = self[i--];
+                    break;
+                }
+                if (--i < 0) {
+                    throw new TypeError("reduceRight of empty array with no initial value");
+                }
+            } while (true);
+        }
+
+        do {
+            if (i in this) {
+                result = fun.call(void 0, result, self[i], i, object);
+            }
+        } while (i--);
+
+        return result;
+    };
+}
+if (!Array.prototype.indexOf || ([0, 1].indexOf(1, 2) != -1)) {
+    Array.prototype.indexOf = function indexOf(sought /*, fromIndex */ ) {
+        var self = splitString && _toString(this) == "[object String]" ?
+                this.split("") :
+                toObject(this),
+            length = self.length >>> 0;
+
+        if (!length) {
+            return -1;
+        }
+
+        var i = 0;
+        if (arguments.length > 1) {
+            i = toInteger(arguments[1]);
+        }
+        i = i >= 0 ? i : Math.max(0, length + i);
+        for (; i < length; i++) {
+            if (i in self && self[i] === sought) {
+                return i;
+            }
+        }
+        return -1;
+    };
+}
+if (!Array.prototype.lastIndexOf || ([0, 1].lastIndexOf(0, -3) != -1)) {
+    Array.prototype.lastIndexOf = function lastIndexOf(sought /*, fromIndex */) {
+        var self = splitString && _toString(this) == "[object String]" ?
+                this.split("") :
+                toObject(this),
+            length = self.length >>> 0;
+
+        if (!length) {
+            return -1;
+        }
+        var i = length - 1;
+        if (arguments.length > 1) {
+            i = Math.min(i, toInteger(arguments[1]));
+        }
+        i = i >= 0 ? i : length - Math.abs(i);
+        for (; i >= 0; i--) {
+            if (i in self && sought === self[i]) {
+                return i;
+            }
+        }
+        return -1;
+    };
+}
+if (!Object.getPrototypeOf) {
+    Object.getPrototypeOf = function getPrototypeOf(object) {
+        return object.__proto__ || (
+            object.constructor ?
+            object.constructor.prototype :
+            prototypeOfObject
+        );
+    };
+}
+if (!Object.getOwnPropertyDescriptor) {
+    var ERR_NON_OBJECT = "Object.getOwnPropertyDescriptor called on a " +
+                         "non-object: ";
+    Object.getOwnPropertyDescriptor = function getOwnPropertyDescriptor(object, property) {
+        if ((typeof object != "object" && typeof object != "function") || object === null)
+            throw new TypeError(ERR_NON_OBJECT + object);
+        if (!owns(object, property))
+            return;
+
+        var descriptor, getter, setter;
+        descriptor =  { enumerable: true, configurable: true };
+        if (supportsAccessors) {
+            var prototype = object.__proto__;
+            object.__proto__ = prototypeOfObject;
+
+            var getter = lookupGetter(object, property);
+            var setter = lookupSetter(object, property);
+            object.__proto__ = prototype;
+
+            if (getter || setter) {
+                if (getter) descriptor.get = getter;
+                if (setter) descriptor.set = setter;
+                return descriptor;
+            }
+        }
+        descriptor.value = object[property];
+        return descriptor;
+    };
+}
+if (!Object.getOwnPropertyNames) {
+    Object.getOwnPropertyNames = function getOwnPropertyNames(object) {
+        return Object.keys(object);
+    };
+}
+if (!Object.create) {
+    var createEmpty;
+    if (Object.prototype.__proto__ === null) {
+        createEmpty = function () {
+            return { "__proto__": null };
+        };
+    } else {
+        createEmpty = function () {
+            var empty = {};
+            for (var i in empty)
+                empty[i] = null;
+            empty.constructor =
+            empty.hasOwnProperty =
+            empty.propertyIsEnumerable =
+            empty.isPrototypeOf =
+            empty.toLocaleString =
+            empty.toString =
+            empty.valueOf =
+            empty.__proto__ = null;
+            return empty;
+        }
+    }
+
+    Object.create = function create(prototype, properties) {
+        var object;
+        if (prototype === null) {
+            object = createEmpty();
+        } else {
+            if (typeof prototype != "object")
+                throw new TypeError("typeof prototype["+(typeof prototype)+"] != 'object'");
+            var Type = function () {};
+            Type.prototype = prototype;
+            object = new Type();
+            object.__proto__ = prototype;
+        }
+        if (properties !== void 0)
+            Object.defineProperties(object, properties);
+        return object;
+    };
+}
+
+function doesDefinePropertyWork(object) {
+    try {
+        Object.defineProperty(object, "sentinel", {});
+        return "sentinel" in object;
+    } catch (exception) {
+    }
+}
+if (Object.defineProperty) {
+    var definePropertyWorksOnObject = doesDefinePropertyWork({});
+    var definePropertyWorksOnDom = typeof document == "undefined" ||
+        doesDefinePropertyWork(document.createElement("div"));
+    if (!definePropertyWorksOnObject || !definePropertyWorksOnDom) {
+        var definePropertyFallback = Object.defineProperty;
+    }
+}
+
+if (!Object.defineProperty || definePropertyFallback) {
+    var ERR_NON_OBJECT_DESCRIPTOR = "Property description must be an object: ";
+    var ERR_NON_OBJECT_TARGET = "Object.defineProperty called on non-object: "
+    var ERR_ACCESSORS_NOT_SUPPORTED = "getters & setters can not be defined " +
+                                      "on this javascript engine";
+
+    Object.defineProperty = function defineProperty(object, property, descriptor) {
+        if ((typeof object != "object" && typeof object != "function") || object === null)
+            throw new TypeError(ERR_NON_OBJECT_TARGET + object);
+        if ((typeof descriptor != "object" && typeof descriptor != "function") || descriptor === null)
+            throw new TypeError(ERR_NON_OBJECT_DESCRIPTOR + descriptor);
+        if (definePropertyFallback) {
+            try {
+                return definePropertyFallback.call(Object, object, property, descriptor);
+            } catch (exception) {
+            }
+        }
+        if (owns(descriptor, "value")) {
+
+            if (supportsAccessors && (lookupGetter(object, property) ||
+                                      lookupSetter(object, property)))
+            {
+                var prototype = object.__proto__;
+                object.__proto__ = prototypeOfObject;
+                delete object[property];
+                object[property] = descriptor.value;
+                object.__proto__ = prototype;
+            } else {
+                object[property] = descriptor.value;
+            }
+        } else {
+            if (!supportsAccessors)
+                throw new TypeError(ERR_ACCESSORS_NOT_SUPPORTED);
+            if (owns(descriptor, "get"))
+                defineGetter(object, property, descriptor.get);
+            if (owns(descriptor, "set"))
+                defineSetter(object, property, descriptor.set);
+        }
+
+        return object;
+    };
+}
+if (!Object.defineProperties) {
+    Object.defineProperties = function defineProperties(object, properties) {
+        for (var property in properties) {
+            if (owns(properties, property))
+                Object.defineProperty(object, property, properties[property]);
+        }
+        return object;
+    };
+}
+if (!Object.seal) {
+    Object.seal = function seal(object) {
+        return object;
+    };
+}
+if (!Object.freeze) {
+    Object.freeze = function freeze(object) {
+        return object;
+    };
+}
+try {
+    Object.freeze(function () {});
+} catch (exception) {
+    Object.freeze = (function freeze(freezeObject) {
+        return function freeze(object) {
+            if (typeof object == "function") {
+                return object;
+            } else {
+                return freezeObject(object);
+            }
+        };
+    })(Object.freeze);
+}
+if (!Object.preventExtensions) {
+    Object.preventExtensions = function preventExtensions(object) {
+        return object;
+    };
+}
+if (!Object.isSealed) {
+    Object.isSealed = function isSealed(object) {
+        return false;
+    };
+}
+if (!Object.isFrozen) {
+    Object.isFrozen = function isFrozen(object) {
+        return false;
+    };
+}
+if (!Object.isExtensible) {
+    Object.isExtensible = function isExtensible(object) {
+        if (Object(object) === object) {
+            throw new TypeError(); // TODO message
+        }
+        var name = '';
+        while (owns(object, name)) {
+            name += '?';
+        }
+        object[name] = true;
+        var returnValue = owns(object, name);
+        delete object[name];
+        return returnValue;
+    };
+}
+if (!Object.keys) {
+    var hasDontEnumBug = true,
+        dontEnums = [
+            "toString",
+            "toLocaleString",
+            "valueOf",
+            "hasOwnProperty",
+            "isPrototypeOf",
+            "propertyIsEnumerable",
+            "constructor"
+        ],
+        dontEnumsLength = dontEnums.length;
+
+    for (var key in {"toString": null}) {
+        hasDontEnumBug = false;
+    }
+
+    Object.keys = function keys(object) {
+
+        if (
+            (typeof object != "object" && typeof object != "function") ||
+            object === null
+        ) {
+            throw new TypeError("Object.keys called on a non-object");
+        }
+
+        var keys = [];
+        for (var name in object) {
+            if (owns(object, name)) {
+                keys.push(name);
+            }
+        }
+
+        if (hasDontEnumBug) {
+            for (var i = 0, ii = dontEnumsLength; i < ii; i++) {
+                var dontEnum = dontEnums[i];
+                if (owns(object, dontEnum)) {
+                    keys.push(dontEnum);
+                }
+            }
+        }
+        return keys;
+    };
+
+}
+if (!Date.now) {
+    Date.now = function now() {
+        return new Date().getTime();
+    };
+}
+var ws = "\x09\x0A\x0B\x0C\x0D\x20\xA0\u1680\u180E\u2000\u2001\u2002\u2003" +
+    "\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u3000\u2028" +
+    "\u2029\uFEFF";
+if (!String.prototype.trim || ws.trim()) {
+    ws = "[" + ws + "]";
+    var trimBeginRegexp = new RegExp("^" + ws + ws + "*"),
+        trimEndRegexp = new RegExp(ws + ws + "*$");
+    String.prototype.trim = function trim() {
+        return String(this).replace(trimBeginRegexp, "").replace(trimEndRegexp, "");
+    };
+}
+
+function toInteger(n) {
+    n = +n;
+    if (n !== n) { // isNaN
+        n = 0;
+    } else if (n !== 0 && n !== (1/0) && n !== -(1/0)) {
+        n = (n > 0 || -1) * Math.floor(Math.abs(n));
+    }
+    return n;
+}
+
+function isPrimitive(input) {
+    var type = typeof input;
+    return (
+        input === null ||
+        type === "undefined" ||
+        type === "boolean" ||
+        type === "number" ||
+        type === "string"
+    );
+}
+
+function toPrimitive(input) {
+    var val, valueOf, toString;
+    if (isPrimitive(input)) {
+        return input;
+    }
+    valueOf = input.valueOf;
+    if (typeof valueOf === "function") {
+        val = valueOf.call(input);
+        if (isPrimitive(val)) {
+            return val;
+        }
+    }
+    toString = input.toString;
+    if (typeof toString === "function") {
+        val = toString.call(input);
+        if (isPrimitive(val)) {
+            return val;
+        }
+    }
+    throw new TypeError();
+}
+var toObject = function (o) {
+    if (o == null) { // this matches both null and undefined
+        throw new TypeError("can't convert "+o+" to object");
+    }
+    return Object(o);
+};
+
+});
+
+define('ace/lib/event_emitter', ['require', 'exports', 'module' ], function(require, exports, module) {
+
+
+var EventEmitter = {};
+var stopPropagation = function() { this.propagationStopped = true; };
+var preventDefault = function() { this.defaultPrevented = true; };
+
+EventEmitter._emit =
+EventEmitter._dispatchEvent = function(eventName, e) {
+    this._eventRegistry || (this._eventRegistry = {});
+    this._defaultHandlers || (this._defaultHandlers = {});
+
+    var listeners = this._eventRegistry[eventName] || [];
+    var defaultHandler = this._defaultHandlers[eventName];
+    if (!listeners.length && !defaultHandler)
+        return;
+
+    if (typeof e != "object" || !e)
+        e = {};
+
+    if (!e.type)
+        e.type = eventName;
+    if (!e.stopPropagation)
+        e.stopPropagation = stopPropagation;
+    if (!e.preventDefault)
+        e.preventDefault = preventDefault;
+    if (!e.target)
+        e.target = this;
+
+    for (var i=0; i<listeners.length; i++) {
+        listeners[i](e);
+        if (e.propagationStopped)
+            break;
+    }
+    
+    if (defaultHandler && !e.defaultPrevented)
+        return defaultHandler(e);
+};
+
+
+EventEmitter._signal = function(eventName, e) {
+    var listeners = (this._eventRegistry || {})[eventName];
+    if (!listeners)
+        return;
+
+    for (var i=0; i<listeners.length; i++)
+        listeners[i](e);
+};
+
+EventEmitter.once = function(eventName, callback) {
+    var _self = this;
+    var newCallback = function() {
+        fun && fun.apply(null, arguments);
+        _self.removeEventListener(event, newCallback);
+    };
+    this.addEventListener(event, newCallback);
+};
+
+
+EventEmitter.setDefaultHandler = function(eventName, callback) {
+    this._defaultHandlers = this._defaultHandlers || {};
+    
+    if (this._defaultHandlers[eventName])
+        throw new Error("The default handler for '" + eventName + "' is already set");
+        
+    this._defaultHandlers[eventName] = callback;
+};
+
+EventEmitter.on =
+EventEmitter.addEventListener = function(eventName, callback, capturing) {
+    this._eventRegistry = this._eventRegistry || {};
+
+    var listeners = this._eventRegistry[eventName];
+    if (!listeners)
+        listeners = this._eventRegistry[eventName] = [];
+
+    if (listeners.indexOf(callback) == -1)
+        listeners[capturing ? "unshift" : "push"](callback);
+    return callback;
+};
+
+EventEmitter.removeListener =
+EventEmitter.removeEventListener = function(eventName, callback) {
+    this._eventRegistry = this._eventRegistry || {};
+
+    var listeners = this._eventRegistry[eventName];
+    if (!listeners)
+        return;
+
+    var index = listeners.indexOf(callback);
+    if (index !== -1)
+        listeners.splice(index, 1);
+};
+
+EventEmitter.removeAllListeners = function(eventName) {
+    if (this._eventRegistry) this._eventRegistry[eventName] = [];
+};
+
+exports.EventEmitter = EventEmitter;
+
+});
+
+define('ace/lib/oop', ['require', 'exports', 'module' ], function(require, exports, module) {
+
+
+exports.inherits = (function() {
+    var tempCtor = function() {};
+    return function(ctor, superCtor) {
+        tempCtor.prototype = superCtor.prototype;
+        ctor.super_ = superCtor.prototype;
+        ctor.prototype = new tempCtor();
+        ctor.prototype.constructor = ctor;
+    };
+}());
+
+exports.mixin = function(obj, mixin) {
+    for (var key in mixin) {
+        obj[key] = mixin[key];
+    }
+};
+
+exports.implement = function(proto, mixin) {
+    exports.mixin(proto, mixin);
+};
+
+});
+
+define('ace/mode/css_worker', ['require', 'exports', 'module' , 'ace/lib/oop', 'ace/lib/lang', 'ace/worker/mirror', 'ace/mode/css/csslint'], function(require, exports, module) {
+
+
+var oop = require("../lib/oop");
+var lang = require("../lib/lang");
+var Mirror = require("../worker/mirror").Mirror;
+var CSSLint = require("./css/csslint").CSSLint;
+
+var Worker = exports.Worker = function(sender) {
+    Mirror.call(this, sender);
+    this.setTimeout(400);
+    this.ruleset = null;
+    this.setDisabledRules("ids");
+    this.setInfoRules("adjoining-classes|qualified-headings|zero-units|gradients|import|outline-none");
+};
+
+oop.inherits(Worker, Mirror);
+
+(function() {
+    this.setInfoRules = function(ruleNames) {
+        if (typeof ruleNames == "string")
+            ruleNames = ruleNames.split("|");
+        this.infoRules = lang.arrayToMap(ruleNames);
+        this.doc.getValue() && this.deferredUpdate.schedule(100);
+    };
+
+    this.setDisabledRules = function(ruleNames) {
+        if (!ruleNames) {
+            this.ruleset = null;
+        } else {
+            if (typeof ruleNames == "string")
+                ruleNames = ruleNames.split("|");
+            var all = {};
+
+            CSSLint.getRules().forEach(function(x){
+                all[x.id] = true;
+            });
+            ruleNames.forEach(function(x) {
+                delete all[x];
+            });
+            
+            this.ruleset = all;
+        }
+        this.doc.getValue() && this.deferredUpdate.schedule(100);
+    };
+
+    this.onUpdate = function() {
+        var value = this.doc.getValue();
+        var infoRules = this.infoRules;
+
+        var result = CSSLint.verify(value, this.ruleset);
+        this.sender.emit("csslint", result.messages.map(function(msg) {
+            return {
+                row: msg.line - 1,
+                column: msg.col - 1,
+                text: msg.message,
+                type: infoRules[msg.rule.id] ? "info" : msg.type
+            }
+        }));
+    };
+
+}).call(Worker.prototype);
+
+});
+
+define('ace/lib/lang', ['require', 'exports', 'module' ], function(require, exports, module) {
+
+
+exports.stringReverse = function(string) {
+    return string.split("").reverse().join("");
+};
+
+exports.stringRepeat = function (string, count) {
+    var result = '';
+    while (count > 0) {
+        if (count & 1)
+            result += string;
+
+        if (count >>= 1)
+            string += string;
+    }
+    return result;
+};
+
+var trimBeginRegexp = /^\s\s*/;
+var trimEndRegexp = /\s\s*$/;
+
+exports.stringTrimLeft = function (string) {
+    return string.replace(trimBeginRegexp, '');
+};
+
+exports.stringTrimRight = function (string) {
+    return string.replace(trimEndRegexp, '');
+};
+
+exports.copyObject = function(obj) {
+    var copy = {};
+    for (var key in obj) {
+        copy[key] = obj[key];
+    }
+    return copy;
+};
+
+exports.copyArray = function(array){
+    var copy = [];
+    for (var i=0, l=array.length; i<l; i++) {
+        if (array[i] && typeof array[i] == "object")
+            copy[i] = this.copyObject( array[i] );
+        else 
+            copy[i] = array[i];
+    }
+    return copy;
+};
+
+exports.deepCopy = function (obj) {
+    if (typeof obj != "object") {
+        return obj;
+    }
+    
+    var copy = obj.constructor();
+    for (var key in obj) {
+        if (typeof obj[key] == "object") {
+            copy[key] = this.deepCopy(obj[key]);
+        } else {
+            copy[key] = obj[key];
+        }
+    }
+    return copy;
+};
+
+exports.arrayToMap = function(arr) {
+    var map = {};
+    for (var i=0; i<arr.length; i++) {
+        map[arr[i]] = 1;
+    }
+    return map;
+
+};
+
+exports.createMap = function(props) {
+    var map = Object.create(null);
+    for (var i in props) {
+        map[i] = props[i];
+    }
+    return map;
+};
+exports.arrayRemove = function(array, value) {
+  for (var i = 0; i <= array.length; i++) {
+    if (value === array[i]) {
+      array.splice(i, 1);
+    }
+  }
+};
+
+exports.escapeRegExp = function(str) {
+    return str.replace(/([.*+?^${}()|[\]\/\\])/g, '\\$1');
+};
+
+exports.escapeHTML = function(str) {
+    return str.replace(/&/g, "&#38;").replace(/"/g, "&#34;").replace(/'/g, "&#39;").replace(/</g, "&#60;");
+};
+
+exports.getMatchOffsets = function(string, regExp) {
+    var matches = [];
+
+    string.replace(regExp, function(str) {
+        matches.push({
+            offset: arguments[arguments.length-2],
+            length: str.length
+        });
+    });
+
+    return matches;
+};
+exports.deferredCall = function(fcn) {
+
+    var timer = null;
+    var callback = function() {
+        timer = null;
+        fcn();
+    };
+
+    var deferred = function(timeout) {
+        deferred.cancel();
+        timer = setTimeout(callback, timeout || 0);
+        return deferred;
+    };
+
+    deferred.schedule = deferred;
+
+    deferred.call = function() {
+        this.cancel();
+        fcn();
+        return deferred;
+    };
+
+    deferred.cancel = function() {
+        clearTimeout(timer);
+        timer = null;
+        return deferred;
+    };
+
+    return deferred;
+};
+
+
+exports.delayedCall = function(fcn, defaultTimeout) {
+    var timer = null;
+    var callback = function() {
+        timer = null;
+        fcn();
+    };
+
+    var _self = function(timeout) {
+        timer && clearTimeout(timer);
+        timer = setTimeout(callback, timeout || defaultTimeout);
+    };
+
+    _self.delay = _self;
+    _self.schedule = function(timeout) {
+        if (timer == null)
+            timer = setTimeout(callback, timeout || 0);
+    };
+
+    _self.call = function() {
+        this.cancel();
+        fcn();
+    };
+
+    _self.cancel = function() {
+        timer && clearTimeout(timer);
+        timer = null;
+    };
+
+    _self.isPending = function() {
+        return timer;
+    };
+
+    return _self;
+};
+});
+define('ace/worker/mirror', ['require', 'exports', 'module' , 'ace/document', 'ace/lib/lang'], function(require, exports, module) {
+
+
+var Document = require("../document").Document;
+var lang = require("../lib/lang");
+    
+var Mirror = exports.Mirror = function(sender) {
+    this.sender = sender;
+    var doc = this.doc = new Document("");
+    
+    var deferredUpdate = this.deferredUpdate = lang.delayedCall(this.onUpdate.bind(this));
+    
+    var _self = this;
+    sender.on("change", function(e) {
+        doc.applyDeltas([e.data]);        
+        deferredUpdate.schedule(_self.$timeout);
+    });
+};
+
+(function() {
+    
+    this.$timeout = 500;
+    
+    this.setTimeout = function(timeout) {
+        this.$timeout = timeout;
+    };
+    
+    this.setValue = function(value) {
+        this.doc.setValue(value);
+        this.deferredUpdate.schedule(this.$timeout);
+    };
+    
+    this.getValue = function(callbackId) {
+        this.sender.callback(this.doc.getValue(), callbackId);
+    };
+    
+    this.onUpdate = function() {
+    };
+    
+}).call(Mirror.prototype);
+
+});
+
+define('ace/document', ['require', 'exports', 'module' , 'ace/lib/oop', 'ace/lib/event_emitter', 'ace/range', 'ace/anchor'], function(require, exports, module) {
+
+
+var oop = require("./lib/oop");
+var EventEmitter = require("./lib/event_emitter").EventEmitter;
+var Range = require("./range").Range;
+var Anchor = require("./anchor").Anchor;
+
+var Document = function(text) {
+    this.$lines = [];
+    if (text.length == 0) {
+        this.$lines = [""];
+    } else if (Array.isArray(text)) {
+        this.insertLines(0, text);
+    } else {
+        this.insert({row: 0, column:0}, text);
+    }
+};
+
+(function() {
+
+    oop.implement(this, EventEmitter);
+    this.setValue = function(text) {
+        var len = this.getLength();
+        this.remove(new Range(0, 0, len, this.getLine(len-1).length));
+        this.insert({row: 0, column:0}, text);
+    };
+    this.getValue = function() {
+        return this.getAllLines().join(this.getNewLineCharacter());
+    };
+    this.createAnchor = function(row, column) {
+        return new Anchor(this, row, column);
+    };
+    if ("aaa".split(/a/).length == 0)
+        this.$split = function(text) {
+            return text.replace(/\r\n|\r/g, "\n").split("\n");
+        }
+    else
+        this.$split = function(text) {
+            return text.split(/\r\n|\r|\n/);
+        };
+
+
+ 
+    this.$detectNewLine = function(text) {
+        var match = text.match(/^.*?(\r\n|\r|\n)/m);
+        if (match) {
+            this.$autoNewLine = match[1];
+        } else {
+            this.$autoNewLine = "\n";
+        }
+    };
+    this.getNewLineCharacter = function() {
+        switch (this.$newLineMode) {
+          case "windows":
+            return "\r\n";
+
+          case "unix":
+            return "\n";
+
+          default:
+            return this.$autoNewLine;
+        }
+    };
+
+    this.$autoNewLine = "\n";
+    this.$newLineMode = "auto";
+    this.setNewLineMode = function(newLineMode) {
+        if (this.$newLineMode === newLineMode)
+            return;
+
+        this.$newLineMode = newLineMode;
+    };
+    this.getNewLineMode = function() {
+        return this.$newLineMode;
+    };
+    this.isNewLine = function(text) {
+        return (text == "\r\n" || text == "\r" || text == "\n");
+    };
+    this.getLine = function(row) {
+        return this.$lines[row] || "";
+    };
+    this.getLines = function(firstRow, lastRow) {
+        return this.$lines.slice(firstRow, lastRow + 1);
+    };
+    this.getAllLines = function() {
+        return this.getLines(0, this.getLength());
+    };
+    this.getLength = function() {
+        return this.$lines.length;
+    };
+    this.getTextRange = function(range) {
+        if (range.start.row == range.end.row) {
+            return this.$lines[range.start.row].substring(range.start.column,
+                                                         range.end.column);
+        }
+        else {
+            var lines = this.getLines(range.start.row+1, range.end.row-1);
+            lines.unshift((this.$lines[range.start.row] || "").substring(range.start.column));
+            lines.push((this.$lines[range.end.row] || "").substring(0, range.end.column));
+            return lines.join(this.getNewLineCharacter());
+        }
+    };
+
+    this.$clipPosition = function(position) {
+        var length = this.getLength();
+        if (position.row >= length) {
+            position.row = Math.max(0, length - 1);
+            position.column = this.getLine(length-1).length;
+        }
+        return position;
+    };
+    this.insert = function(position, text) {
+        if (!text || text.length === 0)
+            return position;
+
+        position = this.$clipPosition(position);
+        if (this.getLength() <= 1)
+            this.$detectNewLine(text);
+
+        var lines = this.$split(text);
+        var firstLine = lines.splice(0, 1)[0];
+        var lastLine = lines.length == 0 ? null : lines.splice(lines.length - 1, 1)[0];
+
+        position = this.insertInLine(position, firstLine);
+        if (lastLine !== null) {
+            position = this.insertNewLine(position); // terminate first line
+            position = this.insertLines(position.row, lines);
+            position = this.insertInLine(position, lastLine || "");
+        }
+        return position;
+    };
+    this.insertLines = function(row, lines) {
+        if (lines.length == 0)
+            return {row: row, column: 0};
+        if (lines.length > 0xFFFF) {
+            var end = this.insertLines(row, lines.slice(0xFFFF));
+            lines = lines.slice(0, 0xFFFF);
+        }
+
+        var args = [row, 0];
+        args.push.apply(args, lines);
+        this.$lines.splice.apply(this.$lines, args);
+
+        var range = new Range(row, 0, row + lines.length, 0);
+        var delta = {
+            action: "insertLines",
+            range: range,
+            lines: lines
+        };
+        this._emit("change", { data: delta });
+        return end || range.end;
+    };
+    this.insertNewLine = function(position) {
+        position = this.$clipPosition(position);
+        var line = this.$lines[position.row] || "";
+
+        this.$lines[position.row] = line.substring(0, position.column);
+        this.$lines.splice(position.row + 1, 0, line.substring(position.column, line.length));
+
+        var end = {
+            row : position.row + 1,
+            column : 0
+        };
+
+        var delta = {
+            action: "insertText",
+            range: Range.fromPoints(position, end),
+            text: this.getNewLineCharacter()
+        };
+        this._emit("change", { data: delta });
+
+        return end;
+    };
+    this.insertInLine = function(position, text) {
+        if (text.length == 0)
+            return position;
+
+        var line = this.$lines[position.row] || "";
+
+        this.$lines[position.row] = line.substring(0, position.column) + text
+                + line.substring(position.column);
+
+        var end = {
+            row : position.row,
+            column : position.column + text.length
+        };
+
+        var delta = {
+            action: "insertText",
+            range: Range.fromPoints(position, end),
+            text: text
+        };
+        this._emit("change", { data: delta });
+
+        return end;
+    };
+    this.remove = function(range) {
+        range.start = this.$clipPosition(range.start);
+        range.end = this.$clipPosition(range.end);
+
+        if (range.isEmpty())
+            return range.start;
+
+        var firstRow = range.start.row;
+        var lastRow = range.end.row;
+
+        if (range.isMultiLine()) {
+            var firstFullRow = range.start.column == 0 ? firstRow : firstRow + 1;
+            var lastFullRow = lastRow - 1;
+
+            if (range.end.column > 0)
+                this.removeInLine(lastRow, 0, range.end.column);
+
+            if (lastFullRow >= firstFullRow)
+                this.removeLines(firstFullRow, lastFullRow);
+
+            if (firstFullRow != firstRow) {
+                this.removeInLine(firstRow, range.start.column, this.getLine(firstRow).length);
+                this.removeNewLine(range.start.row);
+            }
+        }
+        else {
+            this.removeInLine(firstRow, range.start.column, range.end.column);
+        }
+        return range.start;
+    };
+    this.removeInLine = function(row, startColumn, endColumn) {
+        if (startColumn == endColumn)
+            return;
+
+        var range = new Range(row, startColumn, row, endColumn);
+        var line = this.getLine(row);
+        var removed = line.substring(startColumn, endColumn);
+        var newLine = line.substring(0, startColumn) + line.substring(endColumn, line.length);
+        this.$lines.splice(row, 1, newLine);
+
+        var delta = {
+            action: "removeText",
+            range: range,
+            text: removed
+        };
+        this._emit("change", { data: delta });
+        return range.start;
+    };
+    this.removeLines = function(firstRow, lastRow) {
+        var range = new Range(firstRow, 0, lastRow + 1, 0);
+        var removed = this.$lines.splice(firstRow, lastRow - firstRow + 1);
+
+        var delta = {
+            action: "removeLines",
+            range: range,
+            nl: this.getNewLineCharacter(),
+            lines: removed
+        };
+        this._emit("change", { data: delta });
+        return removed;
+    };
+    this.removeNewLine = function(row) {
+        var firstLine = this.getLine(row);
+        var secondLine = this.getLine(row+1);
+
+        var range = new Range(row, firstLine.length, row+1, 0);
+        var line = firstLine + secondLine;
+
+        this.$lines.splice(row, 2, line);
+
+        var delta = {
+            action: "removeText",
+            range: range,
+            text: this.getNewLineCharacter()
+        };
+        this._emit("change", { data: delta });
+    };
+    this.replace = function(range, text) {
+        if (text.length == 0 && range.isEmpty())
+            return range.start;
+        if (text == this.getTextRange(range))
+            return range.end;
+
+        this.remove(range);
+        if (text) {
+            var end = this.insert(range.start, text);
+        }
+        else {
+            end = range.start;
+        }
+
+        return end;
+    };
+    this.applyDeltas = function(deltas) {
+        for (var i=0; i<deltas.length; i++) {
+            var delta = deltas[i];
+            var range = Range.fromPoints(delta.range.start, delta.range.end);
+
+            if (delta.action == "insertLines")
+                this.insertLines(range.start.row, delta.lines);
+            else if (delta.action == "insertText")
+                this.insert(range.start, delta.text);
+            else if (delta.action == "removeLines")
+                this.removeLines(range.start.row, range.end.row - 1);
+            else if (delta.action == "removeText")
+                this.remove(range);
+        }
+    };
+    this.revertDeltas = function(deltas) {
+        for (var i=deltas.length-1; i>=0; i--) {
+            var delta = deltas[i];
+
+            var range = Range.fromPoints(delta.range.start, delta.range.end);
+
+            if (delta.action == "insertLines")
+                this.removeLines(range.start.row, range.end.row - 1);
+            else if (delta.action == "insertText")
+                this.remove(range);
+            else if (delta.action == "removeLines")
+                this.insertLines(range.start.row, delta.lines);
+            else if (delta.action == "removeText")
+                this.insert(range.start, delta.text);
+        }
+    };
+    this.indexToPosition = function(index, startRow) {
+        var lines = this.$lines || this.getAllLines();
+        var newlineLength = this.getNewLineCharacter().length;
+        for (var i = startRow || 0, l = lines.length; i < l; i++) {
+            index -= lines[i].length + newlineLength;
+            if (index < 0)
+                return {row: i, column: index + lines[i].length + newlineLength};
+        }
+        return {row: l-1, column: lines[l-1].length};
+    };
+    this.positionToIndex = function(pos, startRow) {
+        var lines = this.$lines || this.getAllLines();
+        var newlineLength = this.getNewLineCharacter().length;
+        var index = 0;
+        var row = Math.min(pos.row, lines.length);
+        for (var i = startRow || 0; i < row; ++i)
+            index += lines[i].length;
+
+        return index + newlineLength * i + pos.column;
+    };
+
+}).call(Document.prototype);
+
+exports.Document = Document;
+});
+
+define('ace/range', ['require', 'exports', 'module' ], function(require, exports, module) {
+
+var comparePoints = function(p1, p2) {
+    return p1.row - p2.row || p1.column - p2.column;
+};
+var Range = function(startRow, startColumn, endRow, endColumn) {
+    this.start = {
+        row: startRow,
+        column: startColumn
+    };
+
+    this.end = {
+        row: endRow,
+        column: endColumn
+    };
+};
+
+(function() {
+    this.isEqual = function(range) {
+        return this.start.row === range.start.row &&
+            this.end.row === range.end.row &&
+            this.start.column === range.start.column &&
+            this.end.column === range.end.column;
+    };
+    this.toString = function() {
+        return ("Range: [" + this.start.row + "/" + this.start.column +
+            "] -> [" + this.end.row + "/" + this.end.column + "]");
+    };
+
+    this.contains = function(row, column) {
+        return this.compare(row, column) == 0;
+    };
+    this.compareRange = function(range) {
+        var cmp,
+            end = range.end,
+            start = range.start;
+
+        cmp = this.compare(end.row, end.column);
+        if (cmp == 1) {
+            cmp = this.compare(start.row, start.column);
+            if (cmp == 1) {
+                return 2;
+            } else if (cmp == 0) {
+                return 1;
+            } else {
+                return 0;
+            }
+        } else if (cmp == -1) {
+            return -2;
+        } else {
+            cmp = this.compare(start.row, start.column);
+            if (cmp == -1) {
+                return -1;
+            } else if (cmp == 1) {
+                return 42;
+            } else {
+                return 0;
+            }
+        }
+    };
+    this.comparePoint = function(p) {
+        return this.compare(p.row, p.column);
+    };
+    this.containsRange = function(range) {
+        return this.comparePoint(range.start) == 0 && this.comparePoint(range.end) == 0;
+    };
+    this.intersects = function(range) {
+        var cmp = this.compareRange(range);
+        return (cmp == -1 || cmp == 0 || cmp == 1);
+    };
+    this.isEnd = function(row, column) {
+        return this.end.row == row && this.end.column == column;
+    };
+    this.isStart = function(row, column) {
+        return this.start.row == row && this.start.column == column;
+    };
+    this.setStart = function(row, column) {
+        if (typeof row == "object") {
+            this.start.column = row.column;
+            this.start.row = row.row;
+        } else {
+            this.start.row = row;
+            this.start.column = column;
+        }
+    };
+    this.setEnd = function(row, column) {
+        if (typeof row == "object") {
+            this.end.column = row.column;
+            this.end.row = row.row;
+        } else {
+            this.end.row = row;
+            this.end.column = column;
+        }
+    };
+    this.inside = function(row, column) {
+        if (this.compare(row, column) == 0) {
+            if (this.isEnd(row, column) || this.isStart(row, column)) {
+                return false;
+            } else {
+                return true;
+            }
+        }
+        return false;
+    };
+    this.insideStart = function(row, column) {
+        if (this.compare(row, column) == 0) {
+            if (this.isEnd(row, column)) {
+                return false;
+            } else {
+                return true;
+            }
+        }
+        return false;
+    };
+    this.insideEnd = function(row, column) {
+        if (this.compare(row, column) == 0) {
+            if (this.isStart(row, column)) {
+                return false;
+            } else {
+                return true;
+            }
+        }
+        return false;
+    };
+    this.compare = function(row, column) {
+        if (!this.isMultiLine()) {
+            if (row === this.start.row) {
+                return column < this.start.column ? -1 : (column > this.end.column ? 1 : 0);
+            };
+        }
+
+        if (row < this.start.row)
+            return -1;
+
+        if (row > this.end.row)
+            return 1;
+
+        if (this.start.row === row)
+            return column >= this.start.column ? 0 : -1;
+
+        if (this.end.row === row)
+            return column <= this.end.column ? 0 : 1;
+
+        return 0;
+    };
+    this.compareStart = function(row, column) {
+        if (this.start.row == row && this.start.column == column) {
+            return -1;
+        } else {
+            return this.compare(row, column);
+        }
+    };
+    this.compareEnd = function(row, column) {
+        if (this.end.row == row && this.end.column == column) {
+            return 1;
+        } else {
+            return this.compare(row, column);
+        }
+    };
+    this.compareInside = function(row, column) {
+        if (this.end.row == row && this.end.column == column) {
+            return 1;
+        } else if (this.start.row == row && this.start.column == column) {
+            return -1;
+        } else {
+            return this.compare(row, column);
+        }
+    };
+    this.clipRows = function(firstRow, lastRow) {
+        if (this.end.row > lastRow)
+            var end = {row: lastRow + 1, column: 0};
+        else if (this.end.row < firstRow)
+            var end = {row: firstRow, column: 0};
+
+        if (this.start.row > lastRow)
+            var start = {row: lastRow + 1, column: 0};
+        else if (this.start.row < firstRow)
+            var start = {row: firstRow, column: 0};
+
+        return Range.fromPoints(start || this.start, end || this.end);
+    };
+    this.extend = function(row, column) {
+        var cmp = this.compare(row, column);
+
+        if (cmp == 0)
+            return this;
+        else if (cmp == -1)
+            var start = {row: row, column: column};
+        else
+            var end = {row: row, column: column};
+
+        return Range.fromPoints(start || this.start, end || this.end);
+    };
+
+    this.isEmpty = function() {
+        return (this.start.row === this.end.row && this.start.column === this.end.column);
+    };
+    this.isMultiLine = function() {
+        return (this.start.row !== this.end.row);
+    };
+    this.clone = function() {
+        return Range.fromPoints(this.start, this.end);
+    };
+    this.collapseRows = function() {
+        if (this.end.column == 0)
+            return new Range(this.start.row, 0, Math.max(this.start.row, this.end.row-1), 0)
+        else
+            return new Range(this.start.row, 0, this.end.row, 0)
+    };
+    this.toScreenRange = function(session) {
+        var screenPosStart = session.documentToScreenPosition(this.start);
+        var screenPosEnd = session.documentToScreenPosition(this.end);
+
+        return new Range(
+            screenPosStart.row, screenPosStart.column,
+            screenPosEnd.row, screenPosEnd.column
+        );
+    };
+    this.moveBy = function(row, column) {
+        this.start.row += row;
+        this.start.column += column;
+        this.end.row += row;
+        this.end.column += column;
+    };
+
+}).call(Range.prototype);
+Range.fromPoints = function(start, end) {
+    return new Range(start.row, start.column, end.row, end.column);
+};
+Range.comparePoints = comparePoints;
+
+exports.Range = Range;
+});
+
+define('ace/anchor', ['require', 'exports', 'module' , 'ace/lib/oop', 'ace/lib/event_emitter'], function(require, exports, module) {
+
+
+var oop = require("./lib/oop");
+var EventEmitter = require("./lib/event_emitter").EventEmitter;
+
+var Anchor = exports.Anchor = function(doc, row, column) {
+    this.document = doc;
+    
+    if (typeof column == "undefined")
+        this.setPosition(row.row, row.column);
+    else
+        this.setPosition(row, column);
+
+    this.$onChange = this.onChange.bind(this);
+    doc.on("change", this.$onChange);
+};
+
+(function() {
+
+    oop.implement(this, EventEmitter);
+
+    this.getPosition = function() {
+        return this.$clipPositionToDocument(this.row, this.column);
+    };
+        
+    this.getDocument = function() {
+        return this.document;
+    };
+
+    this.onChange = function(e) {
+        var delta = e.data;
+        var range = delta.range;
+            
+        if (range.start.row == range.end.row && range.start.row != this.row)
+            return;
+            
+        if (range.start.row > this.row)
+            return;
+            
+        if (range.start.row == this.row && range.start.column > this.column)
+            return;
+    
+        var row = this.row;
+        var column = this.column;
+        
+        if (delta.action === "insertText") {
+            if (range.start.row === row && range.start.column <= column) {
+                if (range.start.row === range.end.row) {
+                    column += range.end.column - range.start.column;
+                }
+                else {
+                    column -= range.start.column;
+                    row += range.end.row - range.start.row;
+                }
+            }
+            else if (range.start.row !== range.end.row && range.start.row < row) {
+                row += range.end.row - range.start.row;
+            }
+        } else if (delta.action === "insertLines") {
+            if (range.start.row <= row) {
+                row += range.end.row - range.start.row;
+            }
+        }
+        else if (delta.action == "removeText") {
+            if (range.start.row == row && range.start.column < column) {
+                if (range.end.column >= column)
+                    column = range.start.column;
+                else
+                    column = Math.max(0, column - (range.end.column - range.start.column));
+                
+            } else if (range.start.row !== range.end.row && range.start.row < row) {
+                if (range.end.row == row) {
+                    column = Math.max(0, column - range.end.column) + range.start.column;
+                }
+                row -= (range.end.row - range.start.row);
+            }
+            else if (range.end.row == row) {
+                row -= range.end.row - range.start.row;
+                column = Math.max(0, column - range.end.column) + range.start.column;
+            }
+        } else if (delta.action == "removeLines") {
+            if (range.start.row <= row) {
+                if (range.end.row <= row)
+                    row -= range.end.row - range.start.row;
+                else {
+                    row = range.start.row;
+                    column = 0;
+                }
+            }
+        }
+
+        this.setPosition(row, column, true);
+    };
+
+    this.setPosition = function(row, column, noClip) {
+        var pos;
+        if (noClip) {
+            pos = {
+                row: row,
+                column: column
+            };
+        }
+        else {
+            pos = this.$clipPositionToDocument(row, column);
+        }
+        
+        if (this.row == pos.row && this.column == pos.column)
+            return;
+            
+        var old = {
+            row: this.row,
+            column: this.column
+        };
+        
+        this.row = pos.row;
+        this.column = pos.column;
+        this._emit("change", {
+            old: old,
+            value: pos
+        });
+    };
+
+    this.detach = function() {
+        this.document.removeEventListener("change", this.$onChange);
+    };
+    this.$clipPositionToDocument = function(row, column) {
+        var pos = {};
+    
+        if (row >= this.document.getLength()) {
+            pos.row = Math.max(0, this.document.getLength() - 1);
+            pos.column = this.document.getLine(pos.row).length;
+        }
+        else if (row < 0) {
+            pos.row = 0;
+            pos.column = 0;
+        }
+        else {
+            pos.row = row;
+            pos.column = Math.min(this.document.getLine(pos.row).length, Math.max(0, column));
+        }
+        
+        if (column < 0)
+            pos.column = 0;
+            
+        return pos;
+    };
+    
+}).call(Anchor.prototype);
+
+});
+define('ace/mode/css/csslint', ['require', 'exports', 'module' ], function(require, exports, module) {
+var parserlib = {};
+(function(){
+function EventTarget(){
+    this._listeners = {};    
+}
+
+EventTarget.prototype = {
+    constructor: EventTarget,
+    addListener: function(type, listener){
+        if (!this._listeners[type]){
+            this._listeners[type] = [];
+        }
+
+        this._listeners[type].push(listener);
+    },    
+    fire: function(event){
+        if (typeof event == "string"){
+            event = { type: event };
+        }
+        if (typeof event.target != "undefined"){
+            event.target = this;
+        }
+        
+        if (typeof event.type == "undefined"){
+            throw new Error("Event object missing 'type' property.");
+        }
+        
+        if (this._listeners[event.type]){
+            var listeners = this._listeners[event.type].concat();
+            for (var i=0, len=listeners.length; i < len; i++){
+                listeners[i].call(this, event);
+            }
+        }            
+    },
+    removeListener: function(type, listener){
+        if (this._listeners[type]){
+            var listeners = this._listeners[type];
+            for (var i=0, len=listeners.length; i < len; i++){
+                if (listeners[i] === listener){
+                    listeners.splice(i, 1);
+                    break;
+                }
+            }
+            
+            
+        }            
+    }
+};
+function StringReader(text){
+    this._input = text.replace(/\n\r?/g, "\n");
+    this._line = 1;
+    this._col = 1;
+    this._cursor = 0;
+}
+
+StringReader.prototype = {
+    constructor: StringReader,
+    getCol: function(){
+        return this._col;
+    },
+    getLine: function(){
+        return this._line ;
+    },
+    eof: function(){
+        return (this._cursor == this._input.length);
+    },
+    peek: function(count){
+        var c = null;
+        count = (typeof count == "undefined" ? 1 : count);
+        if (this._cursor < this._input.length){
+            c = this._input.charAt(this._cursor + count - 1);
+        }
+
+        return c;
+    },
+    read: function(){
+        var c = null;
+        if (this._cursor < this._input.length){
+            if (this._input.charAt(this._cursor) == "\n"){
+                this._line++;
+                this._col=1;
+            } else {
+                this._col++;
+            }
+            c = this._input.charAt(this._cursor++);
+        }
+
+        return c;
+    },
+    mark: function(){
+        this._bookmark = {
+            cursor: this._cursor,
+            line:   this._line,
+            col:    this._col
+        };
+    },
+
+    reset: function(){
+        if (this._bookmark){
+            this._cursor = this._bookmark.cursor;
+            this._line = this._bookmark.line;
+            this._col = this._bookmark.col;
+            delete this._bookmark;
+        }
+    },
+    readTo: function(pattern){
+
+        var buffer = "",
+            c;
+        while (buffer.length < pattern.length || buffer.lastIndexOf(pattern) != buffer.length - pattern.length){
+            c = this.read();
+            if (c){
+                buffer += c;
+            } else {
+                throw new Error("Expected \"" + pattern + "\" at line " + this._line  + ", col " + this._col + ".");
+            }
+        }
+
+        return buffer;
+
+    },
+    readWhile: function(filter){
+
+        var buffer = "",
+            c = this.read();
+
+        while(c !== null && filter(c)){
+            buffer += c;
+            c = this.read();
+        }
+
+        return buffer;
+
+    },
+    readMatch: function(matcher){
+
+        var source = this._input.substring(this._cursor),
+            value = null;
+        if (typeof matcher == "string"){
+            if (source.indexOf(matcher) === 0){
+                value = this.readCount(matcher.length);
+            }
+        } else if (matcher instanceof RegExp){
+            if (matcher.test(source)){
+                value = this.readCount(RegExp.lastMatch.length);
+            }
+        }
+
+        return value;
+    },
+    readCount: function(count){
+        var buffer = "";
+
+        while(count--){
+            buffer += this.read();
+        }
+
+        return buffer;
+    }
+
+};
+function SyntaxError(message, line, col){
+    this.col = col;
+    this.line = line;
+    this.message = message;
+
+}
+SyntaxError.prototype = new Error();
+function SyntaxUnit(text, line, col, type){
+    this.col = col;
+    this.line = line;
+    this.text = text;
+    this.type = type;
+}
+SyntaxUnit.fromToken = function(token){
+    return new SyntaxUnit(token.value, token.startLine, token.startCol);
+};
+
+SyntaxUnit.prototype = {
+    constructor: SyntaxUnit,
+    valueOf: function(){
+        return this.toString();
+    },
+    toString: function(){
+        return this.text;
+    }
+
+};
+function TokenStreamBase(input, tokenData){
+    this._reader = input ? new StringReader(input.toString()) : null;
+    this._token = null;
+    this._tokenData = tokenData;
+    this._lt = [];
+    this._ltIndex = 0;
+    
+    this._ltIndexCache = [];
+}
+TokenStreamBase.createTokenData = function(tokens){
+
+    var nameMap     = [],
+        typeMap     = {},
+        tokenData     = tokens.concat([]),
+        i            = 0,
+        len            = tokenData.length+1;
+    
+    tokenData.UNKNOWN = -1;
+    tokenData.unshift({name:"EOF"});
+
+    for (; i < len; i++){
+        nameMap.push(tokenData[i].name);
+        tokenData[tokenData[i].name] = i;
+        if (tokenData[i].text){
+            typeMap[tokenData[i].text] = i;
+        }
+    }
+    
+    tokenData.name = function(tt){
+        return nameMap[tt];
+    };
+    
+    tokenData.type = function(c){
+        return typeMap[c];
+    };
+    
+    return tokenData;
+};
+
+TokenStreamBase.prototype = {
+    constructor: TokenStreamBase,    
+    match: function(tokenTypes, channel){
+        if (!(tokenTypes instanceof Array)){
+            tokenTypes = [tokenTypes];
+        }
+                
+        var tt  = this.get(channel),
+            i   = 0,
+            len = tokenTypes.length;
+            
+        while(i < len){
+            if (tt == tokenTypes[i++]){
+                return true;
+            }
+        }
+        this.unget();
+        return false;
+    },        
+    mustMatch: function(tokenTypes, channel){
+
+        var token;
+        if (!(tokenTypes instanceof Array)){
+            tokenTypes = [tokenTypes];
+        }
+
+        if (!this.match.apply(this, arguments)){    
+            token = this.LT(1);
+            throw new SyntaxError("Expected " + this._tokenData[tokenTypes[0]].name + 
+                " at line " + token.startLine + ", col " + token.startCol + ".", token.startLine, token.startCol);
+        }
+    },
+    advance: function(tokenTypes, channel){
+        
+        while(this.LA(0) !== 0 && !this.match(tokenTypes, channel)){
+            this.get();
+        }
+
+        return this.LA(0);    
+    },      
+    get: function(channel){
+    
+        var tokenInfo   = this._tokenData,
+            reader      = this._reader,
+            value,
+            i           =0,
+            len         = tokenInfo.length,
+            found       = false,
+            token,
+            info;
+        if (this._lt.length && this._ltIndex >= 0 && this._ltIndex < this._lt.length){  
+                           
+            i++;
+            this._token = this._lt[this._ltIndex++];
+            info = tokenInfo[this._token.type];
+            while((info.channel !== undefined && channel !== info.channel) &&
+                    this._ltIndex < this._lt.length){
+                this._token = this._lt[this._ltIndex++];
+                info = tokenInfo[this._token.type];
+                i++;
+            }
+            if ((info.channel === undefined || channel === info.channel) &&
+                    this._ltIndex <= this._lt.length){
+                this._ltIndexCache.push(i);
+                return this._token.type;
+            }
+        }
+        token = this._getToken();
+        if (token.type > -1 && !tokenInfo[token.type].hide){
+            token.channel = tokenInfo[token.type].channel;
+            this._token = token;
+            this._lt.push(token);
+            this._ltIndexCache.push(this._lt.length - this._ltIndex + i);  
+            if (this._lt.length > 5){
+                this._lt.shift();                
+            }
+            if (this._ltIndexCache.length > 5){
+                this._ltIndexCache.shift();
+            }
+            this._ltIndex = this._lt.length;
+        }
+        info = tokenInfo[token.type];
+        if (info && 
+                (info.hide || 
+                (info.channel !== undefined && channel !== info.channel))){
+            return this.get(channel);
+        } else {
+            return token.type;
+        }
+    },
+    LA: function(index){
+        var total = index,
+            tt;
+        if (index > 0){
+            if (index > 5){
+                throw new Error("Too much lookahead.");
+            }
+            while(total){
+                tt = this.get();   
+                total--;                            
+            }
+            while(total < index){
+                this.unget();
+                total++;
+            }
+        } else if (index < 0){
+        
+            if(this._lt[this._ltIndex+index]){
+                tt = this._lt[this._ltIndex+index].type;
+            } else {
+                throw new Error("Too much lookbehind.");
+            }
+        
+        } else {
+            tt = this._token.type;
+        }
+        
+        return tt;
+    
+    },    
+    LT: function(index){
+        this.LA(index);
+        return this._lt[this._ltIndex+index-1];    
+    },
+    peek: function(){
+        return this.LA(1);
+    },
+    token: function(){
+        return this._token;
+    },
+    tokenName: function(tokenType){
+        if (tokenType < 0 || tokenType > this._tokenData.length){
+            return "UNKNOWN_TOKEN";
+        } else {
+            return this._tokenData[tokenType].name;
+        }
+    },    
+    tokenType: function(tokenName){
+        return this._tokenData[tokenName] || -1;
+    },      
+    unget: function(){
+        if (this._ltIndexCache.length){
+            this._ltIndex -= this._ltIndexCache.pop();//--;
+            this._token = this._lt[this._ltIndex - 1];
+        } else {
+            throw new Error("Too much lookahead.");
+        }
+    }
+
+};
+
+
+
+
+parserlib.util = {
+StringReader: StringReader,
+SyntaxError : SyntaxError,
+SyntaxUnit  : SyntaxUnit,
+EventTarget : EventTarget,
+TokenStreamBase : TokenStreamBase
+};
+})();
+(function(){
+var EventTarget = parserlib.util.EventTarget,
+TokenStreamBase = parserlib.util.TokenStreamBase,
+StringReader = parserlib.util.StringReader,
+SyntaxError = parserlib.util.SyntaxError,
+SyntaxUnit  = parserlib.util.SyntaxUnit;
+
+
+var Colors = {
+    aliceblue       :"#f0f8ff",
+    antiquewhite    :"#faebd7",
+    aqua            :"#00ffff",
+    aquamarine      :"#7fffd4",
+    azure           :"#f0ffff",
+    beige           :"#f5f5dc",
+    bisque          :"#ffe4c4",
+    black           :"#000000",
+    blanchedalmond  :"#ffebcd",
+    blue            :"#0000ff",
+    blueviolet      :"#8a2be2",
+    brown           :"#a52a2a",
+    burlywood       :"#deb887",
+    cadetblue       :"#5f9ea0",
+    chartreuse      :"#7fff00",
+    chocolate       :"#d2691e",
+    coral           :"#ff7f50",
+    cornflowerblue  :"#6495ed",
+    cornsilk        :"#fff8dc",
+    crimson         :"#dc143c",
+    cyan            :"#00ffff",
+    darkblue        :"#00008b",
+    darkcyan        :"#008b8b",
+    darkgoldenrod   :"#b8860b",
+    darkgray        :"#a9a9a9",
+    darkgreen       :"#006400",
+    darkkhaki       :"#bdb76b",
+    darkmagenta     :"#8b008b",
+    darkolivegreen  :"#556b2f",
+    darkorange      :"#ff8c00",
+    darkorchid      :"#9932cc",
+    darkred         :"#8b0000",
+    darksalmon      :"#e9967a",
+    darkseagreen    :"#8fbc8f",
+    darkslateblue   :"#483d8b",
+    darkslategray   :"#2f4f4f",
+    darkturquoise   :"#00ced1",
+    darkviolet      :"#9400d3",
+    deeppink        :"#ff1493",
+    deepskyblue     :"#00bfff",
+    dimgray         :"#696969",
+    dodgerblue      :"#1e90ff",
+    firebrick       :"#b22222",
+    floralwhite     :"#fffaf0",
+    forestgreen     :"#228b22",
+    fuchsia         :"#ff00ff",
+    gainsboro       :"#dcdcdc",
+    ghostwhite      :"#f8f8ff",
+    gold            :"#ffd700",
+    goldenrod       :"#daa520",
+    gray            :"#808080",
+    green           :"#008000",
+    greenyellow     :"#adff2f",
+    honeydew        :"#f0fff0",
+    hotpink         :"#ff69b4",
+    indianred       :"#cd5c5c",
+    indigo          :"#4b0082",
+    ivory           :"#fffff0",
+    khaki           :"#f0e68c",
+    lavender        :"#e6e6fa",
+    lavenderblush   :"#fff0f5",
+    lawngreen       :"#7cfc00",
+    lemonchiffon    :"#fffacd",
+    lightblue       :"#add8e6",
+    lightcoral      :"#f08080",
+    lightcyan       :"#e0ffff",
+    lightgoldenrodyellow  :"#fafad2",
+    lightgray       :"#d3d3d3",
+    lightgreen      :"#90ee90",
+    lightpink       :"#ffb6c1",
+    lightsalmon     :"#ffa07a",
+    lightseagreen   :"#20b2aa",
+    lightskyblue    :"#87cefa",
+    lightslategray  :"#778899",
+    lightsteelblue  :"#b0c4de",
+    lightyellow     :"#ffffe0",
+    lime            :"#00ff00",
+    limegreen       :"#32cd32",
+    linen           :"#faf0e6",
+    magenta         :"#ff00ff",
+    maroon          :"#800000",
+    mediumaquamarine:"#66cdaa",
+    mediumblue      :"#0000cd",
+    mediumorchid    :"#ba55d3",
+    mediumpurple    :"#9370d8",
+    mediumseagreen  :"#3cb371",
+    mediumslateblue :"#7b68ee",
+    mediumspringgreen   :"#00fa9a",
+    mediumturquoise :"#48d1cc",
+    mediumvioletred :"#c71585",
+    midnightblue    :"#191970",
+    mintcream       :"#f5fffa",
+    mistyrose       :"#ffe4e1",
+    moccasin        :"#ffe4b5",
+    navajowhite     :"#ffdead",
+    navy            :"#000080",
+    oldlace         :"#fdf5e6",
+    olive           :"#808000",
+    olivedrab       :"#6b8e23",
+    orange          :"#ffa500",
+    orangered       :"#ff4500",
+    orchid          :"#da70d6",
+    palegoldenrod   :"#eee8aa",
+    palegreen       :"#98fb98",
+    paleturquoise   :"#afeeee",
+    palevioletred   :"#d87093",
+    papayawhip      :"#ffefd5",
+    peachpuff       :"#ffdab9",
+    peru            :"#cd853f",
+    pink            :"#ffc0cb",
+    plum            :"#dda0dd",
+    powderblue      :"#b0e0e6",
+    purple          :"#800080",
+    red             :"#ff0000",
+    rosybrown       :"#bc8f8f",
+    royalblue       :"#4169e1",
+    saddlebrown     :"#8b4513",
+    salmon          :"#fa8072",
+    sandybrown      :"#f4a460",
+    seagreen        :"#2e8b57",
+    seashell        :"#fff5ee",
+    sienna          :"#a0522d",
+    silver          :"#c0c0c0",
+    skyblue         :"#87ceeb",
+    slateblue       :"#6a5acd",
+    slategray       :"#708090",
+    snow            :"#fffafa",
+    springgreen     :"#00ff7f",
+    steelblue       :"#4682b4",
+    tan             :"#d2b48c",
+    teal            :"#008080",
+    thistle         :"#d8bfd8",
+    tomato          :"#ff6347",
+    turquoise       :"#40e0d0",
+    violet          :"#ee82ee",
+    wheat           :"#f5deb3",
+    white           :"#ffffff",
+    whitesmoke      :"#f5f5f5",
+    yellow          :"#ffff00",
+    yellowgreen     :"#9acd32"
+};
+function Combinator(text, line, col){
+    
+    SyntaxUnit.call(this, text, line, col, Parser.COMBINATOR_TYPE);
+    this.type = "unknown";
+    if (/^\s+$/.test(text)){
+        this.type = "descendant";
+    } else if (text == ">"){
+        this.type = "child";
+    } else if (text == "+"){
+        this.type = "adjacent-sibling";
+    } else if (text == "~"){
+        this.type = "sibling";
+    }
+
+}
+
+Combinator.prototype = new SyntaxUnit();
+Combinator.prototype.constructor = Combinator;
+function MediaFeature(name, value){
+    
+    SyntaxUnit.call(this, "(" + name + (value !== null ? ":" + value : "") + ")", name.startLine, name.startCol, Parser.MEDIA_FEATURE_TYPE);
+    this.name = name;
+    this.value = value;
+}
+
+MediaFeature.prototype = new SyntaxUnit();
+MediaFeature.prototype.constructor = MediaFeature;
+function MediaQuery(modifier, mediaType, features, line, col){
+    
+    SyntaxUnit.call(this, (modifier ? modifier + " ": "") + (mediaType ? mediaType + " " : "") + features.join(" and "), line, col, Parser.MEDIA_QUERY_TYPE);
+    this.modifier = modifier;
+    this.mediaType = mediaType;
+    this.features = features;
+
+}
+
+MediaQuery.prototype = new SyntaxUnit();
+MediaQuery.prototype.constructor = MediaQuery;
+function Parser(options){
+    EventTarget.call(this);
+
+
+    this.options = options || {};
+
+    this._tokenStream = null;
+}
+Parser.DEFAULT_TYPE = 0;
+Parser.COMBINATOR_TYPE = 1;
+Parser.MEDIA_FEATURE_TYPE = 2;
+Parser.MEDIA_QUERY_TYPE = 3;
+Parser.PROPERTY_NAME_TYPE = 4;
+Parser.PROPERTY_VALUE_TYPE = 5;
+Parser.PROPERTY_VALUE_PART_TYPE = 6;
+Parser.SELECTOR_TYPE = 7;
+Parser.SELECTOR_PART_TYPE = 8;
+Parser.SELECTOR_SUB_PART_TYPE = 9;
+
+Parser.prototype = function(){
+
+    var proto = new EventTarget(),  //new prototype
+        prop,
+        additions =  {
+            constructor: Parser,
+            DEFAULT_TYPE : 0,
+            COMBINATOR_TYPE : 1,
+            MEDIA_FEATURE_TYPE : 2,
+            MEDIA_QUERY_TYPE : 3,
+            PROPERTY_NAME_TYPE : 4,
+            PROPERTY_VALUE_TYPE : 5,
+            PROPERTY_VALUE_PART_TYPE : 6,
+            SELECTOR_TYPE : 7,
+            SELECTOR_PART_TYPE : 8,
+            SELECTOR_SUB_PART_TYPE : 9,            
+        
+            _stylesheet: function(){ 
+               
+                var tokenStream = this._tokenStream,
+                    charset     = null,
+                    count,
+                    token,
+                    tt;
+                    
+                this.fire("startstylesheet");
+                this._charset();
+                
+                this._skipCruft();
+                while (tokenStream.peek() == Tokens.IMPORT_SYM){
+                    this._import();
+                    this._skipCruft();
+                }
+                while (tokenStream.peek() == Tokens.NAMESPACE_SYM){
+                    this._namespace();
+                    this._skipCruft();
+                }
+                tt = tokenStream.peek();
+                while(tt > Tokens.EOF){
+                
+                    try {
+                
+                        switch(tt){
+                            case Tokens.MEDIA_SYM:
+                                this._media();
+                                this._skipCruft();
+                                break;
+                            case Tokens.PAGE_SYM:
+                                this._page(); 
+                                this._skipCruft();
+                                break;                   
+                            case Tokens.FONT_FACE_SYM:
+                                this._font_face(); 
+                                this._skipCruft();
+                                break;  
+                            case Tokens.KEYFRAMES_SYM:
+                                this._keyframes(); 
+                                this._skipCruft();
+                                break;                                
+                            case Tokens.UNKNOWN_SYM:  //unknown @ rule
+                                tokenStream.get();
+                                if (!this.options.strict){
+                                    this.fire({
+                                        type:       "error",
+                                        error:      null,
+                                        message:    "Unknown @ rule: " + tokenStream.LT(0).value + ".",
+                                        line:       tokenStream.LT(0).startLine,
+                                        col:        tokenStream.LT(0).startCol
+                                    });                          
+                                    count=0;
+                                    while (tokenStream.advance([Tokens.LBRACE, Tokens.RBRACE]) == Tokens.LBRACE){
+                                        count++;    //keep track of nesting depth
+                                    }
+                                    
+                                    while(count){
+                                        tokenStream.advance([Tokens.RBRACE]);
+                                        count--;
+                                    }
+                                    
+                                } else {
+                                    throw new SyntaxError("Unknown @ rule.", tokenStream.LT(0).startLine, tokenStream.LT(0).startCol);
+                                }                                
+                                break;
+                            case Tokens.S:
+                                this._readWhitespace();
+                                break;
+                            default:                            
+                                if(!this._ruleset()){
+                                    switch(tt){
+                                        case Tokens.CHARSET_SYM:
+                                            token = tokenStream.LT(1);
+                                            this._charset(false);
+                                            throw new SyntaxError("@charset not allowed here.", token.startLine, token.startCol);
+                                        case Tokens.IMPORT_SYM:
+                                            token = tokenStream.LT(1);
+                                            this._import(false);
+                                            throw new SyntaxError("@import not allowed here.", token.startLine, token.startCol);
+                                        case Tokens.NAMESPACE_SYM:
+                                            token = tokenStream.LT(1);
+                                            this._namespace(false);
+                                            throw new SyntaxError("@namespace not allowed here.", token.startLine, token.startCol);
+                                        default:
+                                            tokenStream.get();  //get the last token
+                                            this._unexpectedToken(tokenStream.token());
+                                    }
+                                
+                                }
+                        }
+                    } catch(ex) {
+                        if (ex instanceof SyntaxError && !this.options.strict){
+                            this.fire({
+                                type:       "error",
+                                error:      ex,
+                                message:    ex.message,
+                                line:       ex.line,
+                                col:        ex.col
+                            });                     
+                        } else {
+                            throw ex;
+                        }
+                    }
+                    
+                    tt = tokenStream.peek();
+                }
+                
+                if (tt != Tokens.EOF){
+                    this._unexpectedToken(tokenStream.token());
+                }
+            
+                this.fire("endstylesheet");
+            },
+            
+            _charset: function(emit){
+                var tokenStream = this._tokenStream,
+                    charset,
+                    token,
+                    line,
+                    col;
+                    
+                if (tokenStream.match(Tokens.CHARSET_SYM)){
+                    line = tokenStream.token().startLine;
+                    col = tokenStream.token().startCol;
+                
+                    this._readWhitespace();
+                    tokenStream.mustMatch(Tokens.STRING);
+                    
+                    token = tokenStream.token();
+                    charset = token.value;
+                    
+                    this._readWhitespace();
+                    tokenStream.mustMatch(Tokens.SEMICOLON);
+                    
+                    if (emit !== false){
+                        this.fire({ 
+                            type:   "charset",
+                            charset:charset,
+                            line:   line,
+                            col:    col
+                        });
+                    }
+                }            
+            },
+            
+            _import: function(emit){    
+            
+                var tokenStream = this._tokenStream,
+                    tt,
+                    uri,
+                    importToken,
+                    mediaList   = [];
+                tokenStream.mustMatch(Tokens.IMPORT_SYM);
+                importToken = tokenStream.token();
+                this._readWhitespace();
+                
+                tokenStream.mustMatch([Tokens.STRING, Tokens.URI]);
+                uri = tokenStream.token().value.replace(/(?:url\()?["']([^"']+)["']\)?/, "$1");                
+
+                this._readWhitespace();
+                
+                mediaList = this._media_query_list();
+                tokenStream.mustMatch(Tokens.SEMICOLON);
+                this._readWhitespace();
+                
+                if (emit !== false){
+                    this.fire({
+                        type:   "import",
+                        uri:    uri,
+                        media:  mediaList,
+                        line:   importToken.startLine,
+                        col:    importToken.startCol
+                    });
+                }
+        
+            },
+            
+            _namespace: function(emit){    
+            
+                var tokenStream = this._tokenStream,
+                    line,
+                    col,
+                    prefix,
+                    uri;
+                tokenStream.mustMatch(Tokens.NAMESPACE_SYM);
+                line = tokenStream.token().startLine;
+                col = tokenStream.token().startCol;
+                this._readWhitespace();
+                if (tokenStream.match(Tokens.IDENT)){
+                    prefix = tokenStream.token().value;
+                    this._readWhitespace();
+                }
+                
+                tokenStream.mustMatch([Tokens.STRING, Tokens.URI]);
+                uri = tokenStream.token().value.replace(/(?:url\()?["']([^"']+)["']\)?/, "$1");                
+
+                this._readWhitespace();
+                tokenStream.mustMatch(Tokens.SEMICOLON);
+                this._readWhitespace();
+                
+                if (emit !== false){
+                    this.fire({
+                        type:   "namespace",
+                        prefix: prefix,
+                        uri:    uri,
+                        line:   line,
+                        col:    col
+                    });
+                }
+        
+            },            
+                       
+            _media: function(){
+                var tokenStream     = this._tokenStream,
+                    line,
+                    col,
+                    mediaList;//       = [];
+                tokenStream.mustMatch(Tokens.MEDIA_SYM);
+                line = tokenStream.token().startLine;
+                col = tokenStream.token().startCol;
+                
+                this._readWhitespace();               
+
+                mediaList = this._media_query_list();
+
+                tokenStream.mustMatch(Tokens.LBRACE);
+                this._readWhitespace();
+                
+                this.fire({
+                    type:   "startmedia",
+                    media:  mediaList,
+                    line:   line,
+                    col:    col
+                });
+                
+                while(true) {
+                    if (tokenStream.peek() == Tokens.PAGE_SYM){
+                        this._page();
+                    } else if (!this._ruleset()){
+                        break;
+                    }                
+                }
+                
+                tokenStream.mustMatch(Tokens.RBRACE);
+                this._readWhitespace();
+        
+                this.fire({
+                    type:   "endmedia",
+                    media:  mediaList,
+                    line:   line,
+                    col:    col
+                });
+            },                           
+            _media_query_list: function(){
+                var tokenStream = this._tokenStream,
+                    mediaList   = [];
+                
+                
+                this._readWhitespace();
+                
+                if (tokenStream.peek() == Tokens.IDENT || tokenStream.peek() == Tokens.LPAREN){
+                    mediaList.push(this._media_query());
+                }
+                
+                while(tokenStream.match(Tokens.COMMA)){
+                    this._readWhitespace();
+                    mediaList.push(this._media_query());
+                }
+                
+                return mediaList;
+            },
+            _media_query: function(){
+                var tokenStream = this._tokenStream,
+                    type        = null,
+                    ident       = null,
+                    token       = null,
+                    expressions = [];
+                    
+                if (tokenStream.match(Tokens.IDENT)){
+                    ident = tokenStream.token().value.toLowerCase();
+                    if (ident != "only" && ident != "not"){
+                        tokenStream.unget();
+                        ident = null;
+                    } else {
+                        token = tokenStream.token();
+                    }
+                }
+                                
+                this._readWhitespace();
+                
+                if (tokenStream.peek() == Tokens.IDENT){
+                    type = this._media_type();
+                    if (token === null){
+                        token = tokenStream.token();
+                    }
+                } else if (tokenStream.peek() == Tokens.LPAREN){
+                    if (token === null){
+                        token = tokenStream.LT(1);
+                    }
+                    expressions.push(this._media_expression());
+                }                               
+                
+                if (type === null && expressions.length === 0){
+                    return null;
+                } else {                
+                    this._readWhitespace();
+                    while (tokenStream.match(Tokens.IDENT)){
+                        if (tokenStream.token().value.toLowerCase() != "and"){
+                            this._unexpectedToken(tokenStream.token());
+                        }
+                        
+                        this._readWhitespace();
+                        expressions.push(this._media_expression());
+                    }
+                }
+
+                return new MediaQuery(ident, type, expressions, token.startLine, token.startCol);
+            },
+            _media_type: function(){
+                return this._media_feature();           
+            },
+            _media_expression: function(){
+                var tokenStream = this._tokenStream,
+                    feature     = null,
+                    token,
+                    expression  = null;
+                
+                tokenStream.mustMatch(Tokens.LPAREN);
+                
+                feature = this._media_feature();
+                this._readWhitespace();
+                
+                if (tokenStream.match(Tokens.COLON)){
+                    this._readWhitespace();
+                    token = tokenStream.LT(1);
+                    expression = this._expression();
+                }
+                
+                tokenStream.mustMatch(Tokens.RPAREN);
+                this._readWhitespace();
+
+                return new MediaFeature(feature, (expression ? new SyntaxUnit(expression, token.startLine, token.startCol) : null));            
+            },
+            _media_feature: function(){
+                var tokenStream = this._tokenStream;
+                    
+                tokenStream.mustMatch(Tokens.IDENT);
+                
+                return SyntaxUnit.fromToken(tokenStream.token());            
+            },
+            _page: function(){            
+                var tokenStream = this._tokenStream,
+                    line,
+                    col,
+                    identifier  = null,
+                    pseudoPage  = null;
+                tokenStream.mustMatch(Tokens.PAGE_SYM);
+                line = tokenStream.token().startLine;
+                col = tokenStream.token().startCol;
+                
+                this._readWhitespace();
+                
+                if (tokenStream.match(Tokens.IDENT)){
+                    identifier = tokenStream.token().value;
+                    if (identifier.toLowerCase() === "auto"){
+                        this._unexpectedToken(tokenStream.token());
+                    }
+                }                
+                if (tokenStream.peek() == Tokens.COLON){
+                    pseudoPage = this._pseudo_page();
+                }
+            
+                this._readWhitespace();
+                
+                this.fire({
+                    type:   "startpage",
+                    id:     identifier,
+                    pseudo: pseudoPage,
+                    line:   line,
+                    col:    col
+                });                   
+
+                this._readDeclarations(true, true);                
+                
+                this.fire({
+                    type:   "endpage",
+                    id:     identifier,
+                    pseudo: pseudoPage,
+                    line:   line,
+                    col:    col
+                });             
+            
+            },
+            _margin: function(){
+                var tokenStream = this._tokenStream,
+                    line,
+                    col,
+                    marginSym   = this._margin_sym();
+
+                if (marginSym){
+                    line = tokenStream.token().startLine;
+                    col = tokenStream.token().startCol;
+                
+                    this.fire({
+                        type: "startpagemargin",
+                        margin: marginSym,
+                        line:   line,
+                        col:    col
+                    });    
+                    
+                    this._readDeclarations(true);
+
+                    this.fire({
+                        type: "endpagemargin",
+                        margin: marginSym,
+                        line:   line,
+                        col:    col
+                    });    
+                    return true;
+                } else {
+                    return false;
+                }
+            },
+            _margin_sym: function(){
+            
+                var tokenStream = this._tokenStream;
+            
+                if(tokenStream.match([Tokens.TOPLEFTCORNER_SYM, Tokens.TOPLEFT_SYM,
+                        Tokens.TOPCENTER_SYM, Tokens.TOPRIGHT_SYM, Tokens.TOPRIGHTCORNER_SYM,
+                        Tokens.BOTTOMLEFTCORNER_SYM, Tokens.BOTTOMLEFT_SYM, 
+                        Tokens.BOTTOMCENTER_SYM, Tokens.BOTTOMRIGHT_SYM,
+                        Tokens.BOTTOMRIGHTCORNER_SYM, Tokens.LEFTTOP_SYM, 
+                        Tokens.LEFTMIDDLE_SYM, Tokens.LEFTBOTTOM_SYM, Tokens.RIGHTTOP_SYM,
+                        Tokens.RIGHTMIDDLE_SYM, Tokens.RIGHTBOTTOM_SYM]))
+                {
+                    return SyntaxUnit.fromToken(tokenStream.token());                
+                } else {
+                    return null;
+                }
+            
+            },
+            
+            _pseudo_page: function(){
+        
+                var tokenStream = this._tokenStream;
+                
+                tokenStream.mustMatch(Tokens.COLON);
+                tokenStream.mustMatch(Tokens.IDENT);
+                
+                return tokenStream.token().value;
+            },
+            
+            _font_face: function(){     
+                var tokenStream = this._tokenStream,
+                    line,
+                    col;
+                tokenStream.mustMatch(Tokens.FONT_FACE_SYM);
+                line = tokenStream.token().startLine;
+                col = tokenStream.token().startCol;
+                
+                this._readWhitespace();
+
+                this.fire({
+                    type:   "startfontface",
+                    line:   line,
+                    col:    col
+                });                    
+                
+                this._readDeclarations(true);
+                
+                this.fire({
+                    type:   "endfontface",
+                    line:   line,
+                    col:    col
+                });              
+            },
+
+            _operator: function(){    
+                 
+                var tokenStream = this._tokenStream,
+                    token       = null;
+                
+                if (tokenStream.match([Tokens.SLASH, Tokens.COMMA])){
+                    token =  tokenStream.token();
+                    this._readWhitespace();
+                } 
+                return token ? PropertyValuePart.fromToken(token) : null;
+                
+            },
+            
+            _combinator: function(){    
+                 
+                var tokenStream = this._tokenStream,
+                    value       = null,
+                    token;
+                
+                if(tokenStream.match([Tokens.PLUS, Tokens.GREATER, Tokens.TILDE])){                
+                    token = tokenStream.token();
+                    value = new Combinator(token.value, token.startLine, token.startCol);
+                    this._readWhitespace();
+                }
+                
+                return value;
+            },
+            
+            _unary_operator: function(){
+                 
+                var tokenStream = this._tokenStream;
+                
+                if (tokenStream.match([Tokens.MINUS, Tokens.PLUS])){
+                    return tokenStream.token().value;
+                } else {
+                    return null;
+                }         
+            },
+            
+            _property: function(){
+                 
+                var tokenStream = this._tokenStream,
+                    value       = null,
+                    hack        = null,
+                    tokenValue,
+                    token,
+                    line,
+                    col;
+                if (tokenStream.peek() == Tokens.STAR && this.options.starHack){
+                    tokenStream.get();
+                    token = tokenStream.token();
+                    hack = token.value;
+                    line = token.startLine;
+                    col = token.startCol;
+                }
+                
+                if(tokenStream.match(Tokens.IDENT)){
+                    token = tokenStream.token();
+                    tokenValue = token.value;
+                    if (tokenValue.charAt(0) == "_" && this.options.underscoreHack){
+                        hack = "_";
+                        tokenValue = tokenValue.substring(1);
+                    }
+                    
+                    value = new PropertyName(tokenValue, hack, (line||token.startLine), (col||token.startCol));
+                    this._readWhitespace();
+                }
+                
+                return value;
+            },
+            _ruleset: function(){    
+                 
+                var tokenStream = this._tokenStream,
+                    tt,
+                    selectors;
+                try {
+                    selectors = this._selectors_group();
+                } catch (ex){
+                    if (ex instanceof SyntaxError && !this.options.strict){
+                        this.fire({
+                            type:       "error",
+                            error:      ex,
+                            message:    ex.message,
+                            line:       ex.line,
+                            col:        ex.col
+                        });                          
+                        tt = tokenStream.advance([Tokens.RBRACE]);
+                        if (tt == Tokens.RBRACE){
+                        } else {
+                            throw ex;
+                        }                        
+                        
+                    } else {
+                        throw ex;
+                    }                
+                    return true;
+                }
+                if (selectors){ 
+                                    
+                    this.fire({
+                        type:       "startrule",
+                        selectors:  selectors,
+                        line:       selectors[0].line,
+                        col:        selectors[0].col
+                    });                
+                    
+                    this._readDeclarations(true);                
+                    
+                    this.fire({
+                        type:       "endrule",
+                        selectors:  selectors,
+                        line:       selectors[0].line,
+                        col:        selectors[0].col
+                    });  
+                    
+                }
+                
+                return selectors;
+                
+            },
+            _selectors_group: function(){           
+                var tokenStream = this._tokenStream,
+                    selectors   = [],
+                    selector;
+                    
+                selector = this._selector();
+                if (selector !== null){
+                
+                    selectors.push(selector);
+                    while(tokenStream.match(Tokens.COMMA)){
+                        this._readWhitespace();
+                        selector = this._selector();
+                        if (selector !== null){
+                            selectors.push(selector);
+                        } else {
+                            this._unexpectedToken(tokenStream.LT(1));
+                        }
+                    }
+                }
+
+                return selectors.length ? selectors : null;
+            },
+            _selector: function(){
+                 
+                var tokenStream = this._tokenStream,
+                    selector    = [],
+                    nextSelector = null,
+                    combinator  = null,
+                    ws          = null;
+                nextSelector = this._simple_selector_sequence();
+                if (nextSelector === null){
+                    return null;
+                }
+                
+                selector.push(nextSelector);
+                
+                do {
+                    combinator = this._combinator();
+                    
+                    if (combinator !== null){
+                        selector.push(combinator);
+                        nextSelector = this._simple_selector_sequence();
+                        if (nextSelector === null){
+                            this._unexpectedToken(tokenStream.LT(1));
+                        } else {
+                            selector.push(nextSelector);
+                        }
+                    } else {
+                        if (this._readWhitespace()){           
+                            ws = new Combinator(tokenStream.token().value, tokenStream.token().startLine, tokenStream.token().startCol);
+                            combinator = this._combinator();
+                            nextSelector = this._simple_selector_sequence();
+                            if (nextSelector === null){                        
+                                if (combinator !== null){
+                                    this._unexpectedToken(tokenStream.LT(1));
+                                }
+                            } else {
+                                
+                                if (combinator !== null){
+                                    selector.push(combinator);
+                                } else {
+                                    selector.push(ws);
+                                }
+                                
+                                selector.push(nextSelector);
+                            }     
+                        } else {
+                            break;
+                        }               
+                    
+                    }
+                } while(true);
+                
+                return new Selector(selector, selector[0].line, selector[0].col);
+            },
+            _simple_selector_sequence: function(){
+                 
+                var tokenStream = this._tokenStream,
+                    elementName = null,
+                    modifiers   = [],
+                    selectorText= "",
+                    components  = [
+                        function(){
+                            return tokenStream.match(Tokens.HASH) ?
+                                    new SelectorSubPart(tokenStream.token().value, "id", tokenStream.token().startLine, tokenStream.token().startCol) :
+                                    null;
+                        },
+                        this._class,
+                        this._attrib,
+                        this._pseudo,
+                        this._negation
+                    ],
+                    i           = 0,
+                    len         = components.length,
+                    component   = null,
+                    found       = false,
+                    line,
+                    col;
+                line = tokenStream.LT(1).startLine;
+                col = tokenStream.LT(1).startCol;
+                                        
+                elementName = this._type_selector();
+                if (!elementName){
+                    elementName = this._universal();
+                }
+                
+                if (elementName !== null){
+                    selectorText += elementName;
+                }                
+                
+                while(true){
+                    if (tokenStream.peek() === Tokens.S){
+                        break;
+                    }
+                    while(i < len && component === null){
+                        component = components[i++].call(this);
+                    }
+        
+                    if (component === null){
+                        if (selectorText === ""){
+                            return null;
+                        } else {
+                            break;
+                        }
+                    } else {
+                        i = 0;
+                        modifiers.push(component);
+                        selectorText += component.toString(); 
+                        component = null;
+                    }
+                }
+
+                 
+                return selectorText !== "" ?
+                        new SelectorPart(elementName, modifiers, selectorText, line, col) :
+                        null;
+            },            
+            _type_selector: function(){
+                 
+                var tokenStream = this._tokenStream,
+                    ns          = this._namespace_prefix(),
+                    elementName = this._element_name();
+                    
+                if (!elementName){                    
+                    if (ns){
+                        tokenStream.unget();
+                        if (ns.length > 1){
+                            tokenStream.unget();
+                        }
+                    }
+                
+                    return null;
+                } else {     
+                    if (ns){
+                        elementName.text = ns + elementName.text;
+                        elementName.col -= ns.length;
+                    }
+                    return elementName;
+                }
+            },
+            _class: function(){    
+                 
+                var tokenStream = this._tokenStream,
+                    token;
+                
+                if (tokenStream.match(Tokens.DOT)){
+                    tokenStream.mustMatch(Tokens.IDENT);    
+                    token = tokenStream.token();
+                    return new SelectorSubPart("." + token.value, "class", token.startLine, token.startCol - 1);        
+                } else {
+                    return null;
+                }
+        
+            },
+            _element_name: function(){    
+                
+                var tokenStream = this._tokenStream,
+                    token;
+                
+                if (tokenStream.match(Tokens.IDENT)){
+                    token = tokenStream.token();
+                    return new SelectorSubPart(token.value, "elementName", token.startLine, token.startCol);        
+                
+                } else {
+                    return null;
+                }
+            },
+            _namespace_prefix: function(){
+                var tokenStream = this._tokenStream,
+                    value       = "";
+                if (tokenStream.LA(1) === Tokens.PIPE || tokenStream.LA(2) === Tokens.PIPE){
+                        
+                    if(tokenStream.match([Tokens.IDENT, Tokens.STAR])){
+                        value += tokenStream.token().value;
+                    }
+                    
+                    tokenStream.mustMatch(Tokens.PIPE);
+                    value += "|";
+                    
+                }
+                
+                return value.length ? value : null;                
+            },
+            _universal: function(){
+                var tokenStream = this._tokenStream,
+                    value       = "",
+                    ns;
+                    
+                ns = this._namespace_prefix();
+                if(ns){
+                    value += ns;
+                }
+                
+                if(tokenStream.match(Tokens.STAR)){
+                    value += "*";
+                }
+                
+                return value.length ? value : null;
+                
+           },
+            _attrib: function(){
+                 
+                var tokenStream = this._tokenStream,
+                    value       = null,
+                    ns,
+                    token;
+                
+                if (tokenStream.match(Tokens.LBRACKET)){
+                    token = tokenStream.token();
+                    value = token.value;
+                    value += this._readWhitespace();
+                    
+                    ns = this._namespace_prefix();
+                    
+                    if (ns){
+                        value += ns;
+                    }
+                                        
+                    tokenStream.mustMatch(Tokens.IDENT);
+                    value += tokenStream.token().value;                    
+                    value += this._readWhitespace();
+                    
+                    if(tokenStream.match([Tokens.PREFIXMATCH, Tokens.SUFFIXMATCH, Tokens.SUBSTRINGMATCH,
+                            Tokens.EQUALS, Tokens.INCLUDES, Tokens.DASHMATCH])){
+                    
+                        value += tokenStream.token().value;                    
+                        value += this._readWhitespace();
+                        
+                        tokenStream.mustMatch([Tokens.IDENT, Tokens.STRING]);
+                        value += tokenStream.token().value;                    
+                        value += this._readWhitespace();
+                    }
+                    
+                    tokenStream.mustMatch(Tokens.RBRACKET);
+                                        
+                    return new SelectorSubPart(value + "]", "attribute", token.startLine, token.startCol);
+                } else {
+                    return null;
+                }
+            },
+            _pseudo: function(){   
+            
+                var tokenStream = this._tokenStream,
+                    pseudo      = null,
+                    colons      = ":",
+                    line,
+                    col;
+                
+                if (tokenStream.match(Tokens.COLON)){
+                
+                    if (tokenStream.match(Tokens.COLON)){
+                        colons += ":";
+                    }
+                
+                    if (tokenStream.match(Tokens.IDENT)){
+                        pseudo = tokenStream.token().value;
+                        line = tokenStream.token().startLine;
+                        col = tokenStream.token().startCol - colons.length;
+                    } else if (tokenStream.peek() == Tokens.FUNCTION){
+                        line = tokenStream.LT(1).startLine;
+                        col = tokenStream.LT(1).startCol - colons.length;
+                        pseudo = this._functional_pseudo();
+                    }
+                    
+                    if (pseudo){
+                        pseudo = new SelectorSubPart(colons + pseudo, "pseudo", line, col);
+                    }
+                }
+        
+                return pseudo;
+            },
+            _functional_pseudo: function(){            
+                
+                var tokenStream = this._tokenStream,
+                    value = null;
+                
+                if(tokenStream.match(Tokens.FUNCTION)){
+                    value = tokenStream.token().value;
+                    value += this._readWhitespace();
+                    value += this._expression();
+                    tokenStream.mustMatch(Tokens.RPAREN);
+                    value += ")";
+                }
+                
+                return value;
+            },
+            _expression: function(){
+                 
+                var tokenStream = this._tokenStream,
+                    value       = "";
+                    
+                while(tokenStream.match([Tokens.PLUS, Tokens.MINUS, Tokens.DIMENSION,
+                        Tokens.NUMBER, Tokens.STRING, Tokens.IDENT, Tokens.LENGTH,
+                        Tokens.FREQ, Tokens.ANGLE, Tokens.TIME,
+                        Tokens.RESOLUTION])){
+                    
+                    value += tokenStream.token().value;
+                    value += this._readWhitespace();                        
+                }
+                
+                return value.length ? value : null;
+                
+            },
+            _negation: function(){
+
+                var tokenStream = this._tokenStream,
+                    line,
+                    col,
+                    value       = "",
+                    arg,
+                    subpart     = null;
+                    
+                if (tokenStream.match(Tokens.NOT)){
+                    value = tokenStream.token().value;
+                    line = tokenStream.token().startLine;
+                    col = tokenStream.token().startCol;
+                    value += this._readWhitespace();
+                    arg = this._negation_arg();
+                    value += arg;
+                    value += this._readWhitespace();
+                    tokenStream.match(Tokens.RPAREN);
+                    value += tokenStream.token().value;
+                    
+                    subpart = new SelectorSubPart(value, "not", line, col);
+                    subpart.args.push(arg);
+                }
+                
+                return subpart;
+            },
+            _negation_arg: function(){                       
+                 
+                var tokenStream = this._tokenStream,
+                    args        = [
+                        this._type_selector,
+                        this._universal,
+                        function(){
+                            return tokenStream.match(Tokens.HASH) ?
+                                    new SelectorSubPart(tokenStream.token().value, "id", tokenStream.token().startLine, tokenStream.token().startCol) :
+                                    null;                        
+                        },
+                        this._class,
+                        this._attrib,
+                        this._pseudo                    
+                    ],
+                    arg         = null,
+                    i           = 0,
+                    len         = args.length,
+                    elementName,
+                    line,
+                    col,
+                    part;
+                    
+                line = tokenStream.LT(1).startLine;
+                col = tokenStream.LT(1).startCol;
+                
+                while(i < len && arg === null){
+                    
+                    arg = args[i].call(this);
+                    i++;
+                }
+                if (arg === null){
+                    this._unexpectedToken(tokenStream.LT(1));
+                }
+                if (arg.type == "elementName"){
+                    part = new SelectorPart(arg, [], arg.toString(), line, col);
+                } else {
+                    part = new SelectorPart(null, [arg], arg.toString(), line, col);
+                }
+                
+                return part;                
+            },
+            
+            _declaration: function(){    
+            
+                var tokenStream = this._tokenStream,
+                    property    = null,
+                    expr        = null,
+                    prio        = null,
+                    error       = null,
+                    invalid     = null,
+                    propertyName= "";
+                
+                property = this._property();
+                if (property !== null){
+
+                    tokenStream.mustMatch(Tokens.COLON);
+                    this._readWhitespace();
+                    
+                    expr = this._expr();
+                    if (!expr || expr.length === 0){
+                        this._unexpectedToken(tokenStream.LT(1));
+                    }
+                    
+                    prio = this._prio();
+                    propertyName = property.toString();
+                    if (this.options.starHack && property.hack == "*" ||
+                            this.options.underscoreHack && property.hack == "_") {
+                         
+                        propertyName = property.text;
+                    }
+                    
+                    try {
+                        this._validateProperty(propertyName, expr);
+                    } catch (ex) {
+                        invalid = ex;
+                    }
+                    
+                    this.fire({
+                        type:       "property",
+                        property:   property,
+                        value:      expr,
+                        important:  prio,
+                        line:       property.line,
+                        col:        property.col,
+                        invalid:    invalid
+                    });                      
+                    
+                    return true;
+                } else {
+                    return false;
+                }
+            },
+            
+            _prio: function(){
+                 
+                var tokenStream = this._tokenStream,
+                    result      = tokenStream.match(Tokens.IMPORTANT_SYM);
+                    
+                this._readWhitespace();
+                return result;
+            },
+            
+            _expr: function(){
+        
+                var tokenStream = this._tokenStream,
+                    values      = [],
+                    value       = null,
+                    operator    = null;
+                    
+                value = this._term();
+                if (value !== null){
+                
+                    values.push(value);
+                    
+                    do {
+                        operator = this._operator();
+                        if (operator){
+                            values.push(operator);
+                        } /*else {
+							values.push(new PropertyValue(valueParts, valueParts[0].line, valueParts[0].col));
+							valueParts = [];
+						}*/
+                        
+                        value = this._term();
+                        
+                        if (value === null){
+                            break;
+                        } else {
+                            values.push(value);
+                        }
+                    } while(true);
+                }
+        
+                return values.length > 0 ? new PropertyValue(values, values[0].line, values[0].col) : null;
+            },
+            
+            _term: function(){                           
+        
+                var tokenStream = this._tokenStream,
+                    unary       = null,
+                    value       = null,
+                    token,
+                    line,
+                    col;
+                unary = this._unary_operator();
+                if (unary !== null){
+                    line = tokenStream.token().startLine;
+                    col = tokenStream.token().startCol;
+                }                
+                if (tokenStream.peek() == Tokens.IE_FUNCTION && this.options.ieFilters){
+                
+                    value = this._ie_function();
+                    if (unary === null){
+                        line = tokenStream.token().startLine;
+                        col = tokenStream.token().startCol;
+                    }
+                } else if (tokenStream.match([Tokens.NUMBER, Tokens.PERCENTAGE, Tokens.LENGTH,
+                        Tokens.ANGLE, Tokens.TIME,
+                        Tokens.FREQ, Tokens.STRING, Tokens.IDENT, Tokens.URI, Tokens.UNICODE_RANGE])){
+                 
+                    value = tokenStream.token().value;
+                    if (unary === null){
+                        line = tokenStream.token().startLine;
+                        col = tokenStream.token().startCol;
+                    }
+                    this._readWhitespace();
+                } else {
+                    token = this._hexcolor();
+                    if (token === null){
+                        if (unary === null){
+                            line = tokenStream.LT(1).startLine;
+                            col = tokenStream.LT(1).startCol;
+                        }                    
+                        if (value === null){
+                            if (tokenStream.LA(3) == Tokens.EQUALS && this.options.ieFilters){
+                                value = this._ie_function();
+                            } else {
+                                value = this._function();
+                            }
+                        }
+                    
+                    } else {
+                        value = token.value;
+                        if (unary === null){
+                            line = token.startLine;
+                            col = token.startCol;
+                        }                    
+                    }
+                
+                }                
+                
+                return value !== null ?
+                        new PropertyValuePart(unary !== null ? unary + value : value, line, col) :
+                        null;
+        
+            },
+            
+            _function: function(){
+                 
+                var tokenStream = this._tokenStream,
+                    functionText = null,
+                    expr        = null,
+                    lt;
+                    
+                if (tokenStream.match(Tokens.FUNCTION)){
+                    functionText = tokenStream.token().value;
+                    this._readWhitespace();
+                    expr = this._expr();
+                    functionText += expr;
+                    if (this.options.ieFilters && tokenStream.peek() == Tokens.EQUALS){
+                        do {
+                        
+                            if (this._readWhitespace()){
+                                functionText += tokenStream.token().value;
+                            }
+                            if (tokenStream.LA(0) == Tokens.COMMA){
+                                functionText += tokenStream.token().value;
+                            }
+                        
+                            tokenStream.match(Tokens.IDENT);
+                            functionText += tokenStream.token().value;
+                            
+                            tokenStream.match(Tokens.EQUALS);
+                            functionText += tokenStream.token().value;
+                            lt = tokenStream.peek();
+                            while(lt != Tokens.COMMA && lt != Tokens.S && lt != Tokens.RPAREN){
+                                tokenStream.get();
+                                functionText += tokenStream.token().value;
+                                lt = tokenStream.peek();
+                            }
+                        } while(tokenStream.match([Tokens.COMMA, Tokens.S]));
+                    }
+                    
+                    tokenStream.match(Tokens.RPAREN);    
+                    functionText += ")";
+                    this._readWhitespace();
+                }                
+                
+                return functionText;
+            }, 
+            
+            _ie_function: function(){
+                 
+                var tokenStream = this._tokenStream,
+                    functionText = null,
+                    expr        = null,
+                    lt;
+                if (tokenStream.match([Tokens.IE_FUNCTION, Tokens.FUNCTION])){
+                    functionText = tokenStream.token().value;
+                    
+                    do {
+                    
+                        if (this._readWhitespace()){
+                            functionText += tokenStream.token().value;
+                        }
+                        if (tokenStream.LA(0) == Tokens.COMMA){
+                            functionText += tokenStream.token().value;
+                        }
+                    
+                        tokenStream.match(Tokens.IDENT);
+                        functionText += tokenStream.token().value;
+                        
+                        tokenStream.match(Tokens.EQUALS);
+                        functionText += tokenStream.token().value;
+                        lt = tokenStream.peek();
+                        while(lt != Tokens.COMMA && lt != Tokens.S && lt != Tokens.RPAREN){
+                            tokenStream.get();
+                            functionText += tokenStream.token().value;
+                            lt = tokenStream.peek();
+                        }
+                    } while(tokenStream.match([Tokens.COMMA, Tokens.S]));                    
+                    
+                    tokenStream.match(Tokens.RPAREN);    
+                    functionText += ")";
+                    this._readWhitespace();
+                }                
+                
+                return functionText;
+            }, 
+            
+            _hexcolor: function(){
+                 
+                var tokenStream = this._tokenStream,
+                    token = null,
+                    color;
+                    
+                if(tokenStream.match(Tokens.HASH)){
+                    
+                    token = tokenStream.token();
+                    color = token.value;
+                    if (!/#[a-f0-9]{3,6}/i.test(color)){
+                        throw new SyntaxError("Expected a hex color but found '" + color + "' at line " + token.startLine + ", col " + token.startCol + ".", token.startLine, token.startCol);
+                    }
+                    this._readWhitespace();
+                }
+                
+                return token;
+            },
+            
+            _keyframes: function(){
+                var tokenStream = this._tokenStream,
+                    token,
+                    tt,
+                    name,
+                    prefix = "";            
+                    
+                tokenStream.mustMatch(Tokens.KEYFRAMES_SYM);
+                token = tokenStream.token();
+                if (/^@\-([^\-]+)\-/.test(token.value)) {
+                    prefix = RegExp.$1;
+                }
+                
+                this._readWhitespace();
+                name = this._keyframe_name();
+                
+                this._readWhitespace();
+                tokenStream.mustMatch(Tokens.LBRACE);
+                    
+                this.fire({
+                    type:   "startkeyframes",
+                    name:   name,
+                    prefix: prefix,
+                    line:   token.startLine,
+                    col:    token.startCol
+                });                
+                
+                this._readWhitespace();
+                tt = tokenStream.peek();
+                while(tt == Tokens.IDENT || tt == Tokens.PERCENTAGE) {
+                    this._keyframe_rule();
+                    this._readWhitespace();
+                    tt = tokenStream.peek();
+                }           
+                
+                this.fire({
+                    type:   "endkeyframes",
+                    name:   name,
+                    prefix: prefix,
+                    line:   token.startLine,
+                    col:    token.startCol
+                });                      
+                    
+                this._readWhitespace();
+                tokenStream.mustMatch(Tokens.RBRACE);                    
+                
+            },
+            
+            _keyframe_name: function(){
+                var tokenStream = this._tokenStream,
+                    token;
+
+                tokenStream.mustMatch([Tokens.IDENT, Tokens.STRING]);
+                return SyntaxUnit.fromToken(tokenStream.token());            
+            },
+            
+            _keyframe_rule: function(){
+                var tokenStream = this._tokenStream,
+                    token,
+                    keyList = this._key_list();
+                                    
+                this.fire({
+                    type:   "startkeyframerule",
+                    keys:   keyList,
+                    line:   keyList[0].line,
+                    col:    keyList[0].col
+                });                
+                
+                this._readDeclarations(true);                
+                
+                this.fire({
+                    type:   "endkeyframerule",
+                    keys:   keyList,
+                    line:   keyList[0].line,
+                    col:    keyList[0].col
+                });  
+                
+            },
+            
+            _key_list: function(){
+                var tokenStream = this._tokenStream,
+                    token,
+                    key,
+                    keyList = [];
+                keyList.push(this._key());
+                    
+                this._readWhitespace();
+                    
+                while(tokenStream.match(Tokens.COMMA)){
+                    this._readWhitespace();
+                    keyList.push(this._key());
+                    this._readWhitespace();
+                }
+
+                return keyList;
+            },
+                        
+            _key: function(){
+                 
+                var tokenStream = this._tokenStream,
+                    token;
+                    
+                if (tokenStream.match(Tokens.PERCENTAGE)){
+                    return SyntaxUnit.fromToken(tokenStream.token());
+                } else if (tokenStream.match(Tokens.IDENT)){
+                    token = tokenStream.token();                    
+                    
+                    if (/from|to/i.test(token.value)){
+                        return SyntaxUnit.fromToken(token);
+                    }
+                    
+                    tokenStream.unget();
+                }
+                this._unexpectedToken(tokenStream.LT(1));
+            },
+            _skipCruft: function(){
+                while(this._tokenStream.match([Tokens.S, Tokens.CDO, Tokens.CDC])){
+                }
+            },
+            _readDeclarations: function(checkStart, readMargins){
+                var tokenStream = this._tokenStream,
+                    tt;
+                       
+
+                this._readWhitespace();
+                
+                if (checkStart){
+                    tokenStream.mustMatch(Tokens.LBRACE);            
+                }
+                
+                this._readWhitespace();
+
+                try {
+                    
+                    while(true){
+                    
+                        if (tokenStream.match(Tokens.SEMICOLON) || (readMargins && this._margin())){
+                        } else if (this._declaration()){
+                            if (!tokenStream.match(Tokens.SEMICOLON)){
+                                break;
+                            }
+                        } else {
+                            break;
+                        }
+                        this._readWhitespace();
+                    }
+                    
+                    tokenStream.mustMatch(Tokens.RBRACE);
+                    this._readWhitespace();
+                    
+                } catch (ex) {
+                    if (ex instanceof SyntaxError && !this.options.strict){
+                        this.fire({
+                            type:       "error",
+                            error:      ex,
+                            message:    ex.message,
+                            line:       ex.line,
+                            col:        ex.col
+                        });                          
+                        tt = tokenStream.advance([Tokens.SEMICOLON, Tokens.RBRACE]);
+                        if (tt == Tokens.SEMICOLON){
+                            this._readDeclarations(false, readMargins);                            
+                        } else if (tt != Tokens.RBRACE){
+                            throw ex;
+                        }                        
+                        
+                    } else {
+                        throw ex;
+                    }
+                }    
+            
+            },      
+            _readWhitespace: function(){
+            
+                var tokenStream = this._tokenStream,
+                    ws = "";
+                    
+                while(tokenStream.match(Tokens.S)){
+                    ws += tokenStream.token().value;
+                }
+                
+                return ws;
+            },
+            _unexpectedToken: function(token){
+                throw new SyntaxError("Unexpected token '" + token.value + "' at line " + token.startLine + ", col " + token.startCol + ".", token.startLine, token.startCol);
+            },
+            _verifyEnd: function(){
+                if (this._tokenStream.LA(1) != Tokens.EOF){
+                    this._unexpectedToken(this._tokenStream.LT(1));
+                }            
+            },
+            _validateProperty: function(property, value){
+                Validation.validate(property, value);
+            },
+            
+            parse: function(input){    
+                this._tokenStream = new TokenStream(input, Tokens);
+                this._stylesheet();
+            },
+            
+            parseStyleSheet: function(input){
+                return this.parse(input);
+            },
+            
+            parseMediaQuery: function(input){
+                this._tokenStream = new TokenStream(input, Tokens);
+                var result = this._media_query();
+                this._verifyEnd();
+                return result;            
+            },             
+            parsePropertyValue: function(input){
+            
+                this._tokenStream = new TokenStream(input, Tokens);
+                this._readWhitespace();
+                
+                var result = this._expr();
+                this._readWhitespace();
+                this._verifyEnd();
+                return result;
+            },
+            parseRule: function(input){
+                this._tokenStream = new TokenStream(input, Tokens);
+                this._readWhitespace();
+                
+                var result = this._ruleset();
+                this._readWhitespace();
+                this._verifyEnd();
+                return result;            
+            },
+            parseSelector: function(input){
+            
+                this._tokenStream = new TokenStream(input, Tokens);
+                this._readWhitespace();
+                
+                var result = this._selector();
+                this._readWhitespace();
+                this._verifyEnd();
+                return result;
+            },
+            parseStyleAttribute: function(input){
+                input += "}"; // for error recovery in _readDeclarations()
+                this._tokenStream = new TokenStream(input, Tokens);
+                this._readDeclarations();
+            }
+        };
+    for (prop in additions){
+        if (additions.hasOwnProperty(prop)){
+            proto[prop] = additions[prop];
+        }
+    }   
+    
+    return proto;
+}();
+var Properties = {
+    "alignment-adjust"              : "auto | baseline | before-edge | text-before-edge | middle | central | after-edge | text-after-edge | ideographic | alphabetic | hanging | mathematical | <percentage> | <length>",
+    "alignment-baseline"            : "baseline | use-script | before-edge | text-before-edge | after-edge | text-after-edge | central | middle | ideographic | alphabetic | hanging | mathematical",
+    "animation"                     : 1,
+    "animation-delay"               : { multi: "<time>", comma: true },
+    "animation-direction"           : { multi: "normal | alternate", comma: true },
+    "animation-duration"            : { multi: "<time>", comma: true },
+    "animation-iteration-count"     : { multi: "<number> | infinite", comma: true },
+    "animation-name"                : { multi: "none | <ident>", comma: true },
+    "animation-play-state"          : { multi: "running | paused", comma: true },
+    "animation-timing-function"     : 1,
+    "-moz-animation-delay"               : { multi: "<time>", comma: true },
+    "-moz-animation-direction"           : { multi: "normal | alternate", comma: true },
+    "-moz-animation-duration"            : { multi: "<time>", comma: true },
+    "-moz-animation-iteration-count"     : { multi: "<number> | infinite", comma: true },
+    "-moz-animation-name"                : { multi: "none | <ident>", comma: true },
+    "-moz-animation-play-state"          : { multi: "running | paused", comma: true },
+    
+    "-ms-animation-delay"               : { multi: "<time>", comma: true },
+    "-ms-animation-direction"           : { multi: "normal | alternate", comma: true },
+    "-ms-animation-duration"            : { multi: "<time>", comma: true },
+    "-ms-animation-iteration-count"     : { multi: "<number> | infinite", comma: true },
+    "-ms-animation-name"                : { multi: "none | <ident>", comma: true },
+    "-ms-animation-play-state"          : { multi: "running | paused", comma: true },
+    
+    "-webkit-animation-delay"               : { multi: "<time>", comma: true },
+    "-webkit-animation-direction"           : { multi: "normal | alternate", comma: true },
+    "-webkit-animation-duration"            : { multi: "<time>", comma: true },
+    "-webkit-animation-iteration-count"     : { multi: "<number> | infinite", comma: true },
+    "-webkit-animation-name"                : { multi: "none | <ident>", comma: true },
+    "-webkit-animation-play-state"          : { multi: "running | paused", comma: true },
+    
+    "-o-animation-delay"               : { multi: "<time>", comma: true },
+    "-o-animation-direction"           : { multi: "normal | alternate", comma: true },
+    "-o-animation-duration"            : { multi: "<time>", comma: true },
+    "-o-animation-iteration-count"     : { multi: "<number> | infinite", comma: true },
+    "-o-animation-name"                : { multi: "none | <ident>", comma: true },
+    "-o-animation-play-state"          : { multi: "running | paused", comma: true },        
+    
+    "appearance"                    : "icon | window | desktop | workspace | document | tooltip | dialog | button | push-button | hyperlink | radio-button | checkbox | menu-item | tab | menu | menubar | pull-down-menu | pop-up-menu | list-menu | radio-group | checkbox-group | outline-tree | range | field | combo-box | signature | password | normal | inherit",
+    "azimuth"                       : function (expression) {
+        var simple      = "<angle> | leftwards | rightwards | inherit",
+            direction   = "left-side | far-left | left | center-left | center | center-right | right | far-right | right-side",
+            behind      = false,
+            valid       = false,
+            part;
+        
+        if (!ValidationTypes.isAny(expression, simple)) {
+            if (ValidationTypes.isAny(expression, "behind")) {
+                behind = true;
+                valid = true;
+            }
+            
+            if (ValidationTypes.isAny(expression, direction)) {
+                valid = true;
+                if (!behind) {
+                    ValidationTypes.isAny(expression, "behind");
+                }
+            }
+        }
+        
+        if (expression.hasNext()) {
+            part = expression.next();
+            if (valid) {
+                throw new ValidationError("Expected end of value but found '" + part + "'.", part.line, part.col);
+            } else {
+                throw new ValidationError("Expected (<'azimuth'>) but found '" + part + "'.", part.line, part.col);
+            }
+        }        
+    },
+    "backface-visibility"           : "visible | hidden",
+    "background"                    : 1,
+    "background-attachment"         : { multi: "<attachment>", comma: true },
+    "background-clip"               : { multi: "<box>", comma: true },
+    "background-color"              : "<color> | inherit",
+    "background-image"              : { multi: "<bg-image>", comma: true },
+    "background-origin"             : { multi: "<box>", comma: true },
+    "background-position"           : { multi: "<bg-position>", comma: true },
+    "background-repeat"             : { multi: "<repeat-style>" },
+    "background-size"               : { multi: "<bg-size>", comma: true },
+    "baseline-shift"                : "baseline | sub | super | <percentage> | <length>",
+    "behavior"                      : 1,
+    "binding"                       : 1,
+    "bleed"                         : "<length>",
+    "bookmark-label"                : "<content> | <attr> | <string>",
+    "bookmark-level"                : "none | <integer>",
+    "bookmark-state"                : "open | closed",
+    "bookmark-target"               : "none | <uri> | <attr>",
+    "border"                        : "<border-width> || <border-style> || <color>",
+    "border-bottom"                 : "<border-width> || <border-style> || <color>",
+    "border-bottom-color"           : "<color>",
+    "border-bottom-left-radius"     :  "<x-one-radius>",
+    "border-bottom-right-radius"    :  "<x-one-radius>",
+    "border-bottom-style"           : "<border-style>",
+    "border-bottom-width"           : "<border-width>",
+    "border-collapse"               : "collapse | separate | inherit",
+    "border-color"                  : { multi: "<color> | inherit", max: 4 },
+    "border-image"                  : 1,
+    "border-image-outset"           : { multi: "<length> | <number>", max: 4 },
+    "border-image-repeat"           : { multi: "stretch | repeat | round", max: 2 },
+    "border-image-slice"            : function(expression) {
+        
+        var valid   = false,
+            numeric = "<number> | <percentage>",
+            fill    = false,
+            count   = 0,
+            max     = 4,
+            part;
+        
+        if (ValidationTypes.isAny(expression, "fill")) {
+            fill = true;
+            valid = true;
+        }
+        
+        while (expression.hasNext() && count < max) {
+            valid = ValidationTypes.isAny(expression, numeric);
+            if (!valid) {
+                break;
+            }
+            count++;
+        }
+        
+        
+        if (!fill) {
+            ValidationTypes.isAny(expression, "fill");
+        } else {
+            valid = true;
+        }
+        
+        if (expression.hasNext()) {
+            part = expression.next();
+            if (valid) {
+                throw new ValidationError("Expected end of value but found '" + part + "'.", part.line, part.col);
+            } else {
+                throw new ValidationError("Expected ([<number> | <percentage>]{1,4} && fill?) but found '" + part + "'.", part.line, part.col);
+            }
+        }         
+    },
+    "border-image-source"           : "<image> | none",
+    "border-image-width"            : { multi: "<length> | <percentage> | <number> | auto", max: 4 },
+    "border-left"                   : "<border-width> || <border-style> || <color>",
+    "border-left-color"             : "<color> | inherit",
+    "border-left-style"             : "<border-style>",
+    "border-left-width"             : "<border-width>",
+    "border-radius"                 : function(expression) {
+        
+        var valid   = false,
+            numeric = "<length> | <percentage>",
+            slash   = false,
+            fill    = false,
+            count   = 0,
+            max     = 8,
+            part;
+
+        while (expression.hasNext() && count < max) {
+            valid = ValidationTypes.isAny(expression, numeric);
+            if (!valid) {
+            
+                if (expression.peek() == "/" && count > 1 && !slash) {
+                    slash = true;
+                    max = count + 5;
+                    expression.next();
+                } else {
+                    break;
+                }
+            }
+            count++;
+        }
+        
+        if (expression.hasNext()) {
+            part = expression.next();
+            if (valid) {
+                throw new ValidationError("Expected end of value but found '" + part + "'.", part.line, part.col);
+            } else {
+                throw new ValidationError("Expected (<'border-radius'>) but found '" + part + "'.", part.line, part.col);
+            }
+        }         
+    },
+    "border-right"                  : "<border-width> || <border-style> || <color>",
+    "border-right-color"            : "<color> | inherit",
+    "border-right-style"            : "<border-style>",
+    "border-right-width"            : "<border-width>",
+    "border-spacing"                : { multi: "<length> | inherit", max: 2 },
+    "border-style"                  : { multi: "<border-style>", max: 4 },
+    "border-top"                    : "<border-width> || <border-style> || <color>",
+    "border-top-color"              : "<color> | inherit",
+    "border-top-left-radius"        : "<x-one-radius>",
+    "border-top-right-radius"       : "<x-one-radius>",
+    "border-top-style"              : "<border-style>",
+    "border-top-width"              : "<border-width>",
+    "border-width"                  : { multi: "<border-width>", max: 4 },
+    "bottom"                        : "<margin-width> | inherit", 
+    "box-align"                     : "start | end | center | baseline | stretch",        //http://www.w3.org/TR/2009/WD-css3-flexbox-20090723/
+    "box-decoration-break"          : "slice |clone",
+    "box-direction"                 : "normal | reverse | inherit",
+    "box-flex"                      : "<number>",
+    "box-flex-group"                : "<integer>",
+    "box-lines"                     : "single | multiple",
+    "box-ordinal-group"             : "<integer>",
+    "box-orient"                    : "horizontal | vertical | inline-axis | block-axis | inherit",
+    "box-pack"                      : "start | end | center | justify",
+    "box-shadow"                    : function (expression) {
+        var result      = false,
+            part;
+
+        if (!ValidationTypes.isAny(expression, "none")) {
+            Validation.multiProperty("<shadow>", expression, true, Infinity);                       
+        } else {
+            if (expression.hasNext()) {
+                part = expression.next();
+                throw new ValidationError("Expected end of value but found '" + part + "'.", part.line, part.col);
+            }   
+        }
+    },
+    "box-sizing"                    : "content-box | border-box | inherit",
+    "break-after"                   : "auto | always | avoid | left | right | page | column | avoid-page | avoid-column",
+    "break-before"                  : "auto | always | avoid | left | right | page | column | avoid-page | avoid-column",
+    "break-inside"                  : "auto | avoid | avoid-page | avoid-column",
+    "caption-side"                  : "top | bottom | inherit",
+    "clear"                         : "none | right | left | both | inherit",
+    "clip"                          : 1,
+    "color"                         : "<color> | inherit",
+    "color-profile"                 : 1,
+    "column-count"                  : "<integer> | auto",                      //http://www.w3.org/TR/css3-multicol/
+    "column-fill"                   : "auto | balance",
+    "column-gap"                    : "<length> | normal",
+    "column-rule"                   : "<border-width> || <border-style> || <color>",
+    "column-rule-color"             : "<color>",
+    "column-rule-style"             : "<border-style>",
+    "column-rule-width"             : "<border-width>",
+    "column-span"                   : "none | all",
+    "column-width"                  : "<length> | auto",
+    "columns"                       : 1,
+    "content"                       : 1,
+    "counter-increment"             : 1,
+    "counter-reset"                 : 1,
+    "crop"                          : "<shape> | auto",
+    "cue"                           : "cue-after | cue-before | inherit",
+    "cue-after"                     : 1,
+    "cue-before"                    : 1,
+    "cursor"                        : 1,
+    "direction"                     : "ltr | rtl | inherit",
+    "display"                       : "inline | block | list-item | inline-block | table | inline-table | table-row-group | table-header-group | table-footer-group | table-row | table-column-group | table-column | table-cell | table-caption | box | inline-box | grid | inline-grid | none | inherit",
+    "dominant-baseline"             : 1,
+    "drop-initial-after-adjust"     : "central | middle | after-edge | text-after-edge | ideographic | alphabetic | mathematical | <percentage> | <length>",
+    "drop-initial-after-align"      : "baseline | use-script | before-edge | text-before-edge | after-edge | text-after-edge | central | middle | ideographic | alphabetic | hanging | mathematical",
+    "drop-initial-before-adjust"    : "before-edge | text-before-edge | central | middle | hanging | mathematical | <percentage> | <length>",
+    "drop-initial-before-align"     : "caps-height | baseline | use-script | before-edge | text-before-edge | after-edge | text-after-edge | central | middle | ideographic | alphabetic | hanging | mathematical",
+    "drop-initial-size"             : "auto | line | <length> | <percentage>",
+    "drop-initial-value"            : "initial | <integer>",
+    "elevation"                     : "<angle> | below | level | above | higher | lower | inherit",
+    "empty-cells"                   : "show | hide | inherit",
+    "filter"                        : 1,
+    "fit"                           : "fill | hidden | meet | slice",
+    "fit-position"                  : 1,
+    "float"                         : "left | right | none | inherit",    
+    "float-offset"                  : 1,
+    "font"                          : 1,
+    "font-family"                   : 1,
+    "font-size"                     : "<absolute-size> | <relative-size> | <length> | <percentage> | inherit",
+    "font-size-adjust"              : "<number> | none | inherit",
+    "font-stretch"                  : "normal | ultra-condensed | extra-condensed | condensed | semi-condensed | semi-expanded | expanded | extra-expanded | ultra-expanded | inherit",
+    "font-style"                    : "normal | italic | oblique | inherit",
+    "font-variant"                  : "normal | small-caps | inherit",
+    "font-weight"                   : "normal | bold | bolder | lighter | 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900 | inherit",
+    "grid-cell-stacking"            : "columns | rows | layer",
+    "grid-column"                   : 1,
+    "grid-columns"                  : 1,
+    "grid-column-align"             : "start | end | center | stretch",
+    "grid-column-sizing"            : 1,
+    "grid-column-span"              : "<integer>",
+    "grid-flow"                     : "none | rows | columns",
+    "grid-layer"                    : "<integer>",
+    "grid-row"                      : 1,
+    "grid-rows"                     : 1,
+    "grid-row-align"                : "start | end | center | stretch",
+    "grid-row-span"                 : "<integer>",
+    "grid-row-sizing"               : 1,
+    "hanging-punctuation"           : 1,
+    "height"                        : "<margin-width> | inherit",
+    "hyphenate-after"               : "<integer> | auto",
+    "hyphenate-before"              : "<integer> | auto",
+    "hyphenate-character"           : "<string> | auto",
+    "hyphenate-lines"               : "no-limit | <integer>",
+    "hyphenate-resource"            : 1,
+    "hyphens"                       : "none | manual | auto",
+    "icon"                          : 1,
+    "image-orientation"             : "angle | auto",
+    "image-rendering"               : 1,
+    "image-resolution"              : 1,
+    "inline-box-align"              : "initial | last | <integer>",
+    "left"                          : "<margin-width> | inherit",
+    "letter-spacing"                : "<length> | normal | inherit",
+    "line-height"                   : "<number> | <length> | <percentage> | normal | inherit",
+    "line-break"                    : "auto | loose | normal | strict",
+    "line-stacking"                 : 1,
+    "line-stacking-ruby"            : "exclude-ruby | include-ruby",
+    "line-stacking-shift"           : "consider-shifts | disregard-shifts",
+    "line-stacking-strategy"        : "inline-line-height | block-line-height | max-height | grid-height",
+    "list-style"                    : 1,
+    "list-style-image"              : "<uri> | none | inherit",
+    "list-style-position"           : "inside | outside | inherit",
+    "list-style-type"               : "disc | circle | square | decimal | decimal-leading-zero | lower-roman | upper-roman | lower-greek | lower-latin | upper-latin | armenian | georgian | lower-alpha | upper-alpha | none | inherit",
+    "margin"                        : { multi: "<margin-width> | inherit", max: 4 },
+    "margin-bottom"                 : "<margin-width> | inherit",
+    "margin-left"                   : "<margin-width> | inherit",
+    "margin-right"                  : "<margin-width> | inherit",
+    "margin-top"                    : "<margin-width> | inherit",
+    "mark"                          : 1,
+    "mark-after"                    : 1,
+    "mark-before"                   : 1,
+    "marks"                         : 1,
+    "marquee-direction"             : 1,
+    "marquee-play-count"            : 1,
+    "marquee-speed"                 : 1,
+    "marquee-style"                 : 1,
+    "max-height"                    : "<length> | <percentage> | none | inherit",
+    "max-width"                     : "<length> | <percentage> | none | inherit",
+    "min-height"                    : "<length> | <percentage> | inherit",
+    "min-width"                     : "<length> | <percentage> | inherit",
+    "move-to"                       : 1,
+    "nav-down"                      : 1,
+    "nav-index"                     : 1,
+    "nav-left"                      : 1,
+    "nav-right"                     : 1,
+    "nav-up"                        : 1,
+    "opacity"                       : "<number> | inherit",
+    "orphans"                       : "<integer> | inherit",
+    "outline"                       : 1,
+    "outline-color"                 : "<color> | invert | inherit",
+    "outline-offset"                : 1,
+    "outline-style"                 : "<border-style> | inherit",
+    "outline-width"                 : "<border-width> | inherit",
+    "overflow"                      : "visible | hidden | scroll | auto | inherit",
+    "overflow-style"                : 1,
+    "overflow-x"                    : 1,
+    "overflow-y"                    : 1,
+    "padding"                       : { multi: "<padding-width> | inherit", max: 4 },
+    "padding-bottom"                : "<padding-width> | inherit",
+    "padding-left"                  : "<padding-width> | inherit",
+    "padding-right"                 : "<padding-width> | inherit",
+    "padding-top"                   : "<padding-width> | inherit",
+    "page"                          : 1,
+    "page-break-after"              : "auto | always | avoid | left | right | inherit",
+    "page-break-before"             : "auto | always | avoid | left | right | inherit",
+    "page-break-inside"             : "auto | avoid | inherit",
+    "page-policy"                   : 1,
+    "pause"                         : 1,
+    "pause-after"                   : 1,
+    "pause-before"                  : 1,
+    "perspective"                   : 1,
+    "perspective-origin"            : 1,
+    "phonemes"                      : 1,
+    "pitch"                         : 1,
+    "pitch-range"                   : 1,
+    "play-during"                   : 1,
+    "pointer-events"                : "auto | none | visiblePainted | visibleFill | visibleStroke | visible | painted | fill | stroke | all | inherit",
+    "position"                      : "static | relative | absolute | fixed | inherit",
+    "presentation-level"            : 1,
+    "punctuation-trim"              : 1,
+    "quotes"                        : 1,
+    "rendering-intent"              : 1,
+    "resize"                        : 1,
+    "rest"                          : 1,
+    "rest-after"                    : 1,
+    "rest-before"                   : 1,
+    "richness"                      : 1,
+    "right"                         : "<margin-width> | inherit",
+    "rotation"                      : 1,
+    "rotation-point"                : 1,
+    "ruby-align"                    : 1,
+    "ruby-overhang"                 : 1,
+    "ruby-position"                 : 1,
+    "ruby-span"                     : 1,
+    "size"                          : 1,
+    "speak"                         : "normal | none | spell-out | inherit",
+    "speak-header"                  : "once | always | inherit",
+    "speak-numeral"                 : "digits | continuous | inherit",
+    "speak-punctuation"             : "code | none | inherit",
+    "speech-rate"                   : 1,
+    "src"                           : 1,
+    "stress"                        : 1,
+    "string-set"                    : 1,
+    
+    "table-layout"                  : "auto | fixed | inherit",
+    "tab-size"                      : "<integer> | <length>",
+    "target"                        : 1,
+    "target-name"                   : 1,
+    "target-new"                    : 1,
+    "target-position"               : 1,
+    "text-align"                    : "left | right | center | justify | inherit" ,
+    "text-align-last"               : 1,
+    "text-decoration"               : 1,
+    "text-emphasis"                 : 1,
+    "text-height"                   : 1,
+    "text-indent"                   : "<length> | <percentage> | inherit",
+    "text-justify"                  : "auto | none | inter-word | inter-ideograph | inter-cluster | distribute | kashida",
+    "text-outline"                  : 1,
+    "text-overflow"                 : 1,
+    "text-rendering"                : "auto | optimizeSpeed | optimizeLegibility | geometricPrecision | inherit",
+    "text-shadow"                   : 1,
+    "text-transform"                : "capitalize | uppercase | lowercase | none | inherit",
+    "text-wrap"                     : "normal | none | avoid",
+    "top"                           : "<margin-width> | inherit",
+    "transform"                     : 1,
+    "transform-origin"              : 1,
+    "transform-style"               : 1,
+    "transition"                    : 1,
+    "transition-delay"              : 1,
+    "transition-duration"           : 1,
+    "transition-property"           : 1,
+    "transition-timing-function"    : 1,
+    "unicode-bidi"                  : "normal | embed | bidi-override | inherit",
+    "user-modify"                   : "read-only | read-write | write-only | inherit",
+    "user-select"                   : "none | text | toggle | element | elements | all | inherit",
+    "vertical-align"                : "<percentage> | <length> | baseline | sub | super | top | text-top | middle | bottom | text-bottom | inherit",
+    "visibility"                    : "visible | hidden | collapse | inherit",
+    "voice-balance"                 : 1,
+    "voice-duration"                : 1,
+    "voice-family"                  : 1,
+    "voice-pitch"                   : 1,
+    "voice-pitch-range"             : 1,
+    "voice-rate"                    : 1,
+    "voice-stress"                  : 1,
+    "voice-volume"                  : 1,
+    "volume"                        : 1,
+    "white-space"                   : "normal | pre | nowrap | pre-wrap | pre-line | inherit",
+    "white-space-collapse"          : 1,
+    "widows"                        : "<integer> | inherit",
+    "width"                         : "<length> | <percentage> | auto | inherit" ,
+    "word-break"                    : "normal | keep-all | break-all",
+    "word-spacing"                  : "<length> | normal | inherit",
+    "word-wrap"                     : 1,
+    "z-index"                       : "<integer> | auto | inherit",
+    "zoom"                          : "<number> | <percentage> | normal"
+};
+function PropertyName(text, hack, line, col){
+    
+    SyntaxUnit.call(this, text, line, col, Parser.PROPERTY_NAME_TYPE);
+    this.hack = hack;
+
+}
+
+PropertyName.prototype = new SyntaxUnit();
+PropertyName.prototype.constructor = PropertyName;
+PropertyName.prototype.toString = function(){
+    return (this.hack ? this.hack : "") + this.text;
+};
+function PropertyValue(parts, line, col){
+
+    SyntaxUnit.call(this, parts.join(" "), line, col, Parser.PROPERTY_VALUE_TYPE);
+    this.parts = parts;
+    
+}
+
+PropertyValue.prototype = new SyntaxUnit();
+PropertyValue.prototype.constructor = PropertyValue;
+function PropertyValueIterator(value){
+    this._i = 0;
+    this._parts = value.parts;
+    this._marks = [];
+    this.value = value;
+    
+}
+PropertyValueIterator.prototype.count = function(){
+    return this._parts.length;
+};
+PropertyValueIterator.prototype.isFirst = function(){
+    return this._i === 0;
+};
+PropertyValueIterator.prototype.hasNext = function(){
+    return (this._i < this._parts.length);
+};
+PropertyValueIterator.prototype.mark = function(){
+    this._marks.push(this._i);
+};
+PropertyValueIterator.prototype.peek = function(count){
+    return this.hasNext() ? this._parts[this._i + (count || 0)] : null;
+};
+PropertyValueIterator.prototype.next = function(){
+    return this.hasNext() ? this._parts[this._i++] : null;
+};
+PropertyValueIterator.prototype.previous = function(){
+    return this._i > 0 ? this._parts[--this._i] : null;
+};
+PropertyValueIterator.prototype.restore = function(){
+    if (this._marks.length){
+        this._i = this._marks.pop();
+    }
+};
+function PropertyValuePart(text, line, col){
+
+    SyntaxUnit.call(this, text, line, col, Parser.PROPERTY_VALUE_PART_TYPE);
+    this.type = "unknown";
+    
+    var temp;
+    if (/^([+\-]?[\d\.]+)([a-z]+)$/i.test(text)){  //dimension
+        this.type = "dimension";
+        this.value = +RegExp.$1;
+        this.units = RegExp.$2;
+        switch(this.units.toLowerCase()){
+        
+            case "em":
+            case "rem":
+            case "ex":
+            case "px":
+            case "cm":
+            case "mm":
+            case "in":
+            case "pt":
+            case "pc":
+            case "ch":
+                this.type = "length";
+                break;
+                
+            case "deg":
+            case "rad":
+            case "grad":
+                this.type = "angle";
+                break;
+            
+            case "ms":
+            case "s":
+                this.type = "time";
+                break;
+            
+            case "hz":
+            case "khz":
+                this.type = "frequency";
+                break;
+            
+            case "dpi":
+            case "dpcm":
+                this.type = "resolution";
+                break;
+                
+        }
+        
+    } else if (/^([+\-]?[\d\.]+)%$/i.test(text)){  //percentage
+        this.type = "percentage";
+        this.value = +RegExp.$1;
+    } else if (/^([+\-]?[\d\.]+)%$/i.test(text)){  //percentage
+        this.type = "percentage";
+        this.value = +RegExp.$1;
+    } else if (/^([+\-]?\d+)$/i.test(text)){  //integer
+        this.type = "integer";
+        this.value = +RegExp.$1;
+    } else if (/^([+\-]?[\d\.]+)$/i.test(text)){  //number
+        this.type = "number";
+        this.value = +RegExp.$1;
+    
+    } else if (/^#([a-f0-9]{3,6})/i.test(text)){  //hexcolor
+        this.type = "color";
+        temp = RegExp.$1;
+        if (temp.length == 3){
+            this.red    = parseInt(temp.charAt(0)+temp.charAt(0),16);
+            this.green  = parseInt(temp.charAt(1)+temp.charAt(1),16);
+            this.blue   = parseInt(temp.charAt(2)+temp.charAt(2),16);            
+        } else {
+            this.red    = parseInt(temp.substring(0,2),16);
+            this.green  = parseInt(temp.substring(2,4),16);
+            this.blue   = parseInt(temp.substring(4,6),16);            
+        }
+    } else if (/^rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/i.test(text)){ //rgb() color with absolute numbers
+        this.type   = "color";
+        this.red    = +RegExp.$1;
+        this.green  = +RegExp.$2;
+        this.blue   = +RegExp.$3;
+    } else if (/^rgb\(\s*(\d+)%\s*,\s*(\d+)%\s*,\s*(\d+)%\s*\)/i.test(text)){ //rgb() color with percentages
+        this.type   = "color";
+        this.red    = +RegExp.$1 * 255 / 100;
+        this.green  = +RegExp.$2 * 255 / 100;
+        this.blue   = +RegExp.$3 * 255 / 100;
+    } else if (/^rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d\.]+)\s*\)/i.test(text)){ //rgba() color with absolute numbers
+        this.type   = "color";
+        this.red    = +RegExp.$1;
+        this.green  = +RegExp.$2;
+        this.blue   = +RegExp.$3;
+        this.alpha  = +RegExp.$4;
+    } else if (/^rgba\(\s*(\d+)%\s*,\s*(\d+)%\s*,\s*(\d+)%\s*,\s*([\d\.]+)\s*\)/i.test(text)){ //rgba() color with percentages
+        this.type   = "color";
+        this.red    = +RegExp.$1 * 255 / 100;
+        this.green  = +RegExp.$2 * 255 / 100;
+        this.blue   = +RegExp.$3 * 255 / 100;
+        this.alpha  = +RegExp.$4;        
+    } else if (/^hsl\(\s*(\d+)\s*,\s*(\d+)%\s*,\s*(\d+)%\s*\)/i.test(text)){ //hsl()
+        this.type   = "color";
+        this.hue    = +RegExp.$1;
+        this.saturation = +RegExp.$2 / 100;
+        this.lightness  = +RegExp.$3 / 100;        
+    } else if (/^hsla\(\s*(\d+)\s*,\s*(\d+)%\s*,\s*(\d+)%\s*,\s*([\d\.]+)\s*\)/i.test(text)){ //hsla() color with percentages
+        this.type   = "color";
+        this.hue    = +RegExp.$1;
+        this.saturation = +RegExp.$2 / 100;
+        this.lightness  = +RegExp.$3 / 100;        
+        this.alpha  = +RegExp.$4;        
+    } else if (/^url\(["']?([^\)"']+)["']?\)/i.test(text)){ //URI
+        this.type   = "uri";
+        this.uri    = RegExp.$1;
+    } else if (/^([^\(]+)\(/i.test(text)){
+        this.type   = "function";
+        this.name   = RegExp.$1;
+        this.value  = text;
+    } else if (/^["'][^"']*["']/.test(text)){    //string
+        this.type   = "string";
+        this.value  = eval(text);
+    } else if (Colors[text.toLowerCase()]){  //named color
+        this.type   = "color";
+        temp        = Colors[text.toLowerCase()].substring(1);
+        this.red    = parseInt(temp.substring(0,2),16);
+        this.green  = parseInt(temp.substring(2,4),16);
+        this.blue   = parseInt(temp.substring(4,6),16);         
+    } else if (/^[\,\/]$/.test(text)){
+        this.type   = "operator";
+        this.value  = text;
+    } else if (/^[a-z\-\u0080-\uFFFF][a-z0-9\-\u0080-\uFFFF]*$/i.test(text)){
+        this.type   = "identifier";
+        this.value  = text;
+    }
+
+}
+
+PropertyValuePart.prototype = new SyntaxUnit();
+PropertyValuePart.prototype.constructor = PropertyValuePart;
+PropertyValuePart.fromToken = function(token){
+    return new PropertyValuePart(token.value, token.startLine, token.startCol);
+};
+var Pseudos = {
+    ":first-letter": 1,
+    ":first-line":   1,
+    ":before":       1,
+    ":after":        1
+};
+
+Pseudos.ELEMENT = 1;
+Pseudos.CLASS = 2;
+
+Pseudos.isElement = function(pseudo){
+    return pseudo.indexOf("::") === 0 || Pseudos[pseudo.toLowerCase()] == Pseudos.ELEMENT;
+};
+function Selector(parts, line, col){
+    
+    SyntaxUnit.call(this, parts.join(" "), line, col, Parser.SELECTOR_TYPE);
+    this.parts = parts;
+    this.specificity = Specificity.calculate(this);
+
+}
+
+Selector.prototype = new SyntaxUnit();
+Selector.prototype.constructor = Selector;
+function SelectorPart(elementName, modifiers, text, line, col){
+    
+    SyntaxUnit.call(this, text, line, col, Parser.SELECTOR_PART_TYPE);
+    this.elementName = elementName;
+    this.modifiers = modifiers;
+
+}
+
+SelectorPart.prototype = new SyntaxUnit();
+SelectorPart.prototype.constructor = SelectorPart;
+function SelectorSubPart(text, type, line, col){
+    
+    SyntaxUnit.call(this, text, line, col, Parser.SELECTOR_SUB_PART_TYPE);
+    this.type = type;
+    this.args = [];
+
+}
+
+SelectorSubPart.prototype = new SyntaxUnit();
+SelectorSubPart.prototype.constructor = SelectorSubPart;
+function Specificity(a, b, c, d){
+    this.a = a;
+    this.b = b;
+    this.c = c;
+    this.d = d;
+}
+
+Specificity.prototype = {
+    constructor: Specificity,
+    compare: function(other){
+        var comps = ["a", "b", "c", "d"],
+            i, len;
+            
+        for (i=0, len=comps.length; i < len; i++){
+            if (this[comps[i]] < other[comps[i]]){
+                return -1;
+            } else if (this[comps[i]] > other[comps[i]]){
+                return 1;
+            }
+        }
+        
+        return 0;
+    },
+    valueOf: function(){
+        return (this.a * 1000) + (this.b * 100) + (this.c * 10) + this.d;
+    },
+    toString: function(){
+        return this.a + "," + this.b + "," + this.c + "," + this.d;
+    }
+
+};
+Specificity.calculate = function(selector){
+
+    var i, len,
+        part,
+        b=0, c=0, d=0;
+        
+    function updateValues(part){
+    
+        var i, j, len, num,
+            elementName = part.elementName ? part.elementName.text : "",
+            modifier;
+    
+        if (elementName && elementName.charAt(elementName.length-1) != "*") {
+            d++;
+        }    
+    
+        for (i=0, len=part.modifiers.length; i < len; i++){
+            modifier = part.modifiers[i];
+            switch(modifier.type){
+                case "class":
+                case "attribute":
+                    c++;
+                    break;
+                    
+                case "id":
+                    b++;
+                    break;
+                    
+                case "pseudo":
+                    if (Pseudos.isElement(modifier.text)){
+                        d++;
+                    } else {
+                        c++;
+                    }                    
+                    break;
+                    
+                case "not":
+                    for (j=0, num=modifier.args.length; j < num; j++){
+                        updateValues(modifier.args[j]);
+                    }
+            }    
+         }
+    }
+    
+    for (i=0, len=selector.parts.length; i < len; i++){
+        part = selector.parts[i];
+        
+        if (part instanceof SelectorPart){
+            updateValues(part);                
+        }
+    }
+    
+    return new Specificity(0, b, c, d);
+};
+
+var h = /^[0-9a-fA-F]$/,
+    nonascii = /^[\u0080-\uFFFF]$/,
+    nl = /\n|\r\n|\r|\f/;
+
+
+function isHexDigit(c){
+    return c !== null && h.test(c);
+}
+
+function isDigit(c){
+    return c !== null && /\d/.test(c);
+}
+
+function isWhitespace(c){
+    return c !== null && /\s/.test(c);
+}
+
+function isNewLine(c){
+    return c !== null && nl.test(c);
+}
+
+function isNameStart(c){
+    return c !== null && (/[a-z_\u0080-\uFFFF\\]/i.test(c));
+}
+
+function isNameChar(c){
+    return c !== null && (isNameStart(c) || /[0-9\-\\]/.test(c));
+}
+
+function isIdentStart(c){
+    return c !== null && (isNameStart(c) || /\-\\/.test(c));
+}
+
+function mix(receiver, supplier){
+	for (var prop in supplier){
+		if (supplier.hasOwnProperty(prop)){
+			receiver[prop] = supplier[prop];
+		}
+	}
+	return receiver;
+}
+function TokenStream(input){
+	TokenStreamBase.call(this, input, Tokens);
+}
+
+TokenStream.prototype = mix(new TokenStreamBase(), {
+    _getToken: function(channel){
+
+        var c,
+            reader = this._reader,
+            token   = null,
+            startLine   = reader.getLine(),
+            startCol    = reader.getCol();
+
+        c = reader.read();
+
+
+        while(c){
+            switch(c){
+                case "/":
+
+                    if(reader.peek() == "*"){
+                        token = this.commentToken(c, startLine, startCol);
+                    } else {
+                        token = this.charToken(c, startLine, startCol);
+                    }
+                    break;
+                case "|":
+                case "~":
+                case "^":
+                case "$":
+                case "*":
+                    if(reader.peek() == "="){
+                        token = this.comparisonToken(c, startLine, startCol);
+                    } else {
+                        token = this.charToken(c, startLine, startCol);
+                    }
+                    break;
+                case "\"":
+                case "'":
+                    token = this.stringToken(c, startLine, startCol);
+                    break;
+                case "#":
+                    if (isNameChar(reader.peek())){
+                        token = this.hashToken(c, startLine, startCol);
+                    } else {
+                        token = this.charToken(c, startLine, startCol);
+                    }
+                    break;
+                case ".":
+                    if (isDigit(reader.peek())){
+                        token = this.numberToken(c, startLine, startCol);
+                    } else {
+                        token = this.charToken(c, startLine, startCol);
+                    }
+                    break;
+                case "-":
+                    if (reader.peek() == "-"){  //could be closing HTML-style comment
+                        token = this.htmlCommentEndToken(c, startLine, startCol);
+                    } else if (isNameStart(reader.peek())){
+                        token = this.identOrFunctionToken(c, startLine, startCol);
+                    } else {
+                        token = this.charToken(c, startLine, startCol);
+                    }
+                    break;
+                case "!":
+                    token = this.importantToken(c, startLine, startCol);
+                    break;
+                case "@":
+                    token = this.atRuleToken(c, startLine, startCol);
+                    break;
+                case ":":
+                    token = this.notToken(c, startLine, startCol);
+                    break;
+                case "<":
+                    token = this.htmlCommentStartToken(c, startLine, startCol);
+                    break;
+                case "U":
+                case "u":
+                    if (reader.peek() == "+"){
+                        token = this.unicodeRangeToken(c, startLine, startCol);
+                        break;
+                    }
+                default:
+                    if (isDigit(c)){
+                        token = this.numberToken(c, startLine, startCol);
+                    } else
+                    if (isWhitespace(c)){
+                        token = this.whitespaceToken(c, startLine, startCol);
+                    } else
+                    if (isIdentStart(c)){
+                        token = this.identOrFunctionToken(c, startLine, startCol);
+                    } else
+                    {
+                        token = this.charToken(c, startLine, startCol);
+                    }
+
+
+
+
+
+
+            }
+            break;
+        }
+
+        if (!token && c === null){
+            token = this.createToken(Tokens.EOF,null,startLine,startCol);
+        }
+
+        return token;
+    },
+    createToken: function(tt, value, startLine, startCol, options){
+        var reader = this._reader;
+        options = options || {};
+
+        return {
+            value:      value,
+            type:       tt,
+            channel:    options.channel,
+            hide:       options.hide || false,
+            startLine:  startLine,
+            startCol:   startCol,
+            endLine:    reader.getLine(),
+            endCol:     reader.getCol()
+        };
+    },
+    atRuleToken: function(first, startLine, startCol){
+        var rule    = first,
+            reader  = this._reader,
+            tt      = Tokens.CHAR,
+            valid   = false,
+            ident,
+            c;
+        reader.mark();
+        ident = this.readName();
+        rule = first + ident;
+        tt = Tokens.type(rule.toLowerCase());
+        if (tt == Tokens.CHAR || tt == Tokens.UNKNOWN){
+            if (rule.length > 1){
+                tt = Tokens.UNKNOWN_SYM;                
+            } else {
+                tt = Tokens.CHAR;
+                rule = first;
+                reader.reset();
+            }
+        }
+
+        return this.createToken(tt, rule, startLine, startCol);
+    },
+    charToken: function(c, startLine, startCol){
+        var tt = Tokens.type(c);
+
+        if (tt == -1){
+            tt = Tokens.CHAR;
+        }
+
+        return this.createToken(tt, c, startLine, startCol);
+    },
+    commentToken: function(first, startLine, startCol){
+        var reader  = this._reader,
+            comment = this.readComment(first);
+
+        return this.createToken(Tokens.COMMENT, comment, startLine, startCol);
+    },
+    comparisonToken: function(c, startLine, startCol){
+        var reader  = this._reader,
+            comparison  = c + reader.read(),
+            tt      = Tokens.type(comparison) || Tokens.CHAR;
+
+        return this.createToken(tt, comparison, startLine, startCol);
+    },
+    hashToken: function(first, startLine, startCol){
+        var reader  = this._reader,
+            name    = this.readName(first);
+
+        return this.createToken(Tokens.HASH, name, startLine, startCol);
+    },
+    htmlCommentStartToken: function(first, startLine, startCol){
+        var reader      = this._reader,
+            text        = first;
+
+        reader.mark();
+        text += reader.readCount(3);
+
+        if (text == "<!--"){
+            return this.createToken(Tokens.CDO, text, startLine, startCol);
+        } else {
+            reader.reset();
+            return this.charToken(first, startLine, startCol);
+        }
+    },
+    htmlCommentEndToken: function(first, startLine, startCol){
+        var reader      = this._reader,
+            text        = first;
+
+        reader.mark();
+        text += reader.readCount(2);
+
+        if (text == "-->"){
+            return this.createToken(Tokens.CDC, text, startLine, startCol);
+        } else {
+            reader.reset();
+            return this.charToken(first, startLine, startCol);
+        }
+    },
+    identOrFunctionToken: function(first, startLine, startCol){
+        var reader  = this._reader,
+            ident   = this.readName(first),
+            tt      = Tokens.IDENT;
+        if (reader.peek() == "("){
+            ident += reader.read();
+            if (ident.toLowerCase() == "url("){
+                tt = Tokens.URI;
+                ident = this.readURI(ident);
+                if (ident.toLowerCase() == "url("){
+                    tt = Tokens.FUNCTION;
+                }
+            } else {
+                tt = Tokens.FUNCTION;
+            }
+        } else if (reader.peek() == ":"){  //might be an IE function
+            if (ident.toLowerCase() == "progid"){
+                ident += reader.readTo("(");
+                tt = Tokens.IE_FUNCTION;
+            }
+        }
+
+        return this.createToken(tt, ident, startLine, startCol);
+    },
+    importantToken: function(first, startLine, startCol){
+        var reader      = this._reader,
+            important   = first,
+            tt          = Tokens.CHAR,
+            temp,
+            c;
+
+        reader.mark();
+        c = reader.read();
+
+        while(c){
+            if (c == "/"){
+                if (reader.peek() != "*"){
+                    break;
+                } else {
+                    temp = this.readComment(c);
+                    if (temp === ""){    //broken!
+                        break;
+                    }
+                }
+            } else if (isWhitespace(c)){
+                important += c + this.readWhitespace();
+            } else if (/i/i.test(c)){
+                temp = reader.readCount(8);
+                if (/mportant/i.test(temp)){
+                    important += c + temp;
+                    tt = Tokens.IMPORTANT_SYM;
+
+                }
+                break;  //we're done
+            } else {
+                break;
+            }
+
+            c = reader.read();
+        }
+
+        if (tt == Tokens.CHAR){
+            reader.reset();
+            return this.charToken(first, startLine, startCol);
+        } else {
+            return this.createToken(tt, important, startLine, startCol);
+        }
+
+
+    },
+    notToken: function(first, startLine, startCol){
+        var reader      = this._reader,
+            text        = first;
+
+        reader.mark();
+        text += reader.readCount(4);
+
+        if (text.toLowerCase() == ":not("){
+            return this.createToken(Tokens.NOT, text, startLine, startCol);
+        } else {
+            reader.reset();
+            return this.charToken(first, startLine, startCol);
+        }
+    },
+    numberToken: function(first, startLine, startCol){
+        var reader  = this._reader,
+            value   = this.readNumber(first),
+            ident,
+            tt      = Tokens.NUMBER,
+            c       = reader.peek();
+
+        if (isIdentStart(c)){
+            ident = this.readName(reader.read());
+            value += ident;
+
+            if (/^em$|^ex$|^px$|^gd$|^rem$|^vw$|^vh$|^vm$|^ch$|^cm$|^mm$|^in$|^pt$|^pc$/i.test(ident)){
+                tt = Tokens.LENGTH;
+            } else if (/^deg|^rad$|^grad$/i.test(ident)){
+                tt = Tokens.ANGLE;
+            } else if (/^ms$|^s$/i.test(ident)){
+                tt = Tokens.TIME;
+            } else if (/^hz$|^khz$/i.test(ident)){
+                tt = Tokens.FREQ;
+            } else if (/^dpi$|^dpcm$/i.test(ident)){
+                tt = Tokens.RESOLUTION;
+            } else {
+                tt = Tokens.DIMENSION;
+            }
+
+        } else if (c == "%"){
+            value += reader.read();
+            tt = Tokens.PERCENTAGE;
+        }
+
+        return this.createToken(tt, value, startLine, startCol);
+    },
+    stringToken: function(first, startLine, startCol){
+        var delim   = first,
+            string  = first,
+            reader  = this._reader,
+            prev    = first,
+            tt      = Tokens.STRING,
+            c       = reader.read();
+
+        while(c){
+            string += c;
+            if (c == delim && prev != "\\"){
+                break;
+            }
+            if (isNewLine(reader.peek()) && c != "\\"){
+                tt = Tokens.INVALID;
+                break;
+            }
+            prev = c;
+            c = reader.read();
+        }
+        if (c === null){
+            tt = Tokens.INVALID;
+        }
+
+        return this.createToken(tt, string, startLine, startCol);
+    },
+
+    unicodeRangeToken: function(first, startLine, startCol){
+        var reader  = this._reader,
+            value   = first,
+            temp,
+            tt      = Tokens.CHAR;
+        if (reader.peek() == "+"){
+            reader.mark();
+            value += reader.read();
+            value += this.readUnicodeRangePart(true);
+            if (value.length == 2){
+                reader.reset();
+            } else {
+
+                tt = Tokens.UNICODE_RANGE;
+                if (value.indexOf("?") == -1){
+
+                    if (reader.peek() == "-"){
+                        reader.mark();
+                        temp = reader.read();
+                        temp += this.readUnicodeRangePart(false);
+                        if (temp.length == 1){
+                            reader.reset();
+                        } else {
+                            value += temp;
+                        }
+                    }
+
+                }
+            }
+        }
+
+        return this.createToken(tt, value, startLine, startCol);
+    },
+    whitespaceToken: function(first, startLine, startCol){
+        var reader  = this._reader,
+            value   = first + this.readWhitespace();
+        return this.createToken(Tokens.S, value, startLine, startCol);
+    },
+
+    readUnicodeRangePart: function(allowQuestionMark){
+        var reader  = this._reader,
+            part = "",
+            c       = reader.peek();
+        while(isHexDigit(c) && part.length < 6){
+            reader.read();
+            part += c;
+            c = reader.peek();
+        }
+        if (allowQuestionMark){
+            while(c == "?" && part.length < 6){
+                reader.read();
+                part += c;
+                c = reader.peek();
+            }
+        }
+
+        return part;
+    },
+
+    readWhitespace: function(){
+        var reader  = this._reader,
+            whitespace = "",
+            c       = reader.peek();
+
+        while(isWhitespace(c)){
+            reader.read();
+            whitespace += c;
+            c = reader.peek();
+        }
+
+        return whitespace;
+    },
+    readNumber: function(first){
+        var reader  = this._reader,
+            number  = first,
+            hasDot  = (first == "."),
+            c       = reader.peek();
+
+
+        while(c){
+            if (isDigit(c)){
+                number += reader.read();
+            } else if (c == "."){
+                if (hasDot){
+                    break;
+                } else {
+                    hasDot = true;
+                    number += reader.read();
+                }
+            } else {
+                break;
+            }
+
+            c = reader.peek();
+        }
+
+        return number;
+    },
+    readString: function(){
+        var reader  = this._reader,
+            delim   = reader.read(),
+            string  = delim,
+            prev    = delim,
+            c       = reader.peek();
+
+        while(c){
+            c = reader.read();
+            string += c;
+            if (c == delim && prev != "\\"){
+                break;
+            }
+            if (isNewLine(reader.peek()) && c != "\\"){
+                string = "";
+                break;
+            }
+            prev = c;
+            c = reader.peek();
+        }
+        if (c === null){
+            string = "";
+        }
+
+        return string;
+    },
+    readURI: function(first){
+        var reader  = this._reader,
+            uri     = first,
+            inner   = "",
+            c       = reader.peek();
+
+        reader.mark();
+        while(c && isWhitespace(c)){
+            reader.read();
+            c = reader.peek();
+        }
+        if (c == "'" || c == "\""){
+            inner = this.readString();
+        } else {
+            inner = this.readURL();
+        }
+
+        c = reader.peek();
+        while(c && isWhitespace(c)){
+            reader.read();
+            c = reader.peek();
+        }
+        if (inner === "" || c != ")"){
+            uri = first;
+            reader.reset();
+        } else {
+            uri += inner + reader.read();
+        }
+
+        return uri;
+    },
+    readURL: function(){
+        var reader  = this._reader,
+            url     = "",
+            c       = reader.peek();
+        while (/^[!#$%&\\*-~]$/.test(c)){
+            url += reader.read();
+            c = reader.peek();
+        }
+
+        return url;
+
+    },
+    readName: function(first){
+        var reader  = this._reader,
+            ident   = first || "",
+            c       = reader.peek();
+
+        while(true){
+            if (c == "\\"){
+                ident += this.readEscape(reader.read());
+                c = reader.peek();
+            } else if(c && isNameChar(c)){
+                ident += reader.read();
+                c = reader.peek();
+            } else {
+                break;
+            }
+        }
+
+        return ident;
+    },
+    
+    readEscape: function(first){
+        var reader  = this._reader,
+            cssEscape = first || "",
+            i       = 0,
+            c       = reader.peek();    
+    
+        if (isHexDigit(c)){
+            do {
+                cssEscape += reader.read();
+                c = reader.peek();
+            } while(c && isHexDigit(c) && ++i < 6);
+        }
+        
+        if (cssEscape.length == 3 && /\s/.test(c) ||
+            cssEscape.length == 7 || cssEscape.length == 1){
+                reader.read();
+        } else {
+            c = "";
+        }
+        
+        return cssEscape + c;
+    },
+    
+    readComment: function(first){
+        var reader  = this._reader,
+            comment = first || "",
+            c       = reader.read();
+
+        if (c == "*"){
+            while(c){
+                comment += c;
+                if (comment.length > 2 && c == "*" && reader.peek() == "/"){
+                    comment += reader.read();
+                    break;
+                }
+
+                c = reader.read();
+            }
+
+            return comment;
+        } else {
+            return "";
+        }
+
+    }
+});
+
+
+var Tokens  = [
+    { name: "CDO"},
+    { name: "CDC"},
+    { name: "S", whitespace: true/*, channel: "ws"*/},
+    { name: "COMMENT", comment: true, hide: true, channel: "comment" },
+    { name: "INCLUDES", text: "~="},
+    { name: "DASHMATCH", text: "|="},
+    { name: "PREFIXMATCH", text: "^="},
+    { name: "SUFFIXMATCH", text: "$="},
+    { name: "SUBSTRINGMATCH", text: "*="},
+    { name: "STRING"},     
+    { name: "IDENT"},
+    { name: "HASH"},
+    { name: "IMPORT_SYM", text: "@import"},
+    { name: "PAGE_SYM", text: "@page"},
+    { name: "MEDIA_SYM", text: "@media"},
+    { name: "FONT_FACE_SYM", text: "@font-face"},
+    { name: "CHARSET_SYM", text: "@charset"},
+    { name: "NAMESPACE_SYM", text: "@namespace"},
+    { name: "UNKNOWN_SYM" },
+    { name: "KEYFRAMES_SYM", text: [ "@keyframes", "@-webkit-keyframes", "@-moz-keyframes", "@-o-keyframes" ] },
+    { name: "IMPORTANT_SYM"},
+    { name: "LENGTH"},
+    { name: "ANGLE"},
+    { name: "TIME"},
+    { name: "FREQ"},
+    { name: "DIMENSION"},
+    { name: "PERCENTAGE"},
+    { name: "NUMBER"},
+    { name: "URI"},
+    { name: "FUNCTION"},
+    { name: "UNICODE_RANGE"},    
+    { name: "INVALID"},
+    { name: "PLUS", text: "+" },
+    { name: "GREATER", text: ">"},
+    { name: "COMMA", text: ","},
+    { name: "TILDE", text: "~"},
+    { name: "NOT"},        
+    { name: "TOPLEFTCORNER_SYM", text: "@top-left-corner"},
+    { name: "TOPLEFT_SYM", text: "@top-left"},
+    { name: "TOPCENTER_SYM", text: "@top-center"},
+    { name: "TOPRIGHT_SYM", text: "@top-right"},
+    { name: "TOPRIGHTCORNER_SYM", text: "@top-right-corner"},
+    { name: "BOTTOMLEFTCORNER_SYM", text: "@bottom-left-corner"},
+    { name: "BOTTOMLEFT_SYM", text: "@bottom-left"},
+    { name: "BOTTOMCENTER_SYM", text: "@bottom-center"},
+    { name: "BOTTOMRIGHT_SYM", text: "@bottom-right"},
+    { name: "BOTTOMRIGHTCORNER_SYM", text: "@bottom-right-corner"},
+    { name: "LEFTTOP_SYM", text: "@left-top"},
+    { name: "LEFTMIDDLE_SYM", text: "@left-middle"},
+    { name: "LEFTBOTTOM_SYM", text: "@left-bottom"},
+    { name: "RIGHTTOP_SYM", text: "@right-top"},
+    { name: "RIGHTMIDDLE_SYM", text: "@right-middle"},
+    { name: "RIGHTBOTTOM_SYM", text: "@right-bottom"},
+    { name: "RESOLUTION", state: "media"},
+    { name: "IE_FUNCTION" },
+    { name: "CHAR" },
+    {
+        name: "PIPE",
+        text: "|"
+    },
+    {
+        name: "SLASH",
+        text: "/"
+    },
+    {
+        name: "MINUS",
+        text: "-"
+    },
+    {
+        name: "STAR",
+        text: "*"
+    },
+
+    {
+        name: "LBRACE",
+        text: "{"
+    },   
+    {
+        name: "RBRACE",
+        text: "}"
+    },      
+    {
+        name: "LBRACKET",
+        text: "["
+    },   
+    {
+        name: "RBRACKET",
+        text: "]"
+    },    
+    {
+        name: "EQUALS",
+        text: "="
+    },
+    {
+        name: "COLON",
+        text: ":"
+    },    
+    {
+        name: "SEMICOLON",
+        text: ";"
+    },    
+ 
+    {
+        name: "LPAREN",
+        text: "("
+    },   
+    {
+        name: "RPAREN",
+        text: ")"
+    },     
+    {
+        name: "DOT",
+        text: "."
+    }
+];
+
+(function(){
+
+    var nameMap = [],
+        typeMap = {};
+    
+    Tokens.UNKNOWN = -1;
+    Tokens.unshift({name:"EOF"});
+    for (var i=0, len = Tokens.length; i < len; i++){
+        nameMap.push(Tokens[i].name);
+        Tokens[Tokens[i].name] = i;
+        if (Tokens[i].text){
+            if (Tokens[i].text instanceof Array){
+                for (var j=0; j < Tokens[i].text.length; j++){
+                    typeMap[Tokens[i].text[j]] = i;
+                }
+            } else {
+                typeMap[Tokens[i].text] = i;
+            }
+        }
+    }
+    
+    Tokens.name = function(tt){
+        return nameMap[tt];
+    };
+    
+    Tokens.type = function(c){
+        return typeMap[c] || -1;
+    };
+
+})();
+var Validation = {
+
+    validate: function(property, value){
+        var name        = property.toString().toLowerCase(),
+            parts       = value.parts,
+            expression  = new PropertyValueIterator(value),
+            spec        = Properties[name],
+            part,
+            valid,            
+            j, count,
+            msg,
+            types,
+            last,
+            literals,
+            max, multi, group;
+            
+        if (!spec) {
+            if (name.indexOf("-") !== 0){    //vendor prefixed are ok
+                throw new ValidationError("Unknown property '" + property + "'.", property.line, property.col);
+            }
+        } else if (typeof spec != "number"){
+            if (typeof spec == "string"){
+                if (spec.indexOf("||") > -1) {
+                    this.groupProperty(spec, expression);
+                } else {
+                    this.singleProperty(spec, expression, 1);
+                }
+
+            } else if (spec.multi) {
+                this.multiProperty(spec.multi, expression, spec.comma, spec.max || Infinity);
+            } else if (typeof spec == "function") {
+                spec(expression);
+            }
+
+        }
+
+    },
+    
+    singleProperty: function(types, expression, max, partial) {
+
+        var result      = false,
+            value       = expression.value,
+            count       = 0,
+            part;
+         
+        while (expression.hasNext() && count < max) {
+            result = ValidationTypes.isAny(expression, types);
+            if (!result) {
+                break;
+            }
+            count++;
+        }
+        
+        if (!result) {
+            if (expression.hasNext() && !expression.isFirst()) {
+                part = expression.peek();
+                throw new ValidationError("Expected end of value but found '" + part + "'.", part.line, part.col);
+            } else {
+                 throw new ValidationError("Expected (" + types + ") but found '" + value + "'.", value.line, value.col);
+            }        
+        } else if (expression.hasNext()) {
+            part = expression.next();
+            throw new ValidationError("Expected end of value but found '" + part + "'.", part.line, part.col);
+        }          
+                 
+    },    
+    
+    multiProperty: function (types, expression, comma, max) {
+
+        var result      = false,
+            value       = expression.value,
+            count       = 0,
+            sep         = false,
+            part;
+            
+        while(expression.hasNext() && !result && count < max) {
+            if (ValidationTypes.isAny(expression, types)) {
+                count++;
+                if (!expression.hasNext()) {
+                    result = true;
+
+                } else if (comma) {
+                    if (expression.peek() == ",") {
+                        part = expression.next();
+                    } else {
+                        break;
+                    }
+                }
+            } else {
+                break;
+
+            }
+        }
+        
+        if (!result) {
+            if (expression.hasNext() && !expression.isFirst()) {
+                part = expression.peek();
+                throw new ValidationError("Expected end of value but found '" + part + "'.", part.line, part.col);
+            } else {
+                part = expression.previous();
+                if (comma && part == ",") {
+                    throw new ValidationError("Expected end of value but found '" + part + "'.", part.line, part.col); 
+                } else {
+                    throw new ValidationError("Expected (" + types + ") but found '" + value + "'.", value.line, value.col);
+                }
+            }
+        
+        } else if (expression.hasNext()) {
+            part = expression.next();
+            throw new ValidationError("Expected end of value but found '" + part + "'.", part.line, part.col);
+        }  
+
+    },
+    
+    groupProperty: function (types, expression, comma) {
+
+        var result      = false,
+            value       = expression.value,
+            typeCount   = types.split("||").length,
+            groups      = { count: 0 },
+            partial     = false,
+            name,
+            part;
+            
+        while(expression.hasNext() && !result) {
+            name = ValidationTypes.isAnyOfGroup(expression, types);
+            if (name) {
+                if (groups[name]) {
+                    break;
+                } else {
+                    groups[name] = 1;
+                    groups.count++;
+                    partial = true;
+                    
+                    if (groups.count == typeCount || !expression.hasNext()) {
+                        result = true;
+                    }
+                }
+            } else {
+                break;
+            }
+        }
+        
+        if (!result) {        
+            if (partial && expression.hasNext()) {
+                    part = expression.peek();
+                    throw new ValidationError("Expected end of value but found '" + part + "'.", part.line, part.col);
+            } else {
+                throw new ValidationError("Expected (" + types + ") but found '" + value + "'.", value.line, value.col);
+            }
+        } else if (expression.hasNext()) {
+            part = expression.next();
+            throw new ValidationError("Expected end of value but found '" + part + "'.", part.line, part.col);
+        }           
+    }
+
+    
+
+};
+function ValidationError(message, line, col){
+    this.col = col;
+    this.line = line;
+    this.message = message;
+
+}
+ValidationError.prototype = new Error();
+var ValidationTypes = {
+
+    isLiteral: function (part, literals) {
+        var text = part.text.toString().toLowerCase(),
+            args = literals.split(" | "),
+            i, len, found = false;
+        
+        for (i=0,len=args.length; i < len && !found; i++){
+            if (text == args[i].toLowerCase()){
+                found = true;
+            }
+        }
+        
+        return found;    
+    },
+    
+    isSimple: function(type) {
+        return !!this.simple[type];
+    },
+    
+    isComplex: function(type) {
+        return !!this.complex[type];
+    },
+    isAny: function (expression, types) {
+        var args = types.split(" | "),
+            i, len, found = false;
+        
+        for (i=0,len=args.length; i < len && !found && expression.hasNext(); i++){
+            found = this.isType(expression, args[i]);
+        }
+        
+        return found;    
+    },
+    isAnyOfGroup: function(expression, types) {
+        var args = types.split(" || "),
+            i, len, found = false;
+        
+        for (i=0,len=args.length; i < len && !found; i++){
+            found = this.isType(expression, args[i]);
+        }
+        
+        return found ? args[i-1] : false;
+    },
+    isType: function (expression, type) {
+        var part = expression.peek(),
+            result = false;
+            
+        if (type.charAt(0) != "<") {
+            result = this.isLiteral(part, type);
+            if (result) {
+                expression.next();
+            }
+        } else if (this.simple[type]) {
+            result = this.simple[type](part);
+            if (result) {
+                expression.next();
+            }
+        } else {
+            result = this.complex[type](expression);
+        }
+        
+        return result;
+    },
+    
+    
+    
+    simple: {
+
+        "<absolute-size>": function(part){
+            return ValidationTypes.isLiteral(part, "xx-small | x-small | small | medium | large | x-large | xx-large");
+        },
+        
+        "<attachment>": function(part){
+            return ValidationTypes.isLiteral(part, "scroll | fixed | local");
+        },
+        
+        "<attr>": function(part){
+            return part.type == "function" && part.name == "attr";
+        },
+                
+        "<bg-image>": function(part){
+            return this["<image>"](part) || this["<gradient>"](part) ||  part == "none";
+        },        
+        
+        "<gradient>": function(part) {
+            return part.type == "function" && /^(?:\-(?:ms|moz|o|webkit)\-)?(?:repeating\-)?(?:radial\-|linear\-)?gradient/i.test(part);
+        },
+        
+        "<box>": function(part){
+            return ValidationTypes.isLiteral(part, "padding-box | border-box | content-box");
+        },
+        
+        "<content>": function(part){
+            return part.type == "function" && part.name == "content";
+        },        
+        
+        "<relative-size>": function(part){
+            return ValidationTypes.isLiteral(part, "smaller | larger");
+        },
+        "<ident>": function(part){
+            return part.type == "identifier";
+        },
+        
+        "<length>": function(part){
+            return part.type == "length" || part.type == "number" || part.type == "integer" || part == "0";
+        },
+        
+        "<color>": function(part){
+            return part.type == "color" || part == "transparent";
+        },
+        
+        "<number>": function(part){
+            return part.type == "number" || this["<integer>"](part);
+        },
+        
+        "<integer>": function(part){
+            return part.type == "integer";
+        },
+        
+        "<line>": function(part){
+            return part.type == "integer";
+        },
+        
+        "<angle>": function(part){
+            return part.type == "angle";
+        },        
+        
+        "<uri>": function(part){
+            return part.type == "uri";
+        },
+        
+        "<image>": function(part){
+            return this["<uri>"](part);
+        },
+        
+        "<percentage>": function(part){
+            return part.type == "percentage" || part == "0";
+        },
+
+        "<border-width>": function(part){
+            return this["<length>"](part) || ValidationTypes.isLiteral(part, "thin | medium | thick");
+        },
+        
+        "<border-style>": function(part){
+            return ValidationTypes.isLiteral(part, "none | hidden | dotted | dashed | solid | double | groove | ridge | inset | outset");
+        },
+        
+        "<margin-width>": function(part){
+            return this["<length>"](part) || this["<percentage>"](part) || ValidationTypes.isLiteral(part, "auto");
+        },
+        
+        "<padding-width>": function(part){
+            return this["<length>"](part) || this["<percentage>"](part);
+        },
+        
+        "<shape>": function(part){
+            return part.type == "function" && (part.name == "rect" || part.name == "inset-rect");
+        },
+        
+        "<time>": function(part) {
+            return part.type == "time";
+        }
+    },
+    
+    complex: {
+
+        "<bg-position>": function(expression){
+            var types   = this,
+                result  = false,
+                numeric = "<percentage> | <length>",
+                xDir    = "left | center | right",
+                yDir    = "top | center | bottom",
+                part,
+                i, len;            
+                
+            if (ValidationTypes.isAny(expression, "top | bottom")) {
+                result = true;
+            } else {
+                if (ValidationTypes.isAny(expression, numeric)){
+                    if (expression.hasNext()){
+                        result = ValidationTypes.isAny(expression, numeric + " | " + yDir);
+                    }
+                } else if (ValidationTypes.isAny(expression, xDir)){
+                    if (expression.hasNext()){
+                        if (ValidationTypes.isAny(expression, yDir)){
+                            result = true;
+                      
+                            ValidationTypes.isAny(expression, numeric);
+                            
+                        } else if (ValidationTypes.isAny(expression, numeric)){
+                            if (ValidationTypes.isAny(expression, yDir)){                                    
+                                ValidationTypes.isAny(expression, numeric);                               
+                            }
+                            
+                            result = true;
+                        }
+                    }
+                }                                 
+            }            
+
+            
+            return result;
+        },
+
+        "<bg-size>": function(expression){
+            var types   = this,
+                result  = false,
+                numeric = "<percentage> | <length> | auto",
+                part,
+                i, len;      
+      
+            if (ValidationTypes.isAny(expression, "cover | contain")) {
+                result = true;
+            } else if (ValidationTypes.isAny(expression, numeric)) {
+                result = true;                
+                ValidationTypes.isAny(expression, numeric);
+            }
+            
+            return result;
+        },
+        
+        "<repeat-style>": function(expression){
+            var result  = false,
+                values  = "repeat | space | round | no-repeat",
+                part;
+            
+            if (expression.hasNext()){
+                part = expression.next();
+                
+                if (ValidationTypes.isLiteral(part, "repeat-x | repeat-y")) {
+                    result = true;                    
+                } else if (ValidationTypes.isLiteral(part, values)) {
+                    result = true;
+
+                    if (expression.hasNext() && ValidationTypes.isLiteral(expression.peek(), values)) {
+                        expression.next();
+                    }
+                }
+            }
+            
+            return result;
+            
+        },
+        
+        "<shadow>": function(expression) {
+            var result  = false,
+                count   = 0,
+                inset   = false,
+                color   = false,
+                part;
+                
+            if (expression.hasNext()) {            
+                
+                if (ValidationTypes.isAny(expression, "inset")){
+                    inset = true;
+                }
+                
+                if (ValidationTypes.isAny(expression, "<color>")) {
+                    color = true;
+                }                
+                
+                while (ValidationTypes.isAny(expression, "<length>") && count < 4) {
+                    count++;
+                }
+                
+                
+                if (expression.hasNext()) {
+                    if (!color) {
+                        ValidationTypes.isAny(expression, "<color>");
+                    }
+                    
+                    if (!inset) {
+                        ValidationTypes.isAny(expression, "inset");
+                    }
+
+                }
+                
+                result = (count >= 2 && count <= 4);
+            
+            }
+            
+            return result;
+        },
+        
+        "<x-one-radius>": function(expression) {
+            var result  = false,
+                count   = 0,
+                numeric = "<length> | <percentage>",
+                part;
+                
+            if (ValidationTypes.isAny(expression, numeric)){
+                result = true;
+                
+                ValidationTypes.isAny(expression, numeric);
+            }                
+            
+            return result;
+        }
+    }
+};
+
+
+parserlib.css = {
+Colors              :Colors,    
+Combinator          :Combinator,                
+Parser              :Parser,
+PropertyName        :PropertyName,
+PropertyValue       :PropertyValue,
+PropertyValuePart   :PropertyValuePart,
+MediaFeature        :MediaFeature,
+MediaQuery          :MediaQuery,
+Selector            :Selector,
+SelectorPart        :SelectorPart,
+SelectorSubPart     :SelectorSubPart,
+Specificity         :Specificity,
+TokenStream         :TokenStream,
+Tokens              :Tokens,
+ValidationError     :ValidationError
+};
+})();
+var CSSLint = (function(){
+
+    var rules      = [],
+        formatters = [],
+        api        = new parserlib.util.EventTarget();
+        
+    api.version = "0.9.9";
+    api.addRule = function(rule){
+        rules.push(rule);
+        rules[rule.id] = rule;
+    };
+    api.clearRules = function(){
+        rules = [];
+    };
+    api.getRules = function(){
+        return [].concat(rules).sort(function(a,b){ 
+            return a.id > b.id ? 1 : 0;
+        });
+    };
+    api.getRuleset = function() {
+        var ruleset = {},
+            i = 0,
+            len = rules.length;
+        
+        while (i < len){
+            ruleset[rules[i++].id] = 1;    //by default, everything is a warning
+        }
+        
+        return ruleset;
+    };
+    api.addFormatter = function(formatter) {
+        formatters[formatter.id] = formatter;
+    };
+    api.getFormatter = function(formatId){
+        return formatters[formatId];
+    };
+    api.format = function(results, filename, formatId, options) {
+        var formatter = this.getFormatter(formatId),
+            result = null;
+            
+        if (formatter){
+            result = formatter.startFormat();
+            result += formatter.formatResults(results, filename, options || {});
+            result += formatter.endFormat();
+        }
+        
+        return result;
+    };
+    api.hasFormat = function(formatId){
+        return formatters.hasOwnProperty(formatId);
+    };
+    api.verify = function(text, ruleset){
+
+        var i       = 0,
+            len     = rules.length,
+            reporter,
+            lines,
+            report,
+            parser = new parserlib.css.Parser({ starHack: true, ieFilters: true,
+                                                underscoreHack: true, strict: false });
+        lines = text.replace(/\n\r?/g, "$split$").split('$split$');
+        
+        if (!ruleset){
+            ruleset = this.getRuleset();
+        }
+        
+        reporter = new Reporter(lines, ruleset);
+        
+        ruleset.errors = 2;       //always report parsing errors as errors
+        for (i in ruleset){
+            if(ruleset.hasOwnProperty(i)){
+                if (rules[i]){
+                    rules[i].init(parser, reporter);
+                }
+            }
+        }
+        try {
+            parser.parse(text);
+        } catch (ex) {
+            reporter.error("Fatal error, cannot continue: " + ex.message, ex.line, ex.col, {});
+        }
+
+        report = {
+            messages    : reporter.messages,
+            stats       : reporter.stats
+        };
+        report.messages.sort(function (a, b){
+            if (a.rollup && !b.rollup){
+                return 1;
+            } else if (!a.rollup && b.rollup){
+                return -1;
+            } else {
+                return a.line - b.line;
+            }
+        });        
+        
+        return report;
+    };
+
+    return api;
+
+})();
+function Reporter(lines, ruleset){
+    this.messages = [];
+    this.stats = [];
+    this.lines = lines;
+    this.ruleset = ruleset;
+}
+
+Reporter.prototype = {
+    constructor: Reporter,
+    error: function(message, line, col, rule){
+        this.messages.push({
+            type    : "error",
+            line    : line,
+            col     : col,
+            message : message,
+            evidence: this.lines[line-1],
+            rule    : rule || {}
+        });
+    },
+    warn: function(message, line, col, rule){
+        this.report(message, line, col, rule);
+    },
+    report: function(message, line, col, rule){
+        this.messages.push({
+            type    : this.ruleset[rule.id] == 2 ? "error" : "warning",
+            line    : line,
+            col     : col,
+            message : message,
+            evidence: this.lines[line-1],
+            rule    : rule
+        });
+    },
+    info: function(message, line, col, rule){
+        this.messages.push({
+            type    : "info",
+            line    : line,
+            col     : col,
+            message : message,
+            evidence: this.lines[line-1],
+            rule    : rule
+        });
+    },
+    rollupError: function(message, rule){
+        this.messages.push({
+            type    : "error",
+            rollup  : true,
+            message : message,
+            rule    : rule
+        });
+    },
+    rollupWarn: function(message, rule){
+        this.messages.push({
+            type    : "warning",
+            rollup  : true,
+            message : message,
+            rule    : rule
+        });
+    },
+    stat: function(name, value){
+        this.stats[name] = value;
+    }
+};
+CSSLint._Reporter = Reporter;
+CSSLint.Util = {
+    mix: function(receiver, supplier){
+        var prop;
+
+        for (prop in supplier){
+            if (supplier.hasOwnProperty(prop)){
+                receiver[prop] = supplier[prop];
+            }
+        }
+
+        return prop;
+    },
+    indexOf: function(values, value){
+        if (values.indexOf){
+            return values.indexOf(value);
+        } else {
+            for (var i=0, len=values.length; i < len; i++){
+                if (values[i] === value){
+                    return i;
+                }
+            }
+            return -1;
+        }
+    },
+    forEach: function(values, func) {
+        if (values.forEach){
+            return values.forEach(func);
+        } else {
+            for (var i=0, len=values.length; i < len; i++){
+                func(values[i], i, values);
+            }
+        }
+    }
+};
+CSSLint.addRule({
+    id: "adjoining-classes",
+    name: "Disallow adjoining classes",
+    desc: "Don't use adjoining classes.",
+    browsers: "IE6",
+    init: function(parser, reporter){
+        var rule = this;
+        parser.addListener("startrule", function(event){
+            var selectors = event.selectors,
+                selector,
+                part,
+                modifier,
+                classCount,
+                i, j, k;
+
+            for (i=0; i < selectors.length; i++){
+                selector = selectors[i];
+                for (j=0; j < selector.parts.length; j++){
+                    part = selector.parts[j];
+                    if (part.type == parser.SELECTOR_PART_TYPE){
+                        classCount = 0;
+                        for (k=0; k < part.modifiers.length; k++){
+                            modifier = part.modifiers[k];
+                            if (modifier.type == "class"){
+                                classCount++;
+                            }
+                            if (classCount > 1){
+                                reporter.report("Don't use adjoining classes.", part.line, part.col, rule);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+});
+CSSLint.addRule({
+    id: "box-model",
+    name: "Beware of broken box size",
+    desc: "Don't use width or height when using padding or border.",
+    browsers: "All",
+    init: function(parser, reporter){
+        var rule = this,
+            widthProperties = {
+                border: 1,
+                "border-left": 1,
+                "border-right": 1,
+                padding: 1,
+                "padding-left": 1,
+                "padding-right": 1
+            },
+            heightProperties = {
+                border: 1,
+                "border-bottom": 1,
+                "border-top": 1,
+                padding: 1,
+                "padding-bottom": 1,
+                "padding-top": 1
+            },
+            properties,
+            boxSizing = false;
+
+        function startRule(){
+            properties = {};
+            boxSizing = false;
+        }
+
+        function endRule(){
+            var prop, value;
+            
+            if (!boxSizing) {
+                if (properties.height){
+                    for (prop in heightProperties){
+                        if (heightProperties.hasOwnProperty(prop) && properties[prop]){
+                            value = properties[prop].value;
+                            if (!(prop == "padding" && value.parts.length === 2 && value.parts[0].value === 0)){
+                                reporter.report("Using height with " + prop + " can sometimes make elements larger than you expect.", properties[prop].line, properties[prop].col, rule);
+                            }
+                        }
+                    }
+                }
+
+                if (properties.width){
+                    for (prop in widthProperties){
+                        if (widthProperties.hasOwnProperty(prop) && properties[prop]){
+                            value = properties[prop].value;
+                            
+                            if (!(prop == "padding" && value.parts.length === 2 && value.parts[1].value === 0)){
+                                reporter.report("Using width with " + prop + " can sometimes make elements larger than you expect.", properties[prop].line, properties[prop].col, rule);
+                            }
+                        }
+                    }
+                }   
+            }     
+        }
+
+        parser.addListener("startrule", startRule);
+        parser.addListener("startfontface", startRule);
+        parser.addListener("startpage", startRule);
+        parser.addListener("startpagemargin", startRule);
+        parser.addListener("startkeyframerule", startRule); 
+
+        parser.addListener("property", function(event){
+            var name = event.property.text.toLowerCase();
+            
+            if (heightProperties[name] || widthProperties[name]){
+                if (!/^0\S*$/.test(event.value) && !(name == "border" && event.value == "none")){
+                    properties[name] = { line: event.property.line, col: event.property.col, value: event.value };
+                }
+            } else {
+                if (/^(width|height)/i.test(name) && /^(length|percentage)/.test(event.value.parts[0].type)){
+                    properties[name] = 1;
+                } else if (name == "box-sizing") {
+                    boxSizing = true;
+                }
+            }
+            
+        });
+
+        parser.addListener("endrule", endRule);
+        parser.addListener("endfontface", endRule);
+        parser.addListener("endpage", endRule);
+        parser.addListener("endpagemargin", endRule);
+        parser.addListener("endkeyframerule", endRule);         
+    }
+
+});
+CSSLint.addRule({
+    id: "box-sizing",
+    name: "Disallow use of box-sizing",
+    desc: "The box-sizing properties isn't supported in IE6 and IE7.",
+    browsers: "IE6, IE7",
+    tags: ["Compatibility"],
+    init: function(parser, reporter){
+        var rule = this;
+
+        parser.addListener("property", function(event){
+            var name = event.property.text.toLowerCase();
+   
+            if (name == "box-sizing"){
+                reporter.report("The box-sizing property isn't supported in IE6 and IE7.", event.line, event.col, rule);
+            }
+        });       
+    }
+
+}); 
+CSSLint.addRule({
+    id: "compatible-vendor-prefixes",
+    name: "Require compatible vendor prefixes",
+    desc: "Include all compatible vendor prefixes to reach a wider range of users.",
+    browsers: "All",
+    init: function (parser, reporter) {
+        var rule = this,
+            compatiblePrefixes,
+            properties,
+            prop,
+            variations,
+            prefixed,
+            i,
+            len,
+            inKeyFrame = false,
+            arrayPush = Array.prototype.push,
+            applyTo = [];
+        compatiblePrefixes = {
+            "animation"                  : "webkit moz",
+            "animation-delay"            : "webkit moz",
+            "animation-direction"        : "webkit moz",
+            "animation-duration"         : "webkit moz",
+            "animation-fill-mode"        : "webkit moz",
+            "animation-iteration-count"  : "webkit moz",
+            "animation-name"             : "webkit moz",
+            "animation-play-state"       : "webkit moz",
+            "animation-timing-function"  : "webkit moz",
+            "appearance"                 : "webkit moz",
+            "border-end"                 : "webkit moz",
+            "border-end-color"           : "webkit moz",
+            "border-end-style"           : "webkit moz",
+            "border-end-width"           : "webkit moz",
+            "border-image"               : "webkit moz o",
+            "border-radius"              : "webkit moz",
+            "border-start"               : "webkit moz",
+            "border-start-color"         : "webkit moz",
+            "border-start-style"         : "webkit moz",
+            "border-start-width"         : "webkit moz",
+            "box-align"                  : "webkit moz ms",
+            "box-direction"              : "webkit moz ms",
+            "box-flex"                   : "webkit moz ms",
+            "box-lines"                  : "webkit ms",
+            "box-ordinal-group"          : "webkit moz ms",
+            "box-orient"                 : "webkit moz ms",
+            "box-pack"                   : "webkit moz ms",
+            "box-sizing"                 : "webkit moz",
+            "box-shadow"                 : "webkit moz",
+            "column-count"               : "webkit moz ms",
+            "column-gap"                 : "webkit moz ms",
+            "column-rule"                : "webkit moz ms",
+            "column-rule-color"          : "webkit moz ms",
+            "column-rule-style"          : "webkit moz ms",
+            "column-rule-width"          : "webkit moz ms",
+            "column-width"               : "webkit moz ms",
+            "hyphens"                    : "epub moz",
+            "line-break"                 : "webkit ms",
+            "margin-end"                 : "webkit moz",
+            "margin-start"               : "webkit moz",
+            "marquee-speed"              : "webkit wap",
+            "marquee-style"              : "webkit wap",
+            "padding-end"                : "webkit moz",
+            "padding-start"              : "webkit moz",
+            "tab-size"                   : "moz o",
+            "text-size-adjust"           : "webkit ms",
+            "transform"                  : "webkit moz ms o",
+            "transform-origin"           : "webkit moz ms o",
+            "transition"                 : "webkit moz o",
+            "transition-delay"           : "webkit moz o",
+            "transition-duration"        : "webkit moz o",
+            "transition-property"        : "webkit moz o",
+            "transition-timing-function" : "webkit moz o",
+            "user-modify"                : "webkit moz",
+            "user-select"                : "webkit moz ms",
+            "word-break"                 : "epub ms",
+            "writing-mode"               : "epub ms"
+        };
+
+
+        for (prop in compatiblePrefixes) {
+            if (compatiblePrefixes.hasOwnProperty(prop)) {
+                variations = [];
+                prefixed = compatiblePrefixes[prop].split(' ');
+                for (i = 0, len = prefixed.length; i < len; i++) {
+                    variations.push('-' + prefixed[i] + '-' + prop);
+                }
+                compatiblePrefixes[prop] = variations;
+                arrayPush.apply(applyTo, variations);
+            }
+        }
+                
+        parser.addListener("startrule", function () {
+            properties = [];
+        });
+
+        parser.addListener("startkeyframes", function (event) {
+            inKeyFrame = event.prefix || true;
+        });
+
+        parser.addListener("endkeyframes", function (event) {
+            inKeyFrame = false;
+        });
+
+        parser.addListener("property", function (event) {
+            var name = event.property;
+            if (CSSLint.Util.indexOf(applyTo, name.text) > -1) {
+                if (!inKeyFrame || typeof inKeyFrame != "string" || 
+                        name.text.indexOf("-" + inKeyFrame + "-") !== 0) {
+                    properties.push(name);
+                }
+            }
+        });
+
+        parser.addListener("endrule", function (event) {
+            if (!properties.length) {
+                return;
+            }
+
+            var propertyGroups = {},
+                i,
+                len,
+                name,
+                prop,
+                variations,
+                value,
+                full,
+                actual,
+                item,
+                propertiesSpecified;
+
+            for (i = 0, len = properties.length; i < len; i++) {
+                name = properties[i];
+
+                for (prop in compatiblePrefixes) {
+                    if (compatiblePrefixes.hasOwnProperty(prop)) {
+                        variations = compatiblePrefixes[prop];
+                        if (CSSLint.Util.indexOf(variations, name.text) > -1) {
+                            if (!propertyGroups[prop]) {
+                                propertyGroups[prop] = {
+                                    full : variations.slice(0),
+                                    actual : [],
+                                    actualNodes: []
+                                };
+                            }
+                            if (CSSLint.Util.indexOf(propertyGroups[prop].actual, name.text) === -1) {
+                                propertyGroups[prop].actual.push(name.text);
+                                propertyGroups[prop].actualNodes.push(name);
+                            }
+                        }
+                    }
+                }
+            }
+
+            for (prop in propertyGroups) {
+                if (propertyGroups.hasOwnProperty(prop)) {
+                    value = propertyGroups[prop];
+                    full = value.full;
+                    actual = value.actual;
+
+                    if (full.length > actual.length) {
+                        for (i = 0, len = full.length; i < len; i++) {
+                            item = full[i];
+                            if (CSSLint.Util.indexOf(actual, item) === -1) {
+                                propertiesSpecified = (actual.length === 1) ? actual[0] : (actual.length == 2) ? actual.join(" and ") : actual.join(", ");
+                                reporter.report("The property " + item + " is compatible with " + propertiesSpecified + " and should be included as well.", value.actualNodes[0].line, value.actualNodes[0].col, rule); 
+                            }
+                        }
+
+                    }
+                }
+            }
+        });
+    }
+});
+CSSLint.addRule({
+    id: "display-property-grouping",
+    name: "Require properties appropriate for display",
+    desc: "Certain properties shouldn't be used with certain display property values.",
+    browsers: "All",
+    init: function(parser, reporter){
+        var rule = this;
+
+        var propertiesToCheck = {
+                display: 1,
+                "float": "none",
+                height: 1,
+                width: 1,
+                margin: 1,
+                "margin-left": 1,
+                "margin-right": 1,
+                "margin-bottom": 1,
+                "margin-top": 1,
+                padding: 1,
+                "padding-left": 1,
+                "padding-right": 1,
+                "padding-bottom": 1,
+                "padding-top": 1,
+                "vertical-align": 1
+            },
+            properties;
+
+        function reportProperty(name, display, msg){
+            if (properties[name]){
+                if (typeof propertiesToCheck[name] != "string" || properties[name].value.toLowerCase() != propertiesToCheck[name]){
+                    reporter.report(msg || name + " can't be used with display: " + display + ".", properties[name].line, properties[name].col, rule);
+                }
+            }
+        }
+        
+        function startRule(){
+            properties = {};
+        }
+
+        function endRule(){
+
+            var display = properties.display ? properties.display.value : null;
+            if (display){
+                switch(display){
+
+                    case "inline":
+                        reportProperty("height", display);
+                        reportProperty("width", display);
+                        reportProperty("margin", display);
+                        reportProperty("margin-top", display);
+                        reportProperty("margin-bottom", display);              
+                        reportProperty("float", display, "display:inline has no effect on floated elements (but may be used to fix the IE6 double-margin bug).");
+                        break;
+
+                    case "block":
+                        reportProperty("vertical-align", display);
+                        break;
+
+                    case "inline-block":
+                        reportProperty("float", display);
+                        break;
+
+                    default:
+                        if (display.indexOf("table-") === 0){
+                            reportProperty("margin", display);
+                            reportProperty("margin-left", display);
+                            reportProperty("margin-right", display);
+                            reportProperty("margin-top", display);
+                            reportProperty("margin-bottom", display);
+                            reportProperty("float", display);
+                        }
+                }
+            }
+          
+        }
+
+        parser.addListener("startrule", startRule);
+        parser.addListener("startfontface", startRule);
+        parser.addListener("startkeyframerule", startRule);
+        parser.addListener("startpagemargin", startRule);
+        parser.addListener("startpage", startRule);
+
+        parser.addListener("property", function(event){
+            var name = event.property.text.toLowerCase();
+
+            if (propertiesToCheck[name]){
+                properties[name] = { value: event.value.text, line: event.property.line, col: event.property.col };                    
+            }
+        });
+
+        parser.addListener("endrule", endRule);
+        parser.addListener("endfontface", endRule);
+        parser.addListener("endkeyframerule", endRule);
+        parser.addListener("endpagemargin", endRule);
+        parser.addListener("endpage", endRule);
+
+    }
+
+});
+CSSLint.addRule({
+    id: "duplicate-background-images",
+    name: "Disallow duplicate background images",
+    desc: "Every background-image should be unique. Use a common class for e.g. sprites.",
+    browsers: "All",
+    init: function(parser, reporter){
+        var rule = this,
+            stack = {};
+
+        parser.addListener("property", function(event){
+            var name = event.property.text,
+                value = event.value,
+                i, len;
+
+            if (name.match(/background/i)) {
+                for (i=0, len=value.parts.length; i < len; i++) {
+                    if (value.parts[i].type == 'uri') {
+                        if (typeof stack[value.parts[i].uri] === 'undefined') {
+                            stack[value.parts[i].uri] = event;
+                        }
+                        else {
+                            reporter.report("Background image '" + value.parts[i].uri + "' was used multiple times, first declared at line " + stack[value.parts[i].uri].line + ", col " + stack[value.parts[i].uri].col + ".", event.line, event.col, rule);
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+CSSLint.addRule({
+    id: "duplicate-properties",
+    name: "Disallow duplicate properties",
+    desc: "Duplicate properties must appear one after the other.",
+    browsers: "All",
+    init: function(parser, reporter){
+        var rule = this,
+            properties,
+            lastProperty;            
+            
+        function startRule(event){
+            properties = {};        
+        }
+        
+        parser.addListener("startrule", startRule);
+        parser.addListener("startfontface", startRule);
+        parser.addListener("startpage", startRule);
+        parser.addListener("startpagemargin", startRule);
+        parser.addListener("startkeyframerule", startRule);        
+        
+        parser.addListener("property", function(event){
+            var property = event.property,
+                name = property.text.toLowerCase();
+            
+            if (properties[name] && (lastProperty != name || properties[name] == event.value.text)){
+                reporter.report("Duplicate property '" + event.property + "' found.", event.line, event.col, rule);
+            }
+            
+            properties[name] = event.value.text;
+            lastProperty = name;
+                        
+        });
+            
+        
+    }
+
+});
+CSSLint.addRule({
+    id: "empty-rules",
+    name: "Disallow empty rules",
+    desc: "Rules without any properties specified should be removed.",
+    browsers: "All",
+    init: function(parser, reporter){
+        var rule = this,
+            count = 0;
+
+        parser.addListener("startrule", function(){
+            count=0;
+        });
+
+        parser.addListener("property", function(){
+            count++;
+        });
+
+        parser.addListener("endrule", function(event){
+            var selectors = event.selectors;
+            if (count === 0){
+                reporter.report("Rule is empty.", selectors[0].line, selectors[0].col, rule);
+            }
+        });
+    }
+
+});
+CSSLint.addRule({
+    id: "errors",
+    name: "Parsing Errors",
+    desc: "This rule looks for recoverable syntax errors.",
+    browsers: "All",
+    init: function(parser, reporter){
+        var rule = this;
+
+        parser.addListener("error", function(event){
+            reporter.error(event.message, event.line, event.col, rule);
+        });
+
+    }
+
+});
+CSSLint.addRule({
+    id: "fallback-colors",
+    name: "Require fallback colors",
+    desc: "For older browsers that don't support RGBA, HSL, or HSLA, provide a fallback color.",
+    browsers: "IE6,IE7,IE8",
+    init: function(parser, reporter){
+        var rule = this,
+            lastProperty,
+            propertiesToCheck = {
+                color: 1,
+                background: 1,
+                "background-color": 1                
+            },
+            properties;
+        
+        function startRule(event){
+            properties = {};    
+            lastProperty = null;    
+        }
+        
+        parser.addListener("startrule", startRule);
+        parser.addListener("startfontface", startRule);
+        parser.addListener("startpage", startRule);
+        parser.addListener("startpagemargin", startRule);
+        parser.addListener("startkeyframerule", startRule);        
+        
+        parser.addListener("property", function(event){
+            var property = event.property,
+                name = property.text.toLowerCase(),
+                parts = event.value.parts,
+                i = 0, 
+                colorType = "",
+                len = parts.length;                
+                        
+            if(propertiesToCheck[name]){
+                while(i < len){
+                    if (parts[i].type == "color"){
+                        if ("alpha" in parts[i] || "hue" in parts[i]){
+                            
+                            if (/([^\)]+)\(/.test(parts[i])){
+                                colorType = RegExp.$1.toUpperCase();
+                            }
+                            
+                            if (!lastProperty || (lastProperty.property.text.toLowerCase() != name || lastProperty.colorType != "compat")){
+                                reporter.report("Fallback " + name + " (hex or RGB) should precede " + colorType + " " + name + ".", event.line, event.col, rule);
+                            }
+                        } else {
+                            event.colorType = "compat";
+                        }
+                    }
+                    
+                    i++;
+                }
+            }
+
+            lastProperty = event;
+        });        
+         
+    }
+
+});
+CSSLint.addRule({
+    id: "floats",
+    name: "Disallow too many floats",
+    desc: "This rule tests if the float property is used too many times",
+    browsers: "All",
+    init: function(parser, reporter){
+        var rule = this;
+        var count = 0;
+        parser.addListener("property", function(event){
+            if (event.property.text.toLowerCase() == "float" &&
+                    event.value.text.toLowerCase() != "none"){
+                count++;
+            }
+        });
+        parser.addListener("endstylesheet", function(){
+            reporter.stat("floats", count);
+            if (count >= 10){
+                reporter.rollupWarn("Too many floats (" + count + "), you're probably using them for layout. Consider using a grid system instead.", rule);
+            }
+        });
+    }
+
+});
+CSSLint.addRule({
+    id: "font-faces",
+    name: "Don't use too many web fonts",
+    desc: "Too many different web fonts in the same stylesheet.",
+    browsers: "All",
+    init: function(parser, reporter){
+        var rule = this,
+            count = 0;
+
+
+        parser.addListener("startfontface", function(){
+            count++;
+        });
+
+        parser.addListener("endstylesheet", function(){
+            if (count > 5){
+                reporter.rollupWarn("Too many @font-face declarations (" + count + ").", rule);
+            }
+        });
+    }
+
+});
+CSSLint.addRule({
+    id: "font-sizes",
+    name: "Disallow too many font sizes",
+    desc: "Checks the number of font-size declarations.",
+    browsers: "All",
+    init: function(parser, reporter){
+        var rule = this,
+            count = 0;
+        parser.addListener("property", function(event){
+            if (event.property == "font-size"){
+                count++;
+            }
+        });
+        parser.addListener("endstylesheet", function(){
+            reporter.stat("font-sizes", count);
+            if (count >= 10){
+                reporter.rollupWarn("Too many font-size declarations (" + count + "), abstraction needed.", rule);
+            }
+        });
+    }
+
+});
+CSSLint.addRule({
+    id: "gradients",
+    name: "Require all gradient definitions",
+    desc: "When using a vendor-prefixed gradient, make sure to use them all.",
+    browsers: "All",
+    init: function(parser, reporter){
+        var rule = this,
+            gradients;
+
+        parser.addListener("startrule", function(){
+            gradients = {
+                moz: 0,
+                webkit: 0,
+                oldWebkit: 0,
+                ms: 0,
+                o: 0
+            };
+        });
+
+        parser.addListener("property", function(event){
+
+            if (/\-(moz|ms|o|webkit)(?:\-(?:linear|radial))\-gradient/i.test(event.value)){
+                gradients[RegExp.$1] = 1;
+            } else if (/\-webkit\-gradient/i.test(event.value)){
+                gradients.oldWebkit = 1;
+            }
+
+        });
+
+        parser.addListener("endrule", function(event){
+            var missing = [];
+
+            if (!gradients.moz){
+                missing.push("Firefox 3.6+");
+            }
+
+            if (!gradients.webkit){
+                missing.push("Webkit (Safari 5+, Chrome)");
+            }
+            
+            if (!gradients.oldWebkit){
+                missing.push("Old Webkit (Safari 4+, Chrome)");
+            }
+
+            if (!gradients.ms){
+                missing.push("Internet Explorer 10+");
+            }
+
+            if (!gradients.o){
+                missing.push("Opera 11.1+");
+            }
+
+            if (missing.length && missing.length < 5){            
+                reporter.report("Missing vendor-prefixed CSS gradients for " + missing.join(", ") + ".", event.selectors[0].line, event.selectors[0].col, rule); 
+            }
+
+        });
+
+    }
+
+});
+CSSLint.addRule({
+    id: "ids",
+    name: "Disallow IDs in selectors",
+    desc: "Selectors should not contain IDs.",
+    browsers: "All",
+    init: function(parser, reporter){
+        var rule = this;
+        parser.addListener("startrule", function(event){
+            var selectors = event.selectors,
+                selector,
+                part,
+                modifier,
+                idCount,
+                i, j, k;
+
+            for (i=0; i < selectors.length; i++){
+                selector = selectors[i];
+                idCount = 0;
+
+                for (j=0; j < selector.parts.length; j++){
+                    part = selector.parts[j];
+                    if (part.type == parser.SELECTOR_PART_TYPE){
+                        for (k=0; k < part.modifiers.length; k++){
+                            modifier = part.modifiers[k];
+                            if (modifier.type == "id"){
+                                idCount++;
+                            }
+                        }
+                    }
+                }
+
+                if (idCount == 1){
+                    reporter.report("Don't use IDs in selectors.", selector.line, selector.col, rule);
+                } else if (idCount > 1){
+                    reporter.report(idCount + " IDs in the selector, really?", selector.line, selector.col, rule);
+                }
+            }
+
+        });
+    }
+
+});
+CSSLint.addRule({
+    id: "import",
+    name: "Disallow @import",
+    desc: "Don't use @import, use <link> instead.",
+    browsers: "All",
+    init: function(parser, reporter){
+        var rule = this;
+        
+        parser.addListener("import", function(event){        
+            reporter.report("@import prevents parallel downloads, use <link> instead.", event.line, event.col, rule);
+        });
+
+    }
+
+});
+CSSLint.addRule({
+    id: "important",
+    name: "Disallow !important",
+    desc: "Be careful when using !important declaration",
+    browsers: "All",
+    init: function(parser, reporter){
+        var rule = this,
+            count = 0;
+        parser.addListener("property", function(event){
+            if (event.important === true){
+                count++;
+                reporter.report("Use of !important", event.line, event.col, rule);
+            }
+        });
+        parser.addListener("endstylesheet", function(){
+            reporter.stat("important", count);
+            if (count >= 10){
+                reporter.rollupWarn("Too many !important declarations (" + count + "), try to use less than 10 to avoid specificity issues.", rule);
+            }
+        });
+    }
+
+});
+CSSLint.addRule({
+    id: "known-properties",
+    name: "Require use of known properties",
+    desc: "Properties should be known (listed in CSS3 specification) or be a vendor-prefixed property.",
+    browsers: "All",
+    init: function(parser, reporter){
+        var rule = this;
+
+        parser.addListener("property", function(event){
+            var name = event.property.text.toLowerCase();
+            if (event.invalid) {
+                reporter.report(event.invalid.message, event.line, event.col, rule);
+            }
+
+        });
+    }
+
+});
+CSSLint.addRule({
+    id: "outline-none",
+    name: "Disallow outline: none",
+    desc: "Use of outline: none or outline: 0 should be limited to :focus rules.",
+    browsers: "All",
+    tags: ["Accessibility"],
+    init: function(parser, reporter){
+        var rule = this,
+            lastRule;
+
+        function startRule(event){
+            if (event.selectors){
+                lastRule = {
+                    line: event.line,
+                    col: event.col,
+                    selectors: event.selectors,
+                    propCount: 0,
+                    outline: false
+                };
+            } else {
+                lastRule = null;
+            }
+        }
+        
+        function endRule(event){
+            if (lastRule){
+                if (lastRule.outline){
+                    if (lastRule.selectors.toString().toLowerCase().indexOf(":focus") == -1){
+                        reporter.report("Outlines should only be modified using :focus.", lastRule.line, lastRule.col, rule);
+                    } else if (lastRule.propCount == 1) {
+                        reporter.report("Outlines shouldn't be hidden unless other visual changes are made.", lastRule.line, lastRule.col, rule);                        
+                    }
+                }
+            }
+        }
+
+        parser.addListener("startrule", startRule);
+        parser.addListener("startfontface", startRule);
+        parser.addListener("startpage", startRule);
+        parser.addListener("startpagemargin", startRule);
+        parser.addListener("startkeyframerule", startRule); 
+
+        parser.addListener("property", function(event){
+            var name = event.property.text.toLowerCase(),
+                value = event.value;                
+                
+            if (lastRule){
+                lastRule.propCount++;
+                if (name == "outline" && (value == "none" || value == "0")){
+                    lastRule.outline = true;
+                }            
+            }
+            
+        });
+        
+        parser.addListener("endrule", endRule);
+        parser.addListener("endfontface", endRule);
+        parser.addListener("endpage", endRule);
+        parser.addListener("endpagemargin", endRule);
+        parser.addListener("endkeyframerule", endRule); 
+
+    }
+
+});
+CSSLint.addRule({
+    id: "overqualified-elements",
+    name: "Disallow overqualified elements",
+    desc: "Don't use classes or IDs with elements (a.foo or a#foo).",
+    browsers: "All",
+    init: function(parser, reporter){
+        var rule = this,
+            classes = {};
+            
+        parser.addListener("startrule", function(event){
+            var selectors = event.selectors,
+                selector,
+                part,
+                modifier,
+                i, j, k;
+
+            for (i=0; i < selectors.length; i++){
+                selector = selectors[i];
+
+                for (j=0; j < selector.parts.length; j++){
+                    part = selector.parts[j];
+                    if (part.type == parser.SELECTOR_PART_TYPE){
+                        for (k=0; k < part.modifiers.length; k++){
+                            modifier = part.modifiers[k];
+                            if (part.elementName && modifier.type == "id"){
+                                reporter.report("Element (" + part + ") is overqualified, just use " + modifier + " without element name.", part.line, part.col, rule);
+                            } else if (modifier.type == "class"){
+                                
+                                if (!classes[modifier]){
+                                    classes[modifier] = [];
+                                }
+                                classes[modifier].push({ modifier: modifier, part: part });
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        parser.addListener("endstylesheet", function(){
+        
+            var prop;
+            for (prop in classes){
+                if (classes.hasOwnProperty(prop)){
+                    if (classes[prop].length == 1 && classes[prop][0].part.elementName){
+                        reporter.report("Element (" + classes[prop][0].part + ") is overqualified, just use " + classes[prop][0].modifier + " without element name.", classes[prop][0].part.line, classes[prop][0].part.col, rule);
+                    }
+                }
+            }        
+        });
+    }
+
+});
+CSSLint.addRule({
+    id: "qualified-headings",
+    name: "Disallow qualified headings",
+    desc: "Headings should not be qualified (namespaced).",
+    browsers: "All",
+    init: function(parser, reporter){
+        var rule = this;
+
+        parser.addListener("startrule", function(event){
+            var selectors = event.selectors,
+                selector,
+                part,
+                i, j;
+
+            for (i=0; i < selectors.length; i++){
+                selector = selectors[i];
+
+                for (j=0; j < selector.parts.length; j++){
+                    part = selector.parts[j];
+                    if (part.type == parser.SELECTOR_PART_TYPE){
+                        if (part.elementName && /h[1-6]/.test(part.elementName.toString()) && j > 0){
+                            reporter.report("Heading (" + part.elementName + ") should not be qualified.", part.line, part.col, rule);
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+});
+CSSLint.addRule({
+    id: "regex-selectors",
+    name: "Disallow selectors that look like regexs",
+    desc: "Selectors that look like regular expressions are slow and should be avoided.",
+    browsers: "All",
+    init: function(parser, reporter){
+        var rule = this;
+
+        parser.addListener("startrule", function(event){
+            var selectors = event.selectors,
+                selector,
+                part,
+                modifier,
+                i, j, k;
+
+            for (i=0; i < selectors.length; i++){
+                selector = selectors[i];
+                for (j=0; j < selector.parts.length; j++){
+                    part = selector.parts[j];
+                    if (part.type == parser.SELECTOR_PART_TYPE){
+                        for (k=0; k < part.modifiers.length; k++){
+                            modifier = part.modifiers[k];
+                            if (modifier.type == "attribute"){
+                                if (/([\~\|\^\$\*]=)/.test(modifier)){
+                                    reporter.report("Attribute selectors with " + RegExp.$1 + " are slow!", modifier.line, modifier.col, rule);
+                                }
+                            }
+
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+});
+CSSLint.addRule({
+    id: "rules-count",
+    name: "Rules Count",
+    desc: "Track how many rules there are.",
+    browsers: "All",
+    init: function(parser, reporter){
+        var rule = this,
+            count = 0;
+        parser.addListener("startrule", function(){
+            count++;
+        });
+
+        parser.addListener("endstylesheet", function(){
+            reporter.stat("rule-count", count);
+        });
+    }
+
+});
+CSSLint.addRule({
+    id: "shorthand",
+    name: "Require shorthand properties",
+    desc: "Use shorthand properties where possible.",
+    browsers: "All",
+    init: function(parser, reporter){
+        var rule = this,
+            prop, i, len,
+            propertiesToCheck = {},
+            properties,
+            mapping = {
+                "margin": [
+                    "margin-top",
+                    "margin-bottom",
+                    "margin-left",
+                    "margin-right"
+                ],
+                "padding": [
+                    "padding-top",
+                    "padding-bottom",
+                    "padding-left",
+                    "padding-right"
+                ]              
+            };
+        for (prop in mapping){
+            if (mapping.hasOwnProperty(prop)){
+                for (i=0, len=mapping[prop].length; i < len; i++){
+                    propertiesToCheck[mapping[prop][i]] = prop;
+                }
+            }
+        }
+            
+        function startRule(event){
+            properties = {};
+        }
+        function endRule(event){
+            
+            var prop, i, len, total;
+            for (prop in mapping){
+                if (mapping.hasOwnProperty(prop)){
+                    total=0;
+                    
+                    for (i=0, len=mapping[prop].length; i < len; i++){
+                        total += properties[mapping[prop][i]] ? 1 : 0;
+                    }
+                    
+                    if (total == mapping[prop].length){
+                        reporter.report("The properties " + mapping[prop].join(", ") + " can be replaced by " + prop + ".", event.line, event.col, rule);
+                    }
+                }
+            }
+        }        
+        
+        parser.addListener("startrule", startRule);
+        parser.addListener("startfontface", startRule);
+        parser.addListener("property", function(event){
+            var name = event.property.toString().toLowerCase(),
+                value = event.value.parts[0].value;
+
+            if (propertiesToCheck[name]){
+                properties[name] = 1;
+            }
+        });
+
+        parser.addListener("endrule", endRule);
+        parser.addListener("endfontface", endRule);     
+
+    }
+
+});
+CSSLint.addRule({
+    id: "star-property-hack",
+    name: "Disallow properties with a star prefix",
+    desc: "Checks for the star property hack (targets IE6/7)",
+    browsers: "All",
+    init: function(parser, reporter){
+        var rule = this;
+        parser.addListener("property", function(event){
+            var property = event.property;
+
+            if (property.hack == "*") {
+                reporter.report("Property with star prefix found.", event.property.line, event.property.col, rule);
+            }
+        });
+    }
+});
+CSSLint.addRule({
+    id: "text-indent",
+    name: "Disallow negative text-indent",
+    desc: "Checks for text indent less than -99px",
+    browsers: "All",
+    init: function(parser, reporter){
+        var rule = this,
+            textIndent,
+            direction;
+
+
+        function startRule(event){
+            textIndent = false;
+            direction = "inherit";
+        }
+        function endRule(event){
+            if (textIndent && direction != "ltr"){
+                reporter.report("Negative text-indent doesn't work well with RTL. If you use text-indent for image replacement explicitly set direction for that item to ltr.", textIndent.line, textIndent.col, rule);
+            }
+        }
+
+        parser.addListener("startrule", startRule);
+        parser.addListener("startfontface", startRule);
+        parser.addListener("property", function(event){
+            var name = event.property.toString().toLowerCase(),
+                value = event.value;
+
+            if (name == "text-indent" && value.parts[0].value < -99){
+                textIndent = event.property;
+            } else if (name == "direction" && value == "ltr"){
+                direction = "ltr";
+            }
+        });
+
+        parser.addListener("endrule", endRule);
+        parser.addListener("endfontface", endRule);
+
+    }
+
+});
+CSSLint.addRule({
+    id: "underscore-property-hack",
+    name: "Disallow properties with an underscore prefix",
+    desc: "Checks for the underscore property hack (targets IE6)",
+    browsers: "All",
+    init: function(parser, reporter){
+        var rule = this;
+        parser.addListener("property", function(event){
+            var property = event.property;
+
+            if (property.hack == "_") {
+                reporter.report("Property with underscore prefix found.", event.property.line, event.property.col, rule);
+            }
+        });
+    }
+});
+CSSLint.addRule({
+    id: "unique-headings",
+    name: "Headings should only be defined once",
+    desc: "Headings should be defined only once.",
+    browsers: "All",
+    init: function(parser, reporter){
+        var rule = this;
+
+        var headings =  {
+                h1: 0,
+                h2: 0,
+                h3: 0,
+                h4: 0,
+                h5: 0,
+                h6: 0
+            };
+
+        parser.addListener("startrule", function(event){
+            var selectors = event.selectors,
+                selector,
+                part,
+                pseudo,
+                i, j;
+
+            for (i=0; i < selectors.length; i++){
+                selector = selectors[i];
+                part = selector.parts[selector.parts.length-1];
+
+                if (part.elementName && /(h[1-6])/i.test(part.elementName.toString())){
+                    
+                    for (j=0; j < part.modifiers.length; j++){
+                        if (part.modifiers[j].type == "pseudo"){
+                            pseudo = true;
+                            break;
+                        }
+                    }
+                
+                    if (!pseudo){
+                        headings[RegExp.$1]++;
+                        if (headings[RegExp.$1] > 1) {
+                            reporter.report("Heading (" + part.elementName + ") has already been defined.", part.line, part.col, rule);
+                        }
+                    }
+                }
+            }
+        });
+        
+        parser.addListener("endstylesheet", function(event){
+            var prop,
+                messages = [];
+                
+            for (prop in headings){
+                if (headings.hasOwnProperty(prop)){
+                    if (headings[prop] > 1){
+                        messages.push(headings[prop] + " " + prop + "s");
+                    }
+                }
+            }
+            
+            if (messages.length){
+                reporter.rollupWarn("You have " + messages.join(", ") + " defined in this stylesheet.", rule);
+            }
+        });        
+    }
+
+});
+CSSLint.addRule({
+    id: "universal-selector",
+    name: "Disallow universal selector",
+    desc: "The universal selector (*) is known to be slow.",
+    browsers: "All",
+    init: function(parser, reporter){
+        var rule = this;
+
+        parser.addListener("startrule", function(event){
+            var selectors = event.selectors,
+                selector,
+                part,
+                modifier,
+                i, j, k;
+
+            for (i=0; i < selectors.length; i++){
+                selector = selectors[i];
+                
+                part = selector.parts[selector.parts.length-1];
+                if (part.elementName == "*"){
+                    reporter.report(rule.desc, part.line, part.col, rule);
+                }
+            }
+        });
+    }
+
+});
+CSSLint.addRule({
+    id: "unqualified-attributes",
+    name: "Disallow unqualified attribute selectors",
+    desc: "Unqualified attribute selectors are known to be slow.",
+    browsers: "All",
+    init: function(parser, reporter){
+        var rule = this;
+
+        parser.addListener("startrule", function(event){
+            
+            var selectors = event.selectors,
+                selector,
+                part,
+                modifier,
+                i, j, k;
+
+            for (i=0; i < selectors.length; i++){
+                selector = selectors[i];
+                
+                part = selector.parts[selector.parts.length-1];
+                if (part.type == parser.SELECTOR_PART_TYPE){
+                    for (k=0; k < part.modifiers.length; k++){
+                        modifier = part.modifiers[k];
+                        if (modifier.type == "attribute" && (!part.elementName || part.elementName == "*")){
+                            reporter.report(rule.desc, part.line, part.col, rule);                               
+                        }
+                    }
+                }
+                
+            }            
+        });
+    }
+
+});
+CSSLint.addRule({
+    id: "vendor-prefix",
+    name: "Require standard property with vendor prefix",
+    desc: "When using a vendor-prefixed property, make sure to include the standard one.",
+    browsers: "All",
+    init: function(parser, reporter){
+        var rule = this,
+            properties,
+            num,
+            propertiesToCheck = {
+                "-webkit-border-radius": "border-radius",
+                "-webkit-border-top-left-radius": "border-top-left-radius",
+                "-webkit-border-top-right-radius": "border-top-right-radius",
+                "-webkit-border-bottom-left-radius": "border-bottom-left-radius",
+                "-webkit-border-bottom-right-radius": "border-bottom-right-radius",
+                
+                "-o-border-radius": "border-radius",
+                "-o-border-top-left-radius": "border-top-left-radius",
+                "-o-border-top-right-radius": "border-top-right-radius",
+                "-o-border-bottom-left-radius": "border-bottom-left-radius",
+                "-o-border-bottom-right-radius": "border-bottom-right-radius",
+                
+                "-moz-border-radius": "border-radius",
+                "-moz-border-radius-topleft": "border-top-left-radius",
+                "-moz-border-radius-topright": "border-top-right-radius",
+                "-moz-border-radius-bottomleft": "border-bottom-left-radius",
+                "-moz-border-radius-bottomright": "border-bottom-right-radius",                
+                
+                "-moz-column-count": "column-count",
+                "-webkit-column-count": "column-count",
+                
+                "-moz-column-gap": "column-gap",
+                "-webkit-column-gap": "column-gap",
+                
+                "-moz-column-rule": "column-rule",
+                "-webkit-column-rule": "column-rule",
+                
+                "-moz-column-rule-style": "column-rule-style",
+                "-webkit-column-rule-style": "column-rule-style",
+                
+                "-moz-column-rule-color": "column-rule-color",
+                "-webkit-column-rule-color": "column-rule-color",
+                
+                "-moz-column-rule-width": "column-rule-width",
+                "-webkit-column-rule-width": "column-rule-width",
+                
+                "-moz-column-width": "column-width",
+                "-webkit-column-width": "column-width",
+                
+                "-webkit-column-span": "column-span",
+                "-webkit-columns": "columns",
+                
+                "-moz-box-shadow": "box-shadow",
+                "-webkit-box-shadow": "box-shadow",
+                
+                "-moz-transform" : "transform",
+                "-webkit-transform" : "transform",
+                "-o-transform" : "transform",
+                "-ms-transform" : "transform",
+                
+                "-moz-transform-origin" : "transform-origin",
+                "-webkit-transform-origin" : "transform-origin",
+                "-o-transform-origin" : "transform-origin",
+                "-ms-transform-origin" : "transform-origin",
+                
+                "-moz-box-sizing" : "box-sizing",
+                "-webkit-box-sizing" : "box-sizing",
+                
+                "-moz-user-select" : "user-select",
+                "-khtml-user-select" : "user-select",
+                "-webkit-user-select" : "user-select"                
+            };
+        function startRule(){
+            properties = {};
+            num=1;        
+        }
+        function endRule(event){
+            var prop,
+                i, len,
+                standard,
+                needed,
+                actual,
+                needsStandard = [];
+
+            for (prop in properties){
+                if (propertiesToCheck[prop]){
+                    needsStandard.push({ actual: prop, needed: propertiesToCheck[prop]});
+                }
+            }
+
+            for (i=0, len=needsStandard.length; i < len; i++){
+                needed = needsStandard[i].needed;
+                actual = needsStandard[i].actual;
+
+                if (!properties[needed]){               
+                    reporter.report("Missing standard property '" + needed + "' to go along with '" + actual + "'.", properties[actual][0].name.line, properties[actual][0].name.col, rule);
+                } else {
+                    if (properties[needed][0].pos < properties[actual][0].pos){
+                        reporter.report("Standard property '" + needed + "' should come after vendor-prefixed property '" + actual + "'.", properties[actual][0].name.line, properties[actual][0].name.col, rule);
+                    }
+                }
+            }
+
+        }        
+        
+        parser.addListener("startrule", startRule);
+        parser.addListener("startfontface", startRule);
+        parser.addListener("startpage", startRule);
+        parser.addListener("startpagemargin", startRule);
+        parser.addListener("startkeyframerule", startRule);         
+
+        parser.addListener("property", function(event){
+            var name = event.property.text.toLowerCase();
+
+            if (!properties[name]){
+                properties[name] = [];
+            }
+
+            properties[name].push({ name: event.property, value : event.value, pos:num++ });
+        });
+
+        parser.addListener("endrule", endRule);
+        parser.addListener("endfontface", endRule);
+        parser.addListener("endpage", endRule);
+        parser.addListener("endpagemargin", endRule);
+        parser.addListener("endkeyframerule", endRule);         
+    }
+
+});
+CSSLint.addRule({
+    id: "zero-units",
+    name: "Disallow units for 0 values",
+    desc: "You don't need to specify units when a value is 0.",
+    browsers: "All",
+    init: function(parser, reporter){
+        var rule = this;
+        parser.addListener("property", function(event){
+            var parts = event.value.parts,
+                i = 0, 
+                len = parts.length;
+
+            while(i < len){
+                if ((parts[i].units || parts[i].type == "percentage") && parts[i].value === 0 && parts[i].type != "time"){
+                    reporter.report("Values of 0 shouldn't have units specified.", parts[i].line, parts[i].col, rule);
+                }
+                i++;
+            }
+
+        });
+
+    }
+
+});
+
+
+exports.CSSLint = CSSLint;
+
+
+});

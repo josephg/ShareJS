@@ -12,7 +12,7 @@ module.exports = (model, options) ->
   # By default, accept all connections + data submissions.
   # Don't let anyone delete documents though.
   auth = options.auth or (agent, action) ->
-    if action.type in ['connect', 'read', 'create', 'update'] then action.accept() else action.reject()
+    if action.type in ['connect', 'read', 'create', 'update', 'cursor'] then action.accept() else action.reject()
 
   class UserAgent
     constructor: (data) ->
@@ -50,6 +50,7 @@ module.exports = (model, options) ->
         when 'submit op' then 'update'
         when 'submit meta' then 'update'
         when 'delete' then 'delete'
+        when 'cursor' then 'cursor'
         else throw new Error "Invalid action name #{name}"
 
       action.responded = false
@@ -103,6 +104,11 @@ module.exports = (model, options) ->
         @doAuth {docName, meta:opData.meta}, 'submit meta', callback, =>
           model.applyMetaOp docName, opData, callback
 
+    updateCursor: (docName, cursorData, callback) ->
+      @doAuth {docName, cursor: cursorData}, "cursor", callback, =>
+        model.updateCursor docName, @sessionId, cursorData, callback
+
+
     # Delete the named operation.
     # Callback is passed (deleted?, error message)
     delete: (docName, callback) ->
@@ -134,7 +140,7 @@ module.exports = (model, options) ->
 
     removeListener: (docName) ->
       throw new Error 'Document is not open' unless @listeners[docName]
-      model.removeListener docName, @listeners[docName]
+      model.removeListener docName, @listeners[docName], @sessionId
       delete @listeners[docName]
 
   # Finally, return a function which takes client data and returns an authenticated useragent object
