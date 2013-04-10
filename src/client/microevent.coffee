@@ -28,7 +28,11 @@ class MicroEvent
     this
 
   emit: (event, args...) ->
-    return this unless @_events?[event]
+    unless @_events?[event]
+      # If there's no event handler for errors, log them.
+      if event is 'error'
+        console?.error args...
+      return this
     fn.apply this, args for fn in @_events[event] when fn
     this
 

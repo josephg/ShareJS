@@ -59,7 +59,7 @@ exports.open = do ->
     if numDocs == 0
       c.disconnect()
 
-  (docName, type, options, callback) ->
+  (collection, docName, type, options, callback) ->
     if typeof options == 'function'
       callback = options
       options = {}
@@ -73,7 +73,7 @@ exports.open = do ->
     authentication = options.authentication
 
     c = getConnection origin, authentication
-    c.open docName, type, (error, doc) ->
+    c.open collection, docName, type, (error, doc) ->
       if error
         callback error
         maybeClose c
