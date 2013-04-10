@@ -63,6 +63,11 @@
       var args, event, fn, _i, _len, _ref, _ref1;
       event = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
       if (!((_ref = this._events) != null ? _ref[event] : void 0)) {
+        if (event === 'error') {
+          if (typeof console !== "undefined" && console !== null) {
+            console.error.apply(console, args);
+          }
+        }
         return this;
       }
       _ref1 = this._events[event];
@@ -797,10 +802,10 @@
 
   Doc = (function() {
 
-    function Doc(connection, name, openData) {
+    function Doc(connection, collection, name, openData) {
       this.connection = connection;
+      this.collection = collection;
       this.name = name;
-      this.shout = __bind(this.shout, this);
       this.flush = __bind(this.flush, this);
       openData || (openData = {});
       this.version = openData.v;
@@ -818,6 +823,12 @@
       this.pendingCallbacks = [];
       this.serverOps = {};
     }
+
+    Doc.prototype._send = function(message) {
+      message.c = this.collection;
+      message.doc = this.name;
+      return this.connection.send(message);
+    };
 
     Doc.prototype._xf = function(client, server) {
       var client_, server_;
@@ -914,14 +925,13 @@
           }
           if (this.inflightOp) {
             response = {
-              doc: this.name,
               op: this.inflightOp,
               v: this.version
             };
             if (this.inflightSubmittedIds.length) {
               response.dupIfSource = this.inflightSubmittedIds;
             }
-            this.connection.send(response);
+            this._send(response);
           } else {
             this.flush();
           }
@@ -1022,8 +1032,7 @@
       this.inflightCallbacks = this.pendingCallbacks;
       this.pendingOp = null;
       this.pendingCallbacks = [];
-      return this.connection.send({
-        doc: this.name,
+      return this._send({
         op: this.inflightOp,
         v: this.version
       });
@@ -1046,16 +1055,6 @@
       return setTimeout(this.flush, 0);
     };
 
-    Doc.prototype.shout = function(msg) {
-      return this.connection.send({
-        doc: this.name,
-        meta: {
-          path: ['shout'],
-          value: msg
-        }
-      });
-    };
-
     Doc.prototype.open = function(callback) {
       var message,
         _this = this;
@@ -1064,7 +1063,6 @@
         return;
       }
       message = {
-        doc: this.name,
         open: true
       };
       if (this.snapshot === void 0) {
@@ -1079,7 +1077,7 @@
       if (this._create) {
         message.create = true;
       }
-      this.connection.send(message);
+      this._send(message);
       this.state = 'opening';
       return this._openCallback = function(error) {
         _this._openCallback = null;
@@ -1092,8 +1090,7 @@
       if (this.state === 'closed') {
         return typeof callback === "function" ? callback() : void 0;
       }
-      this.connection.send({
-        doc: this.name,
+      this._send({
         open: false
       });
       this.state = 'closed';
@@ -1295,9 +1292,14 @@
 
   Connection = (function() {
 
+    Connection.prototype._get = function(c, doc) {
+      var _ref;
+      return (_ref = this.collections[c]) != null ? _ref[doc] : void 0;
+    };
+
     function Connection(host, authentication) {
       var _this = this;
-      this.docs = {};
+      this.collections = {};
       this.state = 'connecting';
       if (socketImpl == null) {
         if (host.match(/^ws:/)) {
@@ -1321,7 +1323,8 @@
         }
       })();
       this.socket.onmessage = function(msg) {
-        var docName;
+        var collection, doc, docName, mungedDocName, parts;
+        console.log('onmessage', msg);
         if (socketImpl === 'sockjs' || socketImpl === 'websocket') {
           msg = JSON.parse(msg.data);
         }
@@ -1334,14 +1337,19 @@
           _this.setState('ok');
           return;
         }
-        docName = msg.doc;
-        if (docName !== void 0) {
-          _this.lastReceivedDoc = docName;
+        if (msg.doc !== void 0) {
+          mungedDocName = msg.doc;
+          parts = mungedDocName.split('.');
+          collection = parts.shift();
+          docName = parts.join('.');
+          msg.c = _this.lastReceivedCollection = collection;
+          msg.doc = _this.lastReceivedDoc = docName;
         } else {
+          msg.c = collection = _this.lastReceivedCollection;
           msg.doc = docName = _this.lastReceivedDoc;
         }
-        if (_this.docs[docName]) {
-          return _this.docs[docName]._onMessage(msg);
+        if ((doc = _this._get(collection, docName))) {
+          return doc._onMessage(msg);
         } else {
           return typeof console !== "undefined" && console !== null ? console.error('Unhandled message', msg) : void 0;
         }
@@ -1358,7 +1366,7 @@
       };
       this.socket.onopen = function() {
         _this.send({
-          "auth": authentication ? authentication : null
+          auth: authentication ? authentication : null
         });
         _this.lastError = _this.lastReceivedDoc = _this.lastSentDoc = null;
         return _this.setState('handshaking');
@@ -1369,7 +1377,7 @@
     }
 
     Connection.prototype.setState = function(state, data) {
-      var doc, docName, _ref, _results;
+      var c, collection, doc, docName, _ref, _results;
       if (this.state === state) {
         return;
       }
@@ -1378,23 +1386,37 @@
         delete this.id;
       }
       this.emit(state, data);
-      _ref = this.docs;
+      _ref = this.collections;
       _results = [];
-      for (docName in _ref) {
-        doc = _ref[docName];
-        _results.push(doc._connectionStateChanged(state, data));
+      for (c in _ref) {
+        collection = _ref[c];
+        _results.push((function() {
+          var _results1;
+          _results1 = [];
+          for (docName in collection) {
+            doc = collection[docName];
+            _results1.push(doc._connectionStateChanged(state, data));
+          }
+          return _results1;
+        })());
       }
       return _results;
     };
 
     Connection.prototype.send = function(data) {
-      var docName;
+      var collection, docName;
+      console.log("send:", data);
       if (data.doc) {
         docName = data.doc;
-        if (docName === this.lastSentDoc) {
+        collection = data.c;
+        if (collection === this.lastSentCollection && docName === this.lastSentDoc) {
+          delete data.c;
           delete data.doc;
         } else {
+          this.lastSentCollection = collection;
           this.lastSentDoc = docName;
+          data.doc = "" + collection + "." + docName;
+          delete data.c;
         }
       }
       if (socketImpl === 'sockjs' || socketImpl === 'websocket') {
@@ -1407,46 +1429,47 @@
       return this.socket.close();
     };
 
-    Connection.prototype.makeDoc = function(name, data, callback) {
-      var doc,
+    Connection.prototype.makeDoc = function(collection, name, data, callback) {
+      var c, doc, _base,
         _this = this;
-      if (this.docs[name]) {
+      if (this._get(collection, name)) {
         throw new Error("Doc " + name + " already open");
       }
-      doc = new Doc(this, name, data);
-      this.docs[name] = doc;
+      doc = new Doc(this, collection, name, data);
+      c = ((_base = this.collections)[collection] || (_base[collection] = {}));
+      c[name] = doc;
       return doc.open(function(error) {
         if (error) {
-          delete _this.docs[name];
-        }
-        if (!error) {
+          delete c[name];
+        } else {
           doc.on('closed', function() {
-            return delete _this.docs[name];
+            return delete c[name];
           });
         }
         return callback(error, (!error ? doc : void 0));
       });
     };
 
-    Connection.prototype.openExisting = function(docName, callback) {
+    Connection.prototype.openExisting = function(collection, docName, callback) {
       var doc;
       if (this.state === 'stopped') {
         return callback('connection closed');
       }
-      if (this.docs[docName]) {
-        return this._ensureOpenState(this.docs[docName], callback);
+      doc = this._get(collection, docName);
+      if (doc) {
+        return this._ensureOpenState(doc, callback);
       }
-      return doc = this.makeDoc(docName, {}, callback);
+      return doc = this.makeDoc(collection, docName, {}, callback);
     };
 
-    Connection.prototype.open = function(docName, type, callback) {
+    Connection.prototype.open = function(collection, docName, type, callback) {
       var doc;
       if (this.state === 'stopped') {
         return callback('connection closed');
       }
       if (this.state === 'connecting') {
         this.on('handshaking', function() {
-          return this.open(docName, type, callback);
+          return this.open(collection, docName, type, callback);
         });
         return;
       }
@@ -1464,8 +1487,7 @@
       if (docName == null) {
         throw new Error('Server-generated random doc names are not currently supported');
       }
-      if (this.docs[docName]) {
-        doc = this.docs[docName];
+      if ((doc = this._get(collection, docName))) {
         if (doc.type === type) {
           this._ensureOpenState(doc, callback);
         } else {
@@ -1473,7 +1495,7 @@
         }
         return;
       }
-      return this.makeDoc(docName, {
+      return this.makeDoc(collection, docName, {
         create: true,
         type: type.name
       }, callback);
@@ -1559,7 +1581,7 @@
         return c.disconnect();
       }
     };
-    return function(docName, type, options, callback) {
+    return function(collection, docName, type, options, callback) {
       var authentication, c, origin;
       if (typeof options === 'function') {
         callback = options;
@@ -1573,7 +1595,7 @@
       origin = options.origin;
       authentication = options.authentication;
       c = getConnection(origin, authentication);
-      c.open(docName, type, function(error, doc) {
+      c.open(collection, docName, type, function(error, doc) {
         if (error) {
           callback(error);
           return maybeClose(c);
