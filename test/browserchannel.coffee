@@ -427,6 +427,7 @@ module.exports = testCase
     socket.send {auth:{a:1234}}
 
   'Socket timeout if no auth message is sent': (test) ->
+    # This test should be rewritten to use timerstub.
     socket = new BCSocket "http://localhost:#{@server.address().port}/channel"
     socket.onmessage = (data) ->
       test.strictEqual data.auth, null
