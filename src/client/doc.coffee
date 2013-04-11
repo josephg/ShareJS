@@ -26,7 +26,7 @@ class Doc
   # data can optionally contain known document data, and initial open() call arguments:
   # {v[erson], snapshot={...}, type, create=true/false/undefined}
   # callback will be called once the document is first opened.
-  constructor: (@connection, @name, openData) ->
+  constructor: (@connection, @collection, @name, openData) ->
     # Any of these can be null / undefined at this stage.
     openData ||= {}
     @version = openData.v
@@ -54,6 +54,11 @@ class Doc
 
     # Some recent ops, incase submitOp is called with an old op version number.
     @serverOps = {}
+
+  _send: (message) ->
+    message.c = @collection
+    message.doc = @name
+    @connection.send message
 
   # Transform a server op by a client op, and vice versa.
   _xf: (client, server) ->
@@ -106,6 +111,9 @@ class Doc
       @provides = {}
 
   _onMessage: (msg) ->
+    unless msg.c is @collection and msg.doc is @name
+      throw new Error "Got message for wrong document. Expected '#{@collection}'.'#{@name}' but got '#{msg.c}'.'#{msg.doc}'"
+
     switch
       when msg.open == true
         # The document has been successfully opened.
@@ -128,11 +136,10 @@ class Doc
         # Resend any previously queued operation.
         if @inflightOp
           response =
-            doc: @name
             op: @inflightOp
             v: @version
           response.dupIfSource = @inflightSubmittedIds if @inflightSubmittedIds.length
-          @connection.send response
+          @_send response
         else
           @flush()
 
@@ -213,7 +220,6 @@ class Doc
         # We'll just silently drop subsequent messages.
         return if msg.v < @version
 
-        return @emit 'error', "Expected docName '#{@name}' but got #{msg.doc}" unless msg.doc == @name
         return @emit 'error', "Expected version #{@version} but got #{msg.v}" unless msg.v == @version
 
     #    p "if: #{i @inflightOp} pending: #{i @pendingOp} doc '#{@snapshot}' op: #{i msg.op}"
@@ -258,7 +264,7 @@ class Doc
     @pendingOp = null
     @pendingCallbacks = []
 
-    @connection.send {doc:@name, op:@inflightOp, v:@version}
+    @_send {op:@inflightOp, v:@version}
 
   # Submit an op to the server. The op maybe held for a little while before being sent, as only one
   # op can be inflight at any time.
@@ -281,25 +287,19 @@ class Doc
     # & sent together.
     setTimeout @flush, 0
   
-  shout: (msg) =>
-    # Meta ops don't have to queue, they can go direct. Good/bad idea?
-    @connection.send {doc:@name, meta: { path: ['shout'], value: msg } }
-  
   # Open a document. The document starts closed.
   open: (callback) ->
     @autoOpen = true
     return unless @state is 'closed'
 
-    message =
-      doc: @name
-      open: true
+    message = open:true
 
     message.snapshot = null if @snapshot is undefined
     message.type = @type.name if @type
     message.v = @version if @version?
     message.create = true if @_create
 
-    @connection.send message
+    @_send message
 
     @state = 'opening'
 
@@ -312,7 +312,7 @@ class Doc
     @autoOpen = false
     return callback?() if @state is 'closed'
 
-    @connection.send {doc:@name, open:false}
+    @_send {open:false}
 
     # Should this happen immediately or when we get open:false back from the server?
     @state = 'closed'

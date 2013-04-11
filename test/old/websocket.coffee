@@ -4,7 +4,7 @@
 
 testCase = require('nodeunit').testCase
 assert = require 'assert'
-WebSocket = require 'ws';
+WebSocketClient = require('websocket').client;
 {EventEmitter} = require('events')
 server = require '../src/server'
 types = require '../src/types'
@@ -33,12 +33,15 @@ expectData = (socket, expectedData, callback) ->
         callback()
 
 class WSSocket
-  
+
   constructor: (url, callback)->
     # Open a new websocket session to the server
-    @connection = new WebSocket(url)
+    ws = new WebSocketClient
+    ws.connect url
    
-    @connection.on 'open', () => callback(@)
+    ws.on 'connectFailed', (error) -> console.error "Failed to connect: #{error}"
+
+    ws.on 'connect', (@connection) => callback(@)
 
     @__defineSetter__ "onerror", (callback) =>
       listeners = @connection.listeners('error')
@@ -46,11 +49,9 @@ class WSSocket
       @connection.on 'error', (err) => callback(err)
 
     @__defineSetter__ "onmessage", (callback) =>
-        # Removes existing listener
-        listeners = @connection.listeners('message')
-        listeners.splice(0, listeners.length)
-        @connection.on 'message', (data) => 
-          callback JSON.parse(data)
+      @connection.removeAllListeners "message"
+      @connection.on 'message', (data) =>
+        callback JSON.parse(data.utf8Data)
 
     @__defineSetter__ "onclose", (callback) =>
       listeners = @connection.listeners('close')

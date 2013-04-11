@@ -3,13 +3,30 @@
 # This class implements the client side of the protocol defined here:
 # https://github.com/josephg/ShareJS/wiki/Wire-Protocol
 #
-# The equivalent server code is in src/server/browserchannel.coffee.
+# The equivalent server code is in src/server/channel.coffee.
 #
 # This file is a bit of a mess. I'm dreadfully sorry about that. It passes all the tests,
 # so I have hope that its *correct* even if its not clean.
 #
 # Most of Connection exists to support the open() method, which creates a new document
 # reference.
+#
+# To make a connection, use:
+#  new sharejs.Connection(socket)
+#
+# The socket should look like a websocket connection. It should have the following properties:
+#  send(msg): Send the given message. msg may be an object - if so, you might need to JSON.stringify it.
+#  close(): Disconnect the session
+#
+#  onmessage = function(msg){}: Event handler which is called whenever a message is received. The message
+#     passed in should already be an object. (It may need to be JSON.parsed)
+#  onclose
+#  onerror
+#  onopen
+#  onconnecting
+#
+# The socket should probably automatically reconnect. If so, it should emit the appropriate events as it
+# disconnects & reconnects. (onclose(), onconnecting(), onopen()).
 
 if WEB?
   types = exports.types
@@ -29,9 +46,11 @@ else
   socketImpl = null
 
 class Connection
-  constructor: (host, authentication) ->
-    # Map of docname -> doc
-    @docs = {}
+  _get: (c, doc) -> @collections[c]?[doc]
+
+  constructor: (@socket, authentication) ->
+    # Map of collection -> docname -> doc
+    @collections = {}
 
     # States:
     # - 'connecting': The connection is being established
@@ -41,16 +60,8 @@ class Connection
     # - 'stopped': The connection is closed, and will not reconnect.
     @state = 'connecting'
 
-    unless socketImpl?
-      if host.match /^ws:/ then socketImpl = 'websocket'
-
-    @socket = switch socketImpl
-      when 'channel' then new BCSocket(host, reconnect:true)
-      when 'sockjs' then new ReconnectingWebSocket(host, SockJS)
-      when 'websocket' then new ReconnectingWebSocket(host)
-      else new BCSocket(host, reconnect:true)
-
     @socket.onmessage = (msg) =>
+      console.log 'onmessage', msg
       msg = JSON.parse(msg.data) if socketImpl in ['sockjs', 'websocket']
       if msg.auth is null
         # Auth failed.
@@ -63,15 +74,20 @@ class Connection
         @setState 'ok'
         return
 
-      docName = msg.doc
+      if msg.doc isnt undefined
+        mungedDocName = msg.doc
 
-      if docName isnt undefined
-        @lastReceivedDoc = docName
+        parts = mungedDocName.split '.'
+        collection = parts.shift()
+        docName = parts.join '.'
+        msg.c = @lastReceivedCollection = collection
+        msg.doc = @lastReceivedDoc = docName
       else
+        msg.c = collection = @lastReceivedCollection
         msg.doc = docName = @lastReceivedDoc
 
-      if @docs[docName]
-        @docs[docName]._onMessage msg
+      if (doc = @_get collection, docName)
+        doc._onMessage msg
       else
         console?.error 'Unhandled message', msg
 
@@ -91,7 +107,7 @@ class Connection
 
       # Send authentication message
       @send {
-        "auth": if authentication then authentication else null
+        auth: if authentication then authentication else null
       }
 
       @lastError = @lastReceivedDoc = @lastSentDoc = null
@@ -110,16 +126,26 @@ class Connection
 
     # Documents could just subscribe to the state change events, but there's less state to
     # clean up when you close a document if I just notify the doucments directly.
-    for docName, doc of @docs
-      doc._connectionStateChanged state, data
+    for c, collection of @collections
+      for docName, doc of collection
+        doc._connectionStateChanged state, data
 
   send: (data) ->
-    if data.doc
+    console.log "send:", data
+    if data.doc # data.doc not set when sending auth request
       docName = data.doc
-      if docName is @lastSentDoc
+      collection = data.c
+
+      if collection is @lastSentCollection and docName is @lastSentDoc
+        delete data.c
         delete data.doc
       else
+        @lastSentCollection = collection
         @lastSentDoc = docName
+
+        # Munge doc name into one field
+        data.doc = "#{collection}.#{docName}"
+        delete data.c
 
     #console.warn 'c->s', data
     data = JSON.stringify(data) if socketImpl in ['sockjs', 'websocket']
@@ -132,35 +158,39 @@ class Connection
 
   # *** Doc management
  
-  makeDoc: (name, data, callback) ->
-    throw new Error("Doc #{name} already open") if @docs[name]
-    doc = new Doc(@, name, data)
-    @docs[name] = doc
+  makeDoc: (collection, name, data, callback) ->
+    throw new Error("Doc #{name} already open") if @_get collection, name
+    doc = new Doc(@, collection, name, data)
+    c = (@collections[collection] ||= {})
+    c[name] = doc
 
     doc.open (error) =>
-      delete @docs[name] if error
-      unless error
-        doc.on 'closed', => delete @docs[name]
+      if error
+        delete c[name]
+      else
+        doc.on 'closed', => delete c[name]
+
       callback error, (doc unless error)
 
   # Open a document that already exists
   # callback(error, doc)
-  openExisting: (docName, callback) ->
+  openExisting: (collection, docName, callback) ->
     return callback 'connection closed' if @state is 'stopped'
-    return @_ensureOpenState(@docs[docName], callback) if @docs[docName]
-    doc = @makeDoc docName, {}, callback
+    doc = @_get collection, docName
+    return @_ensureOpenState(doc, callback) if doc
+    doc = @makeDoc collection, docName, {}, callback
 
   # Open a document. It will be created if it doesn't already exist.
   # Callback is passed a document or an error
   # type is either a type name (eg 'text' or 'simple') or the actual type object.
   # Types must be supported by the server.
   # callback(error, doc)
-  open: (docName, type, callback) ->
+  open: (collection, docName, type, callback) ->
     return callback 'connection closed' if @state is 'stopped'
 
     # Wait for the connection to open
     if @state is 'connecting'
-      @on 'handshaking', -> @open(docName, type, callback)
+      @on 'handshaking', -> @open(collection, docName, type, callback)
       return
 
     if typeof type is 'function'
@@ -175,16 +205,16 @@ class Connection
 
     throw new Error 'Server-generated random doc names are not currently supported' unless docName?
 
-    if @docs[docName]
-      doc = @docs[docName]
-      if doc.type == type
+    if (doc = @_get collection, docName)
+      if doc.type is type
         @_ensureOpenState(doc, callback)
       else
         callback 'Type mismatch', doc
       return
 
-    @makeDoc docName, {create:true, type:type.name}, callback
+    @makeDoc collection, docName, {create:true, type:type.name}, callback
 
+  # Call the callback after the document object is open
   _ensureOpenState: (doc, callback) ->
     switch doc.state
       when 'open' then callback null, doc

@@ -111,13 +111,13 @@ in your app.</p>
 <div class="row">
 <div class="span6 offset1">
   <h3>Here’s etherpad in 4 lines.</h3>  
-  <textarea id="pad" rows="8" disabled>Loading. (Or it's probably broken and you should come back later.)</textarea>
+  <textarea id="pad" rows="8" disabled>Loading...</textarea>
   <span class="help-block">Everyone viewing this page can see your edits live. Open this in another browser window for maximum wow.</span>
 </div>
 <div class="span8">
   <h3>Code</h3>
   <pre class="prettyprint">
-sharejs.open('blag', 'text', function(error, doc) {
+sharejs.open('blogs', 'steve', 'text', function(error, doc) {
   var elem = document.getElementById('pad');
   doc.attach_textarea(elem);
 });
@@ -205,7 +205,7 @@ $(function() {
   // *** Editor window
   var elem = document.getElementById('pad');
   
-  var connection = sharejs.open('blag', 'text', function(error, doc) {
+  var connection = sharejs.open('users', 'steve', 'text', function(error, doc) {
   	if (error) {
   		console.log(error);
   	} else {
@@ -229,7 +229,7 @@ $(function() {
   register('stopped', 'important', 'Error');
   
   // *** Draggable trains example
-  sharejs.open('thomas', 'json', function(error, doc) {
+  sharejs.open('trains', 'thomas', 'json', function(error, doc) {
     if (error) {
       if (console) {
         console.error(error);
