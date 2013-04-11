@@ -158,7 +158,7 @@ exports.handler = (session, createAgent) ->
 
       # Tell the socket the doc is open at the requested version
       agent.listen docName, version, listener, (error, v) ->
-        delete docState[docName].listener if error
+        delete docState[docName].listener if error and docState
         callback error, v
 
     # Close the named document.
