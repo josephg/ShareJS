@@ -3,13 +3,30 @@
 # This class implements the client side of the protocol defined here:
 # https://github.com/josephg/ShareJS/wiki/Wire-Protocol
 #
-# The equivalent server code is in src/server/browserchannel.coffee.
+# The equivalent server code is in src/server/channel.coffee.
 #
 # This file is a bit of a mess. I'm dreadfully sorry about that. It passes all the tests,
 # so I have hope that its *correct* even if its not clean.
 #
 # Most of Connection exists to support the open() method, which creates a new document
 # reference.
+#
+# To make a connection, use:
+#  new sharejs.Connection(socket)
+#
+# The socket should look like a websocket connection. It should have the following properties:
+#  send(msg): Send the given message. msg may be an object - if so, you might need to JSON.stringify it.
+#  close(): Disconnect the session
+#
+#  onmessage = function(msg){}: Event handler which is called whenever a message is received. The message
+#     passed in should already be an object. (It may need to be JSON.parsed)
+#  onclose
+#  onerror
+#  onopen
+#  onconnecting
+#
+# The socket should probably automatically reconnect. If so, it should emit the appropriate events as it
+# disconnects & reconnects. (onclose(), onconnecting(), onopen()).
 
 if WEB?
   types = exports.types
@@ -31,7 +48,7 @@ else
 class Connection
   _get: (c, doc) -> @collections[c]?[doc]
 
-  constructor: (host, authentication) ->
+  constructor: (@socket, authentication) ->
     # Map of collection -> docname -> doc
     @collections = {}
 
@@ -42,15 +59,6 @@ class Connection
     # - 'disconnected': The connection is closed, but it will not reconnect automatically.
     # - 'stopped': The connection is closed, and will not reconnect.
     @state = 'connecting'
-
-    unless socketImpl?
-      if host.match /^ws:/ then socketImpl = 'websocket'
-
-    @socket = switch socketImpl
-      when 'channel' then new BCSocket(host, reconnect:true)
-      when 'sockjs' then new ReconnectingWebSocket(host, SockJS)
-      when 'websocket' then new ReconnectingWebSocket(host)
-      else new BCSocket(host, reconnect:true)
 
     @socket.onmessage = (msg) =>
       console.log 'onmessage', msg

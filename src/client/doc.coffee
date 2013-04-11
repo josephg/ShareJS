@@ -111,6 +111,9 @@ class Doc
       @provides = {}
 
   _onMessage: (msg) ->
+    unless msg.c is @collection and msg.doc is @name
+      throw new Error "Got message for wrong document. Expected '#{@collection}'.'#{@name}' but got '#{msg.c}'.'#{msg.doc}'"
+
     switch
       when msg.open == true
         # The document has been successfully opened.
@@ -217,7 +220,6 @@ class Doc
         # We'll just silently drop subsequent messages.
         return if msg.v < @version
 
-        return @emit 'error', "Expected docName '#{@name}' but got #{msg.doc}" unless msg.doc == @name
         return @emit 'error', "Expected version #{@version} but got #{msg.v}" unless msg.v == @version
 
     #    p "if: #{i @inflightOp} pending: #{i @pendingOp} doc '#{@snapshot}' op: #{i msg.op}"

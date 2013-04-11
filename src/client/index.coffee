@@ -2,27 +2,13 @@
 # https://github.com/josephg/ShareJS/wiki/Client-API
 #
 # It works from both a node.js context and a web context (though in the latter case,
-# it needs to be compiled to work.)
-#
-# It should become a little nicer once I start using more of the new RPC features added
-# in socket.io 0.7.
-#
-# Note that anything declared in the global scope here is shared with other files
-# built by closure. Be careful what you put in this namespace.
-
+# it needs to be compiled to work. use % cake webclient)
 
 if WEB?
   hasBCSocket = window.BCSocket isnt undefined
-  hasSockJS = window.SockJS isnt undefined
-  if hasBCSocket
-    socketImpl = 'channel'
-  else
-    if hasSockJS
-      socketImpl = 'sockjs'
-    else
-      socketImpl = 'websocket'
 else
   Connection = require('./connection').Connection
+
 
 # Open a document with the given name. The connection is created implicitly and reused.
 #
@@ -36,11 +22,10 @@ exports.open = do ->
   getConnection = (origin, authentication) ->
     if WEB? and !origin?
       location = window.location
-      protocol = if socketImpl == 'websocket' then 'ws:' else location.protocol
-      origin = "#{protocol}//#{location.host}/#{socketImpl}"
+      origin = "#{location.protocol}//#{location.host}/channel"
 
     unless connections[origin]
-      c = new Connection origin, authentication
+      c = new Connection new BCSocket(origin, reconnect:true), authentication
 
       del = -> delete connections[origin]
       c.on 'disconnected', del
@@ -60,14 +45,14 @@ exports.open = do ->
       c.disconnect()
 
   (collection, docName, type, options, callback) ->
-    if typeof options == 'function'
+    unless hasBCSocket
+      throw new Error 'Cannot find browserchannel. If you want to use a custom channel, create a connection manually.'
+
+    if typeof options is 'function'
       callback = options
       options = {}
 
-    if typeof options == 'string'
-      options = {
-        'origin': options
-      }
+    options = origin: options if typeof options is 'string'
 
     origin = options.origin
     authentication = options.authentication
