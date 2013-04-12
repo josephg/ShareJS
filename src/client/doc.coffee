@@ -1,5 +1,5 @@
 unless WEB?
-  types = require '../types'
+  types = require 'ot-types'
 
 if WEB?
   exports.extendDoc = (name, fn) ->
@@ -44,9 +44,6 @@ class Doc
     # When the connection reconnects, the inflight op is resubmitted.
     @inflightOp = null
     @inflightCallbacks = []
-    # The auth ids which the client has previously used to attempt to send inflightOp. This is
-    # usually empty.
-    @inflightSubmittedIds = []
 
     # All ops that are waiting for the server to acknowledge @inflightOp
     @pendingOp = null
@@ -83,13 +80,10 @@ class Doc
     switch state
       when 'disconnected'
         @state = 'closed'
-        # This is used by the server to make sure that when an op is resubmitted it
-        # doesn't end up getting applied twice.
-        @inflightSubmittedIds.push @connection.id if @inflightOp
 
         @emit 'closed'
 
-      when 'ok' # Might be able to do this when we're connecting... that would save a roundtrip.
+      when 'connected' # Might be able to do this when we're connecting... that would save a roundtrip.
         @open() if @autoOpen
 
       when 'stopped'
@@ -110,119 +104,119 @@ class Doc
     else
       @provides = {}
 
+  _opConfirmed: (msg) ->
+    # We've tried to resend an op to the server, which has already been received successfully. Do nothing.
+    # The op will be confirmed normally when we get the op itself was echoed back from the server
+    # (handled below).
+    return if error is 'Op already submitted'
+
+    # Our inflight op has been acknowledged.
+    oldInflightOp = @inflightOp
+    @inflightOp = null
+    @sentSrc = @sentSeq = null
+
+    error = msg.error
+    if error
+      # The server has rejected an op from the client for some reason.
+      # We'll send the error message to the user and roll back the change.
+      #
+      # If the server isn't going to allow edits anyway, we should probably
+      # figure out some way to flag that (readonly:true in the open request?)
+      if @type.invert
+        undo = @type.invert oldInflightOp
+
+        # Now we have to transform the undo operation by any server ops & pending ops
+        if @pendingOp
+          [@pendingOp, undo] = @_xf @pendingOp, undo
+
+        # ... and apply it locally, reverting the changes.
+        # 
+        # This call will also call @emit 'remoteop'. I'm still not 100% sure about this
+        # functionality, because its really a local op. Basically, the problem is that
+        # if the client's op is rejected by the server, the editor window should update
+        # to reflect the undo.
+        @_otApply undo, true
+      else
+        # This is where an undo stack would come in handy.
+        @emit 'error', "Op apply failed (#{error}) and the op could not be reverted"
+
+      callback error for callback in @inflightCallbacks
+    else
+      # The op applied successfully.
+      throw new Error('Invalid version from server') unless msg.v == @version
+
+      @serverOps[@version] = oldInflightOp
+      @version++
+      @emit 'acknowledge', oldInflightOp
+      callback null, oldInflightOp for callback in @inflightCallbacks
+
+    @inflightCallbacks.length = 0
+
+    # Send the next op.
+    @flush()
+
+
+
   _onMessage: (msg) ->
     unless msg.c is @collection and msg.doc is @name
       throw new Error "Got message for wrong document. Expected '#{@collection}'.'#{@name}' but got '#{msg.c}'.'#{msg.doc}'"
 
-    switch
-      when msg.open == true
-        # The document has been successfully opened.
-        @state = 'open'
-        @_create = false # Don't try and create the document again next time open() is called.
-        unless @created?
-          @created = !!msg.create
-
-        @_setType msg.type if msg.type
-        if msg.create
-          @created = true
-          @snapshot = @type.create()
-        else
-          @created = false unless @created is true
-          @snapshot = msg.snapshot if msg.snapshot isnt undefined
-
-        @meta = msg.meta if msg.meta
-        @version = msg.v if msg.v?
-
-        # Resend any previously queued operation.
-        if @inflightOp
-          response =
-            op: @inflightOp
-            v: @version
-          response.dupIfSource = @inflightSubmittedIds if @inflightSubmittedIds.length
-          @_send response
-        else
-          @flush()
-
-        @emit 'open'
-        
-        @_openCallback? null
-   
-      when msg.open == false
-        # The document has either been closed, or an open request has failed.
+    switch msg.a
+      when 'sub'
+        # The server is responding to our subscribe request.
         if msg.error
           # An error occurred opening the document.
           console?.error "Could not open document: #{msg.error}"
           @emit 'error', msg.error
           @_openCallback? msg.error
+          break
 
+        # The document has been successfully opened.
+        @state = 'open'
+        @_create = false # Don't try and create the document again next time open() is called.
+
+        @_setType msg.type if msg.type
+
+        if msg.create
+          @created = true
+        else
+          @created = false unless @created is true
+
+        @snapshot = msg.snapshot if msg.snapshot isnt undefined
+
+        @meta = msg.meta if msg.meta
+        @version = msg.v if msg.v?
+
+        # Resend any previously queued operation.
+        @flush()
+
+        @emit 'open'
+        
+        @_openCallback? null
+   
+      when 'unsub'
+        # The document has been closed
         @state = 'closed'
         @emit 'closed'
 
         @_closeCallback?()
         @_closeCallback = null
 
-      when msg.op is null and error is 'Op already submitted'
-        # We've tried to resend an op to the server, which has already been received successfully. Do nothing.
-        # The op will be confirmed normally when we get the op itself was echoed back from the server
-        # (handled below).
-        break
+      when 'ack' # Acknowledge a locally submitted operation
+        @_opConfirmed msg if msg.error
 
-      when (msg.op is undefined and msg.v isnt undefined) or (msg.op and msg.meta.source in @inflightSubmittedIds)
-        # Our inflight op has been acknowledged.
-        oldInflightOp = @inflightOp
-        @inflightOp = null
-        @inflightSubmittedIds.length = 0
-
-        error = msg.error
-        if error
-          # The server has rejected an op from the client for some reason.
-          # We'll send the error message to the user and roll back the change.
-          #
-          # If the server isn't going to allow edits anyway, we should probably
-          # figure out some way to flag that (readonly:true in the open request?)
-
-          if @type.invert
-            undo = @type.invert oldInflightOp
-
-            # Now we have to transform the undo operation by any server ops & pending ops
-            if @pendingOp
-              [@pendingOp, undo] = @_xf @pendingOp, undo
-
-            # ... and apply it locally, reverting the changes.
-            # 
-            # This call will also call @emit 'remoteop'. I'm still not 100% sure about this
-            # functionality, because its really a local op. Basically, the problem is that
-            # if the client's op is rejected by the server, the editor window should update
-            # to reflect the undo.
-            @_otApply undo, true
-          else
-            @emit 'error', "Op apply failed (#{error}) and the op could not be reverted"
-
-          callback error for callback in @inflightCallbacks
-        else
-          # The op applied successfully.
-          throw new Error('Invalid version from server') unless msg.v == @version
-
-          @serverOps[@version] = oldInflightOp
-          @version++
-          @emit 'acknowledge', oldInflightOp
-          callback null, oldInflightOp for callback in @inflightCallbacks
-
-        # Send the next op.
-        @flush()
-
-      when msg.op
-        # We got a new op from the server.
+      when 'op'
+        # There's a new op from the server
         # msg is {doc:, op:, v:}
 
-        # There is a bug in socket.io (produced on firefox 3.6) which causes messages
-        # to be duplicated sometimes.
-        # We'll just silently drop subsequent messages.
-        return if msg.v < @version
+        if msg.src is @sentSrc and msg.seq is @sentSeq
+          @_opConfirmed msg
+          break
+        #console.log msg.src, @sentSrc, msg.seq, @sentSeq
 
         return @emit 'error', "Expected version #{@version} but got #{msg.v}" unless msg.v == @version
 
-    #    p "if: #{i @inflightOp} pending: #{i @pendingOp} doc '#{@snapshot}' op: #{i msg.op}"
+        #p "if: #{i @inflightOp} pending: #{i @pendingOp} doc '#{@snapshot}' op: #{i msg.op}"
 
         op = msg.op
         @serverOps[@version] = op
@@ -237,14 +231,10 @@ class Doc
         # Finally, apply the op to @snapshot and trigger any event listeners
         @_otApply docOp, true
 
-      when msg.meta
+      when 'meta'
         {path, value} = msg.meta
 
-        switch path?[0]
-          when 'shout'
-            return @emit 'shout', value
-          else
-            console?.warn 'Unhandled meta op:', msg
+        console?.warn 'Unhandled meta op:', msg
 
       else
         console?.warn 'Unhandled document message:', msg
@@ -255,16 +245,19 @@ class Doc
   # Only one op can be in-flight at a time, so if an op is already on its way then
   # this method does nothing.
   flush: =>
-    return unless @connection.state == 'ok' and @inflightOp == null and @pendingOp != null
+    return unless @connection.state == 'connected' and @inflightOp == null and @pendingOp != null
 
     # Rotate null -> pending -> inflight
     @inflightOp = @pendingOp
     @inflightCallbacks = @pendingCallbacks
 
+    @sentSrc = @connection.id
+    @sentSeq = @connection.seq++
+
     @pendingOp = null
     @pendingCallbacks = []
 
-    @_send {op:@inflightOp, v:@version}
+    @_send {a:'op', op:@inflightOp, v:@version}
 
   # Submit an op to the server. The op maybe held for a little while before being sent, as only one
   # op can be inflight at any time.
@@ -292,12 +285,9 @@ class Doc
     @autoOpen = true
     return unless @state is 'closed'
 
-    message = open:true
-
-    message.snapshot = null if @snapshot is undefined
-    message.type = @type.name if @type
+    message = a:'sub'
+    message.type = @type.uri if @type
     message.v = @version if @version?
-    message.create = true if @_create
 
     @_send message
 

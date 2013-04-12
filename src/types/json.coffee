@@ -2,16 +2,17 @@
 #
 # Spec is here: https://github.com/josephg/ShareJS/wiki/JSON-Operations
 #
-# Note: This is obsolete, and will be replaced by the JSON2 type.
+# Note: This is being made obsolete. It will soon be replaced by the JSON2 type.
 
-if WEB?
-  text = exports.types.text
+if window?
+  text = window.ottypes.text
 else
-  text = require './text'
+  text = require './text-old'
 
 json = {}
 
-json.name = 'json'
+json.name = 'json0'
+json.uri = 'http://sharejs.org/types/JSONv0'
 
 json.create = -> null
 
@@ -44,82 +45,78 @@ json.apply = (snapshot, op) ->
   json.checkValidOp op
   op = clone op
 
-  container = {data: clone snapshot}
+  container = {data: snapshot}
 
-  try
-    for c, i in op
-      parent = null
-      parentkey = null
-      elem = container
-      key = 'data'
+  for c, i in op
+    parent = null
+    parentkey = null
+    elem = container
+    key = 'data'
 
-      for p in c.p
-        parent = elem
-        parentkey = key
-        elem = elem[key]
-        key = p
+    for p in c.p
+      parent = elem
+      parentkey = key
+      elem = elem[key]
+      key = p
 
-        throw new Error 'Path invalid' unless parent?
+      throw new Error 'Path invalid' unless parent?
 
-      if c.na != undefined
-        # Number add
-        throw new Error 'Referenced element not a number' unless typeof elem[key] is 'number'
-        elem[key] += c.na
+    if c.na != undefined
+      # Number add
+      throw new Error 'Referenced element not a number' unless typeof elem[key] is 'number'
+      elem[key] += c.na
 
-      else if c.si != undefined
-        # String insert
-        throw new Error "Referenced element not a string (it was #{JSON.stringify elem})" unless typeof elem is 'string'
-        parent[parentkey] = elem[...key] + c.si + elem[key..]
-      else if c.sd != undefined
-        # String delete
-        throw new Error 'Referenced element not a string' unless typeof elem is 'string'
-        throw new Error 'Deleted string does not match' unless elem[key...key + c.sd.length] == c.sd
-        parent[parentkey] = elem[...key] + elem[key + c.sd.length..]
+    else if c.si != undefined
+      # String insert
+      throw new Error "Referenced element not a string (it was #{JSON.stringify elem})" unless typeof elem is 'string'
+      parent[parentkey] = elem[...key] + c.si + elem[key..]
+    else if c.sd != undefined
+      # String delete
+      throw new Error 'Referenced element not a string' unless typeof elem is 'string'
+      throw new Error 'Deleted string does not match' unless elem[key...key + c.sd.length] == c.sd
+      parent[parentkey] = elem[...key] + elem[key + c.sd.length..]
 
-      else if c.li != undefined && c.ld != undefined
-        # List replace
-        json.checkList elem
+    else if c.li != undefined && c.ld != undefined
+      # List replace
+      json.checkList elem
 
-        # Should check the list element matches c.ld
-        elem[key] = c.li
-      else if c.li != undefined
-        # List insert
-        json.checkList elem
+      # Should check the list element matches c.ld
+      elem[key] = c.li
+    else if c.li != undefined
+      # List insert
+      json.checkList elem
 
-        elem.splice key, 0, c.li
-      else if c.ld != undefined
-        # List delete
-        json.checkList elem
+      elem.splice key, 0, c.li
+    else if c.ld != undefined
+      # List delete
+      json.checkList elem
 
-        # Should check the list element matches c.ld here too.
+      # Should check the list element matches c.ld here too.
+      elem.splice key, 1
+    else if c.lm != undefined
+      # List move
+      json.checkList elem
+      if c.lm != key
+        e = elem[key]
+        # Remove it...
         elem.splice key, 1
-      else if c.lm != undefined
-        # List move
-        json.checkList elem
-        if c.lm != key
-          e = elem[key]
-          # Remove it...
-          elem.splice key, 1
-          # And insert it back.
-          elem.splice c.lm, 0, e
+        # And insert it back.
+        elem.splice c.lm, 0, e
 
-      else if c.oi != undefined
-        # Object insert / replace
-        json.checkObj elem
-        
-        # Should check that elem[key] == c.od
-        elem[key] = c.oi
-      else if c.od != undefined
-        # Object delete
-        json.checkObj elem
+    else if c.oi != undefined
+      # Object insert / replace
+      json.checkObj elem
+      
+      # Should check that elem[key] == c.od
+      elem[key] = c.oi
+    else if c.od != undefined
+      # Object delete
+      json.checkObj elem
 
-        # Should check that elem[key] == c.od
-        delete elem[key]
-      else
-        throw new Error 'invalid / missing instruction in op'
-  catch error
-    # TODO: Roll back all already applied changes. Write tests before implementing this code.
-    throw error
+      # Should check that elem[key] == c.od
+      delete elem[key]
+    else
+      throw new Error 'invalid / missing instruction in op'
 
   container.data
 
@@ -431,16 +428,11 @@ json.transformComponent = (dest, c, otherC, type) ->
   json.append dest, c
   return dest
 
-if WEB?
-  exports.types ||= {}
-
+if window?
   # This is kind of awful - come up with a better way to hook this helper code up.
-  exports._bt(json, json.transformComponent, json.checkValidOp, json.append)
-
-  # [] is used to prevent closure from renaming types.text
-  exports.types.json = json
+  exports._bootstrapTransform(json, json.transformComponent, json.checkValidOp, json.append)
 else
-  module.exports = json
+  require('./helpers')._bootstrapTransform(json, json.transformComponent, json.checkValidOp, json.append)
 
-  require('./helpers').bootstrapTransform(json, json.transformComponent, json.checkValidOp, json.append)
+module.exports = json
 

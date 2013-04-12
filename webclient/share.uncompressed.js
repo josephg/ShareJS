@@ -2,8 +2,7 @@
 (function() {
   var AttributePool, BCSocket, Changeset, Connection, Doc, MicroEvent, ReconnectingWebSocket, SockJS, WebSocket, append, attribsToTokens, bootstrapTransform, checkValidComponent, checkValidOp, etherpad, exports, hasBCSocket, invertComponent, nextTick, socketImpl, strInject, text, transformComponent, transformPosition, types,
     __slice = [].slice,
-    __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
-    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+    __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
   window.sharejs = exports = {
     'version': '0.6.0'
@@ -791,7 +790,7 @@
   exports.etherpad = etherpad;
 
   if (typeof WEB === "undefined" || WEB === null) {
-    types = require('../types');
+    types = require('ot-types');
   }
 
   if (typeof WEB !== "undefined" && WEB !== null) {
@@ -818,7 +817,6 @@
       this._create = openData.create;
       this.inflightOp = null;
       this.inflightCallbacks = [];
-      this.inflightSubmittedIds = [];
       this.pendingOp = null;
       this.pendingCallbacks = [];
       this.serverOps = {};
@@ -855,12 +853,9 @@
       switch (state) {
         case 'disconnected':
           this.state = 'closed';
-          if (this.inflightOp) {
-            this.inflightSubmittedIds.push(this.connection.id);
-          }
           this.emit('closed');
           break;
-        case 'ok':
+        case 'connected':
           if (this.autoOpen) {
             this.open();
           }
@@ -894,53 +889,54 @@
       }
     };
 
+    Doc.prototype._opConfirmed = function(msg) {
+      var callback, error, oldInflightOp, undo, _i, _j, _len, _len1, _ref, _ref1, _ref2;
+      if (error === 'Op already submitted') {
+        return;
+      }
+      oldInflightOp = this.inflightOp;
+      this.inflightOp = null;
+      this.sentSrc = this.sentSeq = null;
+      error = msg.error;
+      if (error) {
+        if (this.type.invert) {
+          undo = this.type.invert(oldInflightOp);
+          if (this.pendingOp) {
+            _ref = this._xf(this.pendingOp, undo), this.pendingOp = _ref[0], undo = _ref[1];
+          }
+          this._otApply(undo, true);
+        } else {
+          this.emit('error', "Op apply failed (" + error + ") and the op could not be reverted");
+        }
+        _ref1 = this.inflightCallbacks;
+        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+          callback = _ref1[_i];
+          callback(error);
+        }
+      } else {
+        if (msg.v !== this.version) {
+          throw new Error('Invalid version from server');
+        }
+        this.serverOps[this.version] = oldInflightOp;
+        this.version++;
+        this.emit('acknowledge', oldInflightOp);
+        _ref2 = this.inflightCallbacks;
+        for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
+          callback = _ref2[_j];
+          callback(null, oldInflightOp);
+        }
+      }
+      this.inflightCallbacks.length = 0;
+      return this.flush();
+    };
+
     Doc.prototype._onMessage = function(msg) {
-      var callback, docOp, error, oldInflightOp, op, path, response, undo, value, _i, _j, _len, _len1, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6;
+      var docOp, op, path, value, _ref, _ref1, _ref2;
       if (!(msg.c === this.collection && msg.doc === this.name)) {
         throw new Error("Got message for wrong document. Expected '" + this.collection + "'.'" + this.name + "' but got '" + msg.c + "'.'" + msg.doc + "'");
       }
-      switch (false) {
-        case msg.open !== true:
-          this.state = 'open';
-          this._create = false;
-          if (this.created == null) {
-            this.created = !!msg.create;
-          }
-          if (msg.type) {
-            this._setType(msg.type);
-          }
-          if (msg.create) {
-            this.created = true;
-            this.snapshot = this.type.create();
-          } else {
-            if (this.created !== true) {
-              this.created = false;
-            }
-            if (msg.snapshot !== void 0) {
-              this.snapshot = msg.snapshot;
-            }
-          }
-          if (msg.meta) {
-            this.meta = msg.meta;
-          }
-          if (msg.v != null) {
-            this.version = msg.v;
-          }
-          if (this.inflightOp) {
-            response = {
-              op: this.inflightOp,
-              v: this.version
-            };
-            if (this.inflightSubmittedIds.length) {
-              response.dupIfSource = this.inflightSubmittedIds;
-            }
-            this._send(response);
-          } else {
-            this.flush();
-          }
-          this.emit('open');
-          return typeof this._openCallback === "function" ? this._openCallback(null) : void 0;
-        case msg.open !== false:
+      switch (msg.a) {
+        case 'sub':
           if (msg.error) {
             if (typeof console !== "undefined" && console !== null) {
               console.error("Could not open document: " + msg.error);
@@ -949,52 +945,48 @@
             if (typeof this._openCallback === "function") {
               this._openCallback(msg.error);
             }
+            break;
           }
+          this.state = 'open';
+          this._create = false;
+          if (msg.type) {
+            this._setType(msg.type);
+          }
+          if (msg.create) {
+            this.created = true;
+          } else {
+            if (this.created !== true) {
+              this.created = false;
+            }
+          }
+          if (msg.snapshot !== void 0) {
+            this.snapshot = msg.snapshot;
+          }
+          if (msg.meta) {
+            this.meta = msg.meta;
+          }
+          if (msg.v != null) {
+            this.version = msg.v;
+          }
+          this.flush();
+          this.emit('open');
+          return typeof this._openCallback === "function" ? this._openCallback(null) : void 0;
+        case 'unsub':
           this.state = 'closed';
           this.emit('closed');
           if (typeof this._closeCallback === "function") {
             this._closeCallback();
           }
           return this._closeCallback = null;
-        case !(msg.op === null && error === 'Op already submitted'):
-          break;
-        case !((msg.op === void 0 && msg.v !== void 0) || (msg.op && (_ref = msg.meta.source, __indexOf.call(this.inflightSubmittedIds, _ref) >= 0))):
-          oldInflightOp = this.inflightOp;
-          this.inflightOp = null;
-          this.inflightSubmittedIds.length = 0;
-          error = msg.error;
-          if (error) {
-            if (this.type.invert) {
-              undo = this.type.invert(oldInflightOp);
-              if (this.pendingOp) {
-                _ref1 = this._xf(this.pendingOp, undo), this.pendingOp = _ref1[0], undo = _ref1[1];
-              }
-              this._otApply(undo, true);
-            } else {
-              this.emit('error', "Op apply failed (" + error + ") and the op could not be reverted");
-            }
-            _ref2 = this.inflightCallbacks;
-            for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-              callback = _ref2[_i];
-              callback(error);
-            }
-          } else {
-            if (msg.v !== this.version) {
-              throw new Error('Invalid version from server');
-            }
-            this.serverOps[this.version] = oldInflightOp;
-            this.version++;
-            this.emit('acknowledge', oldInflightOp);
-            _ref3 = this.inflightCallbacks;
-            for (_j = 0, _len1 = _ref3.length; _j < _len1; _j++) {
-              callback = _ref3[_j];
-              callback(null, oldInflightOp);
-            }
+        case 'ack':
+          if (msg.error) {
+            return this._opConfirmed(msg);
           }
-          return this.flush();
-        case !msg.op:
-          if (msg.v < this.version) {
-            return;
+          break;
+        case 'op':
+          if (msg.src === this.sentSrc && msg.seq === this.sentSeq) {
+            this._opConfirmed(msg);
+            break;
           }
           if (msg.v !== this.version) {
             return this.emit('error', "Expected version " + this.version + " but got " + msg.v);
@@ -1003,36 +995,33 @@
           this.serverOps[this.version] = op;
           docOp = op;
           if (this.inflightOp !== null) {
-            _ref4 = this._xf(this.inflightOp, docOp), this.inflightOp = _ref4[0], docOp = _ref4[1];
+            _ref = this._xf(this.inflightOp, docOp), this.inflightOp = _ref[0], docOp = _ref[1];
           }
           if (this.pendingOp !== null) {
-            _ref5 = this._xf(this.pendingOp, docOp), this.pendingOp = _ref5[0], docOp = _ref5[1];
+            _ref1 = this._xf(this.pendingOp, docOp), this.pendingOp = _ref1[0], docOp = _ref1[1];
           }
           this.version++;
           return this._otApply(docOp, true);
-        case !msg.meta:
-          _ref6 = msg.meta, path = _ref6.path, value = _ref6.value;
-          switch (path != null ? path[0] : void 0) {
-            case 'shout':
-              return this.emit('shout', value);
-            default:
-              return typeof console !== "undefined" && console !== null ? console.warn('Unhandled meta op:', msg) : void 0;
-          }
-          break;
+        case 'meta':
+          _ref2 = msg.meta, path = _ref2.path, value = _ref2.value;
+          return typeof console !== "undefined" && console !== null ? console.warn('Unhandled meta op:', msg) : void 0;
         default:
           return typeof console !== "undefined" && console !== null ? console.warn('Unhandled document message:', msg) : void 0;
       }
     };
 
     Doc.prototype.flush = function() {
-      if (!(this.connection.state === 'ok' && this.inflightOp === null && this.pendingOp !== null)) {
+      if (!(this.connection.state === 'connected' && this.inflightOp === null && this.pendingOp !== null)) {
         return;
       }
       this.inflightOp = this.pendingOp;
       this.inflightCallbacks = this.pendingCallbacks;
+      this.sentSrc = this.connection.id;
+      this.sentSeq = this.connection.seq++;
       this.pendingOp = null;
       this.pendingCallbacks = [];
       return this._send({
+        a: 'op',
         op: this.inflightOp,
         v: this.version
       });
@@ -1063,19 +1052,13 @@
         return;
       }
       message = {
-        open: true
+        a: 'sub'
       };
-      if (this.snapshot === void 0) {
-        message.snapshot = null;
-      }
       if (this.type) {
-        message.type = this.type.name;
+        message.type = this.type.uri;
       }
       if (this.version != null) {
         message.v = this.version;
-      }
-      if (this._create) {
-        message.create = true;
       }
       this._send(message);
       this.state = 'opening';
@@ -1271,7 +1254,7 @@
   })();
 
   if (typeof WEB !== "undefined" && WEB !== null) {
-    types = exports.types;
+    types = ottypes;
     BCSocket = window.BCSocket, SockJS = window.SockJS, WebSocket = window.WebSocket;
     if (BCSocket) {
       socketImpl = 'channel';
@@ -1283,7 +1266,7 @@
       }
     }
   } else {
-    types = require('../types');
+    types = require('ot-types');
     BCSocket = require('browserchannel').BCSocket;
     Doc = require('./doc').Doc;
     WebSocket = require('ws');
@@ -1297,36 +1280,36 @@
       return (_ref = this.collections[c]) != null ? _ref[doc] : void 0;
     };
 
-    function Connection(socket, authentication) {
+    Connection.prototype._error = function(e) {
+      this.setState('stopped', e);
+      return this.disconnect(e);
+    };
+
+    function Connection(socket) {
       var _this = this;
       this.socket = socket;
       this.collections = {};
-      this.state = 'connecting';
+      this.state = 'disconnected';
       this.socket.onmessage = function(msg) {
-        var collection, doc, docName, mungedDocName, parts;
-        console.log('onmessage', msg);
-        if (socketImpl === 'sockjs' || socketImpl === 'websocket') {
-          msg = JSON.parse(msg.data);
-        }
-        if (msg.auth === null) {
-          _this.lastError = msg.error;
-          _this.disconnect();
-          return _this.emit('connect failed', msg.error);
-        } else if (msg.auth) {
-          _this.id = msg.auth;
-          _this.setState('ok');
+        var collection, doc, docName;
+        console.log('RECV', msg);
+        if (msg.id) {
+          if (msg.protocol !== 0) {
+            throw new Error('Invalid protocol version');
+          }
+          if (typeof msg.id !== 'string') {
+            throw new Error('Invalid client id');
+          }
+          _this.id = msg.id;
+          _this.setState('connected');
           return;
         }
         if (msg.doc !== void 0) {
-          mungedDocName = msg.doc;
-          parts = mungedDocName.split('.');
-          collection = parts.shift();
-          docName = parts.join('.');
-          msg.c = _this.lastReceivedCollection = collection;
-          msg.doc = _this.lastReceivedDoc = docName;
+          collection = _this.lastReceivedCollection = msg.c;
+          docName = _this.lastReceivedDoc = msg.doc;
         } else {
-          msg.c = collection = _this.lastReceivedCollection;
-          msg.doc = docName = _this.lastReceivedDoc;
+          collection = msg.c = _this.lastReceivedCollection;
+          docName = msg.doc = _this.lastReceivedDoc;
         }
         if ((doc = _this._get(collection, docName))) {
           return doc._onMessage(msg);
@@ -1345,27 +1328,29 @@
         return _this.emit('error', e);
       };
       this.socket.onopen = function() {
-        _this.send({
-          auth: authentication ? authentication : null
-        });
-        _this.lastError = _this.lastReceivedDoc = _this.lastSentDoc = null;
-        return _this.setState('handshaking');
-      };
-      this.socket.onconnecting = function() {
         return _this.setState('connecting');
       };
+      this.reset();
     }
 
-    Connection.prototype.setState = function(state, data) {
+    Connection.prototype.reset = function() {
+      this.id = this.lastError = this.lastReceivedDoc = this.lastSentDoc = null;
+      return this.seq = 1;
+    };
+
+    Connection.prototype.setState = function(newState, data) {
       var c, collection, doc, docName, _ref, _results;
-      if (this.state === state) {
+      if (this.state === newState) {
         return;
       }
-      this.state = state;
-      if (state === 'disconnected') {
-        delete this.id;
+      if ((newState === 'connecting' && this.state !== 'disconnected') || (newState === 'connected' && this.state !== 'connecting')) {
+        throw new Error("Cannot transition directly from " + this.state + " to " + newState);
       }
-      this.emit(state, data);
+      this.state = newState;
+      if (newState === 'disconnected') {
+        this.reset();
+      }
+      this.emit(newState, data);
       _ref = this.collections;
       _results = [];
       for (c in _ref) {
@@ -1375,7 +1360,7 @@
           _results1 = [];
           for (docName in collection) {
             doc = collection[docName];
-            _results1.push(doc._connectionStateChanged(state, data));
+            _results1.push(doc._connectionStateChanged(newState, data));
           }
           return _results1;
         })());
@@ -1385,7 +1370,7 @@
 
     Connection.prototype.send = function(data) {
       var collection, docName;
-      console.log("send:", data);
+      console.log("SEND:", data);
       if (data.doc) {
         docName = data.doc;
         collection = data.c;
@@ -1395,12 +1380,7 @@
         } else {
           this.lastSentCollection = collection;
           this.lastSentDoc = docName;
-          data.doc = "" + collection + "." + docName;
-          delete data.c;
         }
-      }
-      if (socketImpl === 'sockjs' || socketImpl === 'websocket') {
-        data = JSON.stringify(data);
       }
       return this.socket.send(data);
     };

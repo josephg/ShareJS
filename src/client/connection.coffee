@@ -29,7 +29,7 @@
 # disconnects & reconnects. (onclose(), onconnecting(), onopen()).
 
 if WEB?
-  types = exports.types
+  types = ottypes
   {BCSocket, SockJS, WebSocket} = window
   if BCSocket
     socketImpl = 'channel'
@@ -39,7 +39,7 @@ if WEB?
     else
       socketImpl = 'websocket'
 else
-  types = require '../types'
+  types = require 'ot-types'
   {BCSocket} = require 'browserchannel'
   Doc = require('./doc').Doc
   WebSocket = require 'ws'
@@ -48,43 +48,39 @@ else
 class Connection
   _get: (c, doc) -> @collections[c]?[doc]
 
-  constructor: (@socket, authentication) ->
+  _error: (e) ->
+    @setState 'stopped', e
+    @disconnect e
+
+  constructor: (@socket) ->
     # Map of collection -> docname -> doc
     @collections = {}
 
     # States:
-    # - 'connecting': The connection is being established
-    # - 'handshaking': The connection has been established, but we don't have the auth ID yet
-    # - 'ok': We have connected and recieved our client ID. Ready for data.
-    # - 'disconnected': The connection is closed, but it will not reconnect automatically.
-    # - 'stopped': The connection is closed, and will not reconnect.
-    @state = 'connecting'
+    # - 'connecting': The connection has been established, but we don't have our client ID yet
+    # - 'connected': We have connected and recieved our client ID. Ready for data.
+    # - 'disconnected': The connection is closed, but it will reconnect automatically.
+    # - 'stopped': The connection is closed, and should not attempt to reconnect.
+    @state = 'disconnected'
 
     @socket.onmessage = (msg) =>
-      console.log 'onmessage', msg
-      msg = JSON.parse(msg.data) if socketImpl in ['sockjs', 'websocket']
-      if msg.auth is null
-        # Auth failed.
-        @lastError = msg.error # 'forbidden'
-        @disconnect()
-        return @emit 'connect failed', msg.error
-      else if msg.auth
+      console.log 'RECV', msg
+
+      if msg.id
+        throw new Error 'Invalid protocol version' unless msg.protocol is 0
+        throw new Error 'Invalid client id' unless typeof msg.id is 'string'
+
         # Our very own client id.
-        @id = msg.auth
-        @setState 'ok'
+        @id = msg.id
+        @setState 'connected'
         return
 
       if msg.doc isnt undefined
-        mungedDocName = msg.doc
-
-        parts = mungedDocName.split '.'
-        collection = parts.shift()
-        docName = parts.join '.'
-        msg.c = @lastReceivedCollection = collection
-        msg.doc = @lastReceivedDoc = docName
+        collection = @lastReceivedCollection = msg.c
+        docName = @lastReceivedDoc = msg.doc
       else
-        msg.c = collection = @lastReceivedCollection
-        msg.doc = docName = @lastReceivedDoc
+        collection = msg.c = @lastReceivedCollection
+        docName = msg.doc = @lastReceivedDoc
 
       if (doc = @_get collection, docName)
         doc._onMessage msg
@@ -104,34 +100,35 @@ class Connection
 
     @socket.onopen = =>
       #console.warn 'onopen'
-
-      # Send authentication message
-      @send {
-        auth: if authentication then authentication else null
-      }
-
-      @lastError = @lastReceivedDoc = @lastSentDoc = null
-      @setState 'handshaking'
-
-    @socket.onconnecting = =>
-      #console.warn 'connecting'
       @setState 'connecting'
+    
+    @reset()
 
-  setState: (state, data) ->
-    return if @state is state
-    @state = state
 
-    delete @id if state is 'disconnected'
-    @emit state, data
+  reset: ->
+    @id = @lastError = @lastReceivedDoc = @lastSentDoc = null
+    @seq = 1
+
+  setState: (newState, data) ->
+    return if @state is newState
+
+    if (newState is 'connecting' and @state isnt 'disconnected') or
+        (newState is 'connected' and @state isnt 'connecting')
+      throw new Error "Cannot transition directly from #{@state} to #{newState}"
+
+    @state = newState
+
+    @reset() if newState is 'disconnected'
+    @emit newState, data
 
     # Documents could just subscribe to the state change events, but there's less state to
     # clean up when you close a document if I just notify the doucments directly.
     for c, collection of @collections
       for docName, doc of collection
-        doc._connectionStateChanged state, data
+        doc._connectionStateChanged newState, data
 
   send: (data) ->
-    console.log "send:", data
+    console.log "SEND:", data
     if data.doc # data.doc not set when sending auth request
       docName = data.doc
       collection = data.c
@@ -143,12 +140,6 @@ class Connection
         @lastSentCollection = collection
         @lastSentDoc = docName
 
-        # Munge doc name into one field
-        data.doc = "#{collection}.#{docName}"
-        delete data.c
-
-    #console.warn 'c->s', data
-    data = JSON.stringify(data) if socketImpl in ['sockjs', 'websocket']
     @socket.send data
 
   disconnect: ->
