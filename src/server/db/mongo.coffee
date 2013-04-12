@@ -210,6 +210,37 @@ module.exports = MongoDb = (options) ->
               opsCollection.remove { '_id.doc': docName }, (err, count) ->
                 callback? err
 
+  flattenOpDataCollection = (name, callback) ->
+    client.collection name, (err, collection) ->
+      collection.update {}, {$rename: {"opData.op": "op", "opData.meta": "meta"}}, {multi: true}, (err) ->
+        return callback(err) if err
+        collection.update {}, {$unset: {opData: ""}}, {multi: true}, (err) ->
+          callback(err)
+
+  # A migration to flatten the unnecessary "opdata" key
+  @migrateFlattenOpData = (callback = ->) ->
+    if options.opsCollectionPerDoc
+      client.collection 'docs', (err, docsCollection) ->
+        return callback(err) if err
+
+        docCount = 0
+        docDoneCount = 0
+
+        docsCollection.find({}).each (err, doc) ->
+          return callback(err) if err
+          return if not doc?._id
+          docCount += 1
+          flattenOpDataCollection opsCollectionForDoc(doc._id), (err) ->
+            return callback(err) if err
+            docDoneCount += 1
+            if docDoneCount == docCount
+              callback()
+
+    else
+      flattenOpDataCollection 'ops', callback
+
+
+
   # Close the connection to the database
   @close = ->
     client.close()
