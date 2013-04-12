@@ -3,9 +3,8 @@
 fs = require 'fs'
 util = require 'util'
 
-randomWord = require './randomWord'
 text = require '../../src/types/text2'
-{randomInt} = require '../helpers'
+{randomInt, randomWord} = require '../helpers'
 
 readOp = (file) ->
   op = for c in JSON.parse file.shift()

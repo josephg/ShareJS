@@ -4,8 +4,6 @@
 
 nativetype = require '../../src/types/json'
 
-randomWord = require './randomWord'
-
 util = require 'util'
 p = util.debug
 i = util.inspect
@@ -15,7 +13,7 @@ i = util.inspect
 # the changes the op generator will make.
 clone = (o) -> JSON.parse(JSON.stringify(o))
 
-{randomInt, randomReal} = require('../helpers')
+{randomInt, randomReal, randomWord} = require('../helpers')
 
 randomKey = (obj) ->
   if Array.isArray(obj)

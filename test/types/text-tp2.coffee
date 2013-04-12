@@ -3,9 +3,8 @@
 fs = require 'fs'
 util = require 'util'
 
-randomWord = require './randomWord'
 text = require '../../src/types/text-tp2'
-{randomInt, randomReal, seed, randomizerTest} = require '../helpers'
+{randomInt, randomReal, seed, randomizerTest, randomWord} = require '../helpers'
 
 p = util.debug
 i = util.inspect

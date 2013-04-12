@@ -1,6 +1,6 @@
 # Tests for the non-composable op type.
 
-randomWord = require './randomWord'
+{randomWord} = require('../helpers')
 nativeType = require '../../src/types/text'
 
 genTests = (type) ->

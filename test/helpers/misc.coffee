@@ -1,6 +1,7 @@
 # Some utility functions.
 p = -> #require('util').debug
 i = -> #require('util').inspect
+fs = require 'fs'
 
 # Cross-transform function. Transform server by client and client by server. Returns
 # [server, client].
@@ -69,4 +70,10 @@ exports.applyOps = applyOps = (model, docName, startVersion, ops, callback) =>
 exports.newDocName = do ->
   index = 1
   -> 'testing_doc_' + index++
+
+
+# Return a random word from a corpus each time the method is called
+exports.randomWord = do ->
+  words = fs.readFileSync(__dirname + '/jabberwocky.txt').toString().split(/\W+/)
+  -> words[exports.randomInt(words.length)]
 

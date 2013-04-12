@@ -3,7 +3,7 @@
 fs = require 'fs'
 util = require 'util'
 
-randomWord = require './randomWord'
+{randomWord} = require('../helpers')
 text = require '../../src/types/text-composable'
 p = util.debug
 i = util.inspect

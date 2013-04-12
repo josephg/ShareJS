@@ -1,7 +1,6 @@
 # Tests for the text types using the DSL interface
 assert = require 'assert'
-randomWord = require './randomWord'
-{randomInt, randomReal} = require('../helpers')
+{randomInt, randomReal, randomWord} = require('../helpers')
 
 types = require '../../src/types'
 MicroEvent = require '../../src/client/microevent'
