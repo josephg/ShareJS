@@ -1,0 +1,24 @@
+#!/usr/bin/env node
+
+# The MongoDb driver used to create an unnecessary "opData" key in op documents.
+# Future ops now do not create this key. This script fixes all existing ops.
+
+require('coffee-script');
+
+var createdb = require('../src/server/db');
+var options = require('./options');
+if (options.db.type !== 'mongo') {
+  console.error('You must configure your server to use mongodb before using this script');
+  process.exit(1);
+}
+
+var db = createdb(options.db);
+db.migrateFlattenOpData(function(error) {
+  if(error) {
+    throw new Error(error.toString());
+  } else {
+    console.log("DB migrated successfully");
+  }
+  db.close();
+});
+

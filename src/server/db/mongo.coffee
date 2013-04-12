@@ -107,7 +107,17 @@ module.exports = MongoDb = (options) ->
         console.warn "failed to get ops for #{docName}: #{err}" if err
         return callback? err if err
 
-        callback? null, (doc.opData for doc in docs)
+        result = []
+        for doc in docs
+          # This is to support an old schema where ops were stored within an
+          # "opData" object.
+          if doc.opData
+            result.push doc.opData
+          else
+            delete doc._id
+            result.push doc
+
+        callback? null, result
         
   # Write an op to a document.
   #
@@ -125,9 +135,8 @@ module.exports = MongoDb = (options) ->
       return callback? err if err
       
       doc = 
-        opData:
-          op: opData.op
-          meta: opData.meta
+        op: opData.op
+        meta: opData.meta
       
       if options.opsCollectionPerDoc
         doc._id = opData.v
@@ -200,6 +209,37 @@ module.exports = MongoDb = (options) ->
             else
               opsCollection.remove { '_id.doc': docName }, (err, count) ->
                 callback? err
+
+  flattenOpDataCollection = (name, callback) ->
+    client.collection name, (err, collection) ->
+      collection.update {}, {$rename: {"opData.op": "op", "opData.meta": "meta"}}, {multi: true}, (err) ->
+        return callback(err) if err
+        collection.update {}, {$unset: {opData: ""}}, {multi: true}, (err) ->
+          callback(err)
+
+  # A migration to flatten the unnecessary "opdata" key
+  @migrateFlattenOpData = (callback = ->) ->
+    if options.opsCollectionPerDoc
+      client.collection 'docs', (err, docsCollection) ->
+        return callback(err) if err
+
+        docCount = 0
+        docDoneCount = 0
+
+        docsCollection.find({}).each (err, doc) ->
+          return callback(err) if err
+          return if not doc?._id
+          docCount += 1
+          flattenOpDataCollection opsCollectionForDoc(doc._id), (err) ->
+            return callback(err) if err
+            docDoneCount += 1
+            if docDoneCount == docCount
+              callback()
+
+    else
+      flattenOpDataCollection 'ops', callback
+
+
 
   # Close the connection to the database
   @close = ->
