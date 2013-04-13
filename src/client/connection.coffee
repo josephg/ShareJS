@@ -181,7 +181,7 @@ class Connection
 
     # Wait for the connection to open
     if @state is 'connecting'
-      @on 'handshaking', -> @open(collection, docName, type, callback)
+      @on 'connected', -> @open(collection, docName, type, callback)
       return
 
     if typeof type is 'function'

@@ -155,7 +155,29 @@ class Doc
     # Send the next op.
     @flush()
 
+  _didOpen: (msg) ->
+    # The document has been successfully opened.
+    @state = 'open'
+    @_create = false # Don't try and create the document again next time open() is called.
 
+    @_setType msg.type if msg.type
+
+    if msg.create
+      @created = true
+    else
+      @created = false unless @created is true
+
+    @snapshot = msg.snapshot if msg.snapshot isnt undefined
+
+    @meta = msg.meta if msg.meta
+    @version = msg.v if msg.v?
+
+    # Resend any previously queued operation.
+    @flush()
+
+    @emit 'open'
+    
+    @_openCallback? null
 
   _onMessage: (msg) ->
     unless msg.c is @collection and msg.doc is @name
@@ -171,28 +193,13 @@ class Doc
           @_openCallback? msg.error
           break
 
-        # The document has been successfully opened.
-        @state = 'open'
-        @_create = false # Don't try and create the document again next time open() is called.
-
-        @_setType msg.type if msg.type
-
-        if msg.create
-          @created = true
+        if !msg.type? # and @_create
+          @_send a:'op', v:msg.v, create:{type:@type.uri}
+          @version = msg.v
         else
-          @created = false unless @created is true
+          console.log 'already created', msg, @create
+          @_didOpen msg
 
-        @snapshot = msg.snapshot if msg.snapshot isnt undefined
-
-        @meta = msg.meta if msg.meta
-        @version = msg.v if msg.v?
-
-        # Resend any previously queued operation.
-        @flush()
-
-        @emit 'open'
-        
-        @_openCallback? null
    
       when 'unsub'
         # The document has been closed
@@ -206,6 +213,10 @@ class Doc
         @_opConfirmed msg if msg.error
 
       when 'op'
+        if msg.create
+          @_didOpen msg
+          break
+
         # There's a new op from the server
         # msg is {doc:, op:, v:}
 

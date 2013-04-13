@@ -77,8 +77,6 @@ client = [
   'types/helpers'
   'types/text'
   'types/text-api'
-  'types/etherpad'
-  'types/etherpad-api'
   'client/doc'
   'client/reconnecting_websocket'
   'client/connection'
