@@ -539,6 +539,9 @@
 
     Doc.prototype._setType = function(type) {
       var k, v, _ref;
+      if (this.type) {
+        return;
+      }
       if (typeof type === 'string') {
         type = types[type];
       }
@@ -602,7 +605,7 @@
     Doc.prototype._didOpen = function(msg) {
       this.state = 'open';
       this._create = false;
-      if (msg.type) {
+      if (!this.type) {
         this._setType(msg.type);
       }
       if (msg.create) {
@@ -612,9 +615,7 @@
           this.created = false;
         }
       }
-      if (msg.snapshot !== void 0) {
-        this.snapshot = msg.snapshot;
-      }
+      this.snapshot = msg.snapshot || this.type.create(msg.create.data);
       if (msg.meta) {
         this.meta = msg.meta;
       }
@@ -672,6 +673,7 @@
         case 'op':
           if (msg.create) {
             this._didOpen(msg);
+            this.version++;
             break;
           }
           if (msg.src === this.sentSrc && msg.seq === this.sentSeq) {

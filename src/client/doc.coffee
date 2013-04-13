@@ -92,6 +92,7 @@ class Doc
     @emit state, data
 
   _setType: (type) ->
+    return if @type
     if typeof type is 'string'
       type = types[type]
 
@@ -160,14 +161,14 @@ class Doc
     @state = 'open'
     @_create = false # Don't try and create the document again next time open() is called.
 
-    @_setType msg.type if msg.type
+    @_setType msg.type unless @type # this is a bit dodgy.
 
     if msg.create
       @created = true
     else
       @created = false unless @created is true
 
-    @snapshot = msg.snapshot if msg.snapshot isnt undefined
+    @snapshot = msg.snapshot or @type.create msg.create.data
 
     @meta = msg.meta if msg.meta
     @version = msg.v if msg.v?
@@ -215,6 +216,7 @@ class Doc
       when 'op'
         if msg.create
           @_didOpen msg
+          @version++
           break
 
         # There's a new op from the server
