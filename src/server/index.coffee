@@ -7,7 +7,6 @@ Model = require './model'
 createDb = require './db'
 
 rest = require './rest'
-socketio = require './socketio'
 browserChannel = require './browserchannel'
 sockjs = require './sockjs'
 websocket = require './websocket'
@@ -46,9 +45,6 @@ create.attach = attach = (server, options, model = createModel(options)) ->
   # The client frontend doesn't get access to the model at all, to make sure security stuff is
   # done properly.
   server.use rest(createAgent, options.rest) if options.rest != null
-
-  # Socketio frontend is now disabled by default.
-  socketio.attach(server, createAgent, options.socketio or {}) if options.socketio?
 
   browserChannel.attach(server, createAgent, options.browserChannel or {}) if options.browserChannel != null
 

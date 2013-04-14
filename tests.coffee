@@ -22,7 +22,6 @@ modules = [
   'useragent'
   'events'
   'rest'
-#  'socketio'
   'browserchannel'
   'sockjs'
   'websocket'
