@@ -103,6 +103,16 @@ tests =
     test.strictEqual calls, 1
     test.done()
 
+  'Listeners are called in the proper context': (test) ->
+    passPart = makePassPart test, 2
+    e = @e
+    @e.once 'foo', ->
+      test.strictEqual this, e
+      passPart()
+    @e.on 'foo', ->
+      test.strictEqual this, e
+      passPart()
+    @e.emit 'foo'
 
 # The tests above are run both with a new MicroEvent and with an object with
 # microevent mixed in.

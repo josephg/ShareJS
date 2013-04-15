@@ -7,20 +7,20 @@
 nextTick = if WEB? then (fn) -> setTimeout fn, 0 else process['nextTick']
 
 class MicroEvent
-  on: (event, f) ->
+  on: (event, fn) ->
     @_events ||= {}
     @_events[event] ||= []
-    @_events[event].push(f)
+    @_events[event].push fn
     this
 
-  removeListener: (event, fct) ->
+  removeListener: (event, fn) ->
     @_events ||= {}
     listeners = (@_events[event] ||= [])
     
     # Sadly, there's no IE8- support for indexOf.
     i = 0
     while i < listeners.length
-      listeners[i] = undefined if listeners[i] == fct
+      listeners[i] = undefined if listeners[i] == fn
       i++
 
     nextTick => @_events[event] = (x for x in @_events[event] when x)
@@ -36,10 +36,10 @@ class MicroEvent
     fn.apply this, args for fn in @_events[event] when fn
     this
 
-  once: (event, f) ->
+  once: (event, fn) ->
     @on event, listener = (args...) =>
       @removeListener event, listener
-      f args...
+      fn.apply this, args
 
 # mixin will delegate all MicroEvent.js function in the destination object
 MicroEvent.mixin = (obj) ->
