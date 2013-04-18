@@ -32,6 +32,7 @@ if WEB?
   types = ottypes
 else
   types = require 'ot-types'
+  {Doc} = require './doc'
 
 class Connection
   _error: (e) ->

@@ -46,8 +46,7 @@ class Doc
     # This is a list of {[create:{...}], [del:true], [op:...], callbacks:[...]}
     @pendingData = []
 
-    if typeof data?.v is 'number'
-      @_injestData data
+    @_injestData data if data
 
   _send: (message) ->
     message.c = @collection
@@ -124,16 +123,13 @@ class Doc
       @provides = {}
 
   # Injest data from a stored snapshot or from the server
-  _injestData: (data = {}) ->
+  _injestData: (data) ->
     # data.type could be:
     # - a string name
     # - an object (the type itself)
     # - null (the document doesn't exist on the server)
     # - undefined (the type is unknown)
-
-    # If version is set, we should have a snapshot and type as well.
-    throw new Error 'Missing snapshot' if data.snapshot is undefined
-    throw new Error 'Missing type' if data.type is undefined
+    throw new Error 'Missing version' unless typeof data.v is 'number'
 
     if typeof @version is 'number'
       # We already have data! Ignore the new stuff, its only going to

@@ -29,8 +29,11 @@ test:
 
 webclient/share.uncompressed.js: $(CLIENT_SRCS) $(BUNDLED_TYPES)
 	mkdir -p webclient
-	cat $(filter %.js,$^) > $@
-	coffee -j $@ -c $(filter %.coffee,$^)
+	echo '(function(){' > $@
+	cat $(filter %.js,$^) >> $@
+	coffee -bpc $(filter %.coffee,$^) >> $@
+	echo '})();' >> $@
+
 
 # Uglify.
 webclient/%.js: webclient/%.uncompressed.js
@@ -40,4 +43,5 @@ webclient/%.js: webclient/%.uncompressed.js
 webclient: webclient/share.js
 	cp node_modules/ot-types/webclient/text.js webclient/
 	cp node_modules/ot-types/webclient/json0.js webclient/
+	cp node_modules/ot-types/webclient/json0.uncompressed.js webclient/
 
