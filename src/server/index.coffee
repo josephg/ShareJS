@@ -7,10 +7,9 @@ Model = require './model'
 createDb = require './db'
 
 rest = require './rest'
-socketio = require './socketio'
-browserChannel = require './browserchannel'
-sockjs = require './sockjs'
-websocket = require './websocket'
+#browserChannel = require './browserchannel'
+#sockjs = require './sockjs'
+#websocket = require './websocket'
 
 # Create an HTTP server and attach whatever frontends are specified in the options.
 #
@@ -47,10 +46,7 @@ create.attach = attach = (server, options, model = createModel(options)) ->
   # done properly.
   server.use rest(createAgent, options.rest) if options.rest != null
 
-  # Socketio frontend is now disabled by default.
-  socketio.attach(server, createAgent, options.socketio or {}) if options.socketio?
-
-  browserChannel.attach(server, createAgent, options.browserChannel or {}) if options.browserChannel != null
+  #browserChannel.attach(server, createAgent, options.browserChannel or {}) if options.browserChannel != null
 
   if !(server instanceof http.Server)
     server = http.createServer server
@@ -58,10 +54,10 @@ create.attach = attach = (server, options, model = createModel(options)) ->
   # this is required by sockjs since it only works with http server, not with
   # `connect` server
   # SockJS frontend is disabled by default
-  sockjs.attach(server, createAgent, options.sockjs or {}) if options.sockjs?
+  #sockjs.attach(server, createAgent, options.sockjs or {}) if options.sockjs?
 
   # WebSocket frontend is disabled by default
-  websocket.attach(server, createAgent, options.websocket or {}) if options.websocket?
+  #websocket.attach(server, createAgent, options.websocket or {}) if options.websocket?
 
   server
 

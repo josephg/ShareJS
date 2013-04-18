@@ -1,5 +1,5 @@
 assert = require 'assert'
-helpers = require '.' # This is sort of nasty.
+helpers = require './index' # This is sort of nasty.
 util = require 'util'
 p = -> #util.debug
 i = -> #util.inspect
@@ -140,7 +140,7 @@ collectStats = (type) ->
   [stats, restore]
 
 # Run some iterations of the random op tester. Requires a random op generator for the type.
-modules.export = (type, iterations = 1000) ->
+module.exports = (type, iterations = 1000) ->
   assert.ok type.generateRandomOp
   assert.ok type.transform
 

@@ -1,19 +1,3 @@
-
-register = (file) ->
-  type = require file
-  exports[type.name] = type
-  try require "#{file}-api"
-
-# Import all the built-in types.
-register './simple'
-register './count'
-
-register './text'
-register './text2'
-register './text-composable'
-register './text-tp2'
-
-register './json'
-
-register './etherpad'
-register './etherpad-api'
+for name, type of require 'ot-types'
+  exports[name] = type
+  try require "#{name}-api"

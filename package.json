@@ -13,6 +13,7 @@
   "homepage": "",
   "author": "Joseph Gentle <josephg@gmail.com>",
   "dependencies": {
+    "ot-types": "*",
     "ws": "*",
     "connect": "<3.x",
     "request": ">= 2.1.1",
