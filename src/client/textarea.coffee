@@ -13,13 +13,11 @@ applyChange = (doc, oldval, newval) ->
   commonEnd++ while oldval.charAt(oldval.length - 1 - commonEnd) == newval.charAt(newval.length - 1 - commonEnd) and
     commonEnd + commonStart < oldval.length and commonEnd + commonStart < newval.length
 
-  doc.del commonStart, oldval.length - commonStart - commonEnd unless oldval.length == commonStart + commonEnd
+  doc.remove commonStart, oldval.length - commonStart - commonEnd unless oldval.length == commonStart + commonEnd
   doc.insert commonStart, newval[commonStart ... newval.length - commonEnd] unless newval.length == commonStart + commonEnd
 
 window.sharejs.extendDoc 'attach_textarea', (elem) ->
   doc = this
-  elem.value = @getText()
-  prevvalue = elem.value
 
   replaceText = (newText, transformCursor) ->
     newSelection = [
@@ -32,7 +30,7 @@ window.sharejs.extendDoc 'attach_textarea', (elem) ->
     elem.scrollTop = scrollTop if elem.scrollTop != scrollTop
     [elem.selectionStart, elem.selectionEnd] = newSelection if window.document.activeElement is elem
 
-  @on 'insert', insert_listener = (pos, text) ->
+  insert_listener = (pos, text) ->
     transformCursor = (cursor) ->
       if pos < cursor
         cursor + text.length
@@ -42,15 +40,15 @@ window.sharejs.extendDoc 'attach_textarea', (elem) ->
     prevvalue = elem.value.replace /\r\n/g, '\n'
     replaceText prevvalue[...pos] + text + prevvalue[pos..], transformCursor
   
-  @on 'delete', delete_listener = (pos, text) ->
+  remove_listener = (pos, length) ->
     transformCursor = (cursor) ->
       if pos < cursor
-        cursor - Math.min(text.length, cursor - pos)
+        cursor - Math.min(length, cursor - pos)
       else
         cursor
     #for IE8 and Opera that replace \n with \r\n.
     prevvalue = elem.value.replace /\r\n/g, '\n'
-    replaceText prevvalue[...pos] + prevvalue[pos + text.length..], transformCursor
+    replaceText prevvalue[...pos] + prevvalue[pos + length..], transformCursor
 
   genOp = (event) ->
     onNextTick = (fn) -> setTimeout fn, 0
@@ -61,18 +59,37 @@ window.sharejs.extendDoc 'attach_textarea', (elem) ->
         prevvalue = elem.value
         applyChange doc, doc.getText(), elem.value.replace /\r\n/g, '\n'
 
-  for event in ['textInput', 'keydown', 'keyup', 'select', 'cut', 'paste']
-    if elem.addEventListener
-      elem.addEventListener event, genOp, false
-    else
-      elem.attachEvent 'on'+event, genOp
+  attach = ->
+    return console?.warn 'Could not attach document: text api incompatible' unless doc.provides.text
 
-  elem.detach_share = =>
-    @removeListener 'insert', insert_listener
-    @removeListener 'delete', delete_listener
+    prevvalue = elem.value = doc.getText()
+    doc.on 'insert', insert_listener
+    doc.on 'remove', remove_listener
+
+    for event in ['textInput', 'keydown', 'keyup', 'select', 'cut', 'paste']
+      if elem.addEventListener
+        elem.addEventListener event, genOp, false
+      else
+        elem.attachEvent 'on'+event, genOp
+
+    doc.once 'deleted', detach
+
+  detach = elem.detach_share = ->
+    doc.removeListener 'insert', insert_listener
+    doc.removeListener 'remove', remove_listener
 
     for event in ['textInput', 'keydown', 'keyup', 'select', 'cut', 'paste']
       if elem.removeEventListener
         elem.removeEventListener event, genOp, false
       else
         elem.detachEvent 'on'+event, genOp
+
+    elem.disabled = true
+    doc.once 'ready', attach
+
+
+  if doc.type
+    attach()
+  else
+    doc.once 'ready', attach
+

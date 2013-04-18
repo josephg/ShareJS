@@ -90,6 +90,29 @@ tests =
     @e.removeListener 'foo', fn
     @e.emit 'bar'
 
+  'a listener registered with once fires': (test) ->
+    @e.once 'foo', -> test.done()
+    @e.emit 'foo'
+
+  'a listener registered with once only fires once': (test) ->
+    calls = 0
+    @e.once 'foo', -> calls++
+    @e.emit 'foo'
+    @e.emit 'foo'
+
+    test.strictEqual calls, 1
+    test.done()
+
+  'Listeners are called in the proper context': (test) ->
+    passPart = makePassPart test, 2
+    e = @e
+    @e.once 'foo', ->
+      test.strictEqual this, e
+      passPart()
+    @e.on 'foo', ->
+      test.strictEqual this, e
+      passPart()
+    @e.emit 'foo'
 
 # The tests above are run both with a new MicroEvent and with an object with
 # microevent mixed in.

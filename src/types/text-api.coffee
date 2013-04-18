@@ -1,7 +1,7 @@
 # Text document API for text
 
 if WEB?
-  type = exports.types.text
+  type = ottypes.text
 else
   type = require './text'
 
@@ -9,10 +9,10 @@ type.api =
   provides: {text:true}
 
   # The number of characters in the string
-  getLength: -> @snapshot.length
+  getLength: -> @getSnapshot().length
 
   # Get the text contents of a document
-  getText: -> @snapshot
+  getText: -> @getSnapshot()
 
   insert: (pos, text, callback) ->
     op = type.normalize [pos, text]
@@ -20,24 +20,25 @@ type.api =
     @submitOp op, callback
     op
   
-  del: (pos, length, callback) ->
+  remove: (pos, length, callback) ->
     op = type.normalize [pos, d:length]
 
     @submitOp op, callback
     op
 
-  _register: ->
-    @on 'remoteop', (op, snapshot) ->
-      pos = spos = 0 # Reported insert position and snapshot position.
-      for component in op
-        switch typeof component
-          when 'number'
-            pos += component
-            spos += component
-          when 'string'
-            @emit 'insert', pos, component
-            pos += component.length
-          when 'object'
-            @emit 'delete', pos, snapshot[spos...spos + component.d]
-            spos += component.d
+  _onOp: (op, isLocal) ->
+    return if isLocal
+
+    pos = spos = 0 # Reported insert position and snapshot position.
+    for component in op
+      switch typeof component
+        when 'number'
+          pos += component
+          spos += component
+        when 'string'
+          @emit 'insert', pos, component
+          pos += component.length
+        when 'object'
+          @emit 'remove', pos, component.d
+          spos += component.d
 

@@ -15,7 +15,7 @@ task 'test', 'Run all tests', ->
   # run directly to get all the delicious output
   console.log 'Running tests... (is your webclient up-to-date?)'
   config.silent = true
-  exec 'nodeunit tests.coffee'      
+  exec 'nodeunit tests.coffee'
   config.silent = false
 
 # This is only needed to be able to refer to the line numbers of crashes
@@ -77,8 +77,6 @@ client = [
   'types/helpers'
   'types/text'
   'types/text-api'
-  'types/etherpad'
-  'types/etherpad-api'
   'client/doc'
   'client/reconnecting_websocket'
   'client/connection'
@@ -94,8 +92,8 @@ extras = [
 task 'webclient', 'Build the web client into one file', ->
   compile client, 'webclient/share'
   buildtype 'json'
-  buildtype 'text-tp2'
-  buildtype 'text2'
+  #buildtype 'text-tp2'
+  #buildtype 'text2'
 
   # TODO: This should also be closure compiled.
   extrafiles = expandNames extras
