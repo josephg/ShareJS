@@ -5,348 +5,195 @@
 #
 # When a client connects the server first authenticates it and sends:
 #
-# S: {auth:<agent session id>}
-#  or
-# S: {auth:null, error:'forbidden'}
+# S: {id:<agent session id>}
 #
 # After that, the client can open documents:
 #
-# C: {doc:'foo', open:true, snapshot:null, create:true, type:'text'}
-# S: {doc:'foo', open:true, snapshot:{snapshot:'hi there', v:5, meta:{}}, create:false}
+# C: {c:'users', doc:'fred', sub:true, snapshot:null, create:true, type:'text'}
+# S: {c:'users', doc:'fred', sub:true, snapshot:{snapshot:'hi there', v:5, meta:{}}, create:false}
 #
 # ...
 #
 # The client can send open requests as soon as the socket has opened - it doesn't need to
-# wait for auth.
+# wait for its id.
 #
 # The wire protocol is documented here:
 # https://github.com/josephg/ShareJS/wiki/Wire-Protocol
 
+createAgent = require './agent'
 hat = require 'hat'
 
-syncQueue = require './syncqueue'
-
-# Time (in ms) that the server will wait for an auth message from the client before closing the connection
-AUTH_TIMEOUT = 10000
-
-# session should implement the following interface:
+# stream should expose the following interface:
 #   headers
 #   address
-#   abort()
-#   stop()
+#   #abort()
+#   #stop()
 #   ready()
 #   send(msg)
 #   removeListener()
 #   on(event, handler) - where event can be 'message' or 'closed'
-exports.handler = (session, createAgent) ->
-    data =
-      headers: session.headers
-      remoteAddress: session.address
+module.exports = (options, stream) ->
+  data =
+    headers: stream.headers
+    remoteAddress: stream.remoteAddress
 
-    # This is the user agent through which a connecting client acts. It is set when the
-    # session is authenticated. The agent is responsible for making sure client requests are
-    # properly authorized, and metadata is kept up to date.
-    agent = null
+  close = (err) ->
+    # Close the stream for writing
+    if err
+      console.warn err
+      stream.emit 'error', err
+    stream.end()
+    # ... and for reading.
+    stream.emit 'close'
+    stream.emit 'end'
 
-    # To save on network traffic, the agent & server can leave out the docName with each message to mean
-    # 'same as the last message'
-    lastSentDoc = null
-    lastReceivedDoc = null
+  # This is the user agent through which a connecting client acts.
+  # The agent is responsible for making sure client requests are properly authorized, and metadata is kept up to date.
+  agent = null
 
-    # Map from docName -> {queue, listener if open}
-    docState = {}
+  # To save on network traffic, the agent & server can leave out the docName with each message to mean
+  # 'same as the last message'
+  lastSentCollection = null
+  lastSentDoc = null
+
+  lastReceivedCollection = null
+  lastReceivedDoc = null
+
+  seq = 1
+
+  # Send a message to the socket.
+  # msg _must_ have the c:Collection,doc:DocName properties set. We'll remove if they're the same as lastReceivedDoc.
+  send = (response) ->
+    if response.c is lastSentCollection and response.doc is lastSentDoc
+      delete response.c
+      delete response.doc
+    else
+      lastSentCollection = response.c
+      lastSentDoc = response.doc
+
+    # Its invalid to send a message to a closed stream. We'll silently drop messages if the
+    # stream has closed.
+    stream.write response
 
 
-    # We'll only handle one message from each client at a time.
-    handleMessage = (query) ->
+  # We'll only handle one message from each client at a time.
+  handleMessage = (query, callback) ->
+    console.log 'handleMessage', query
 
-      error = null
-      error = 'Invalid docName' unless query.doc is null or typeof query.doc is 'string' or (query.doc is undefined and lastReceivedDoc)
-      error = "'create' must be true or missing" unless query.create in [true, undefined]
-      error = "'open' must be true, false or missing" unless query.open in [true, false, undefined]
-      error = "'snapshot' must be null or missing" unless query.snapshot in [null, undefined]
-      error = "'type' invalid" unless query.type is undefined or typeof query.type is 'string'
-      error = "'v' invalid" unless query.v is undefined or (typeof query.v is 'number' and query.v >= 0)
+    error = null
+    # + check collection
+    error = 'Invalid docName' unless query.doc is null or typeof query.doc is 'string' or (query.doc is undefined and lastReceivedDoc)
+    error = "'v' invalid" unless query.v is undefined or (typeof query.v is 'number' and query.v >= 0)
+    error = 'invalid action' unless query.a is undefined or query.a in ['op', 'sub', 'unsub', 'fetch', 'q', 'qsub', 'qunsub']
+    error = 'missing or invalid collection' if (query.doc or query.doc is null) and typeof query.c isnt 'string'
 
-      if error
-        console.warn "Invalid query #{query} from #{agent.sessionId}: #{error}"
-        return session.abort()
+    if error
+      console.warn "Invalid query #{query} from #{agent?.sessionId}: #{error}"
+      #stream.emit 'error', error
+      return callback error
 
-      # The agent can specify null as the docName to get a random doc name.
-      if query.doc is null
-        query.doc = lastReceivedDoc = hat()
-      else if query.doc != undefined
-        lastReceivedDoc = query.doc
-      else
-        unless lastReceivedDoc
-          console.warn "msg.doc missing in query #{query} from #{agent.sessionId}"
+    # The agent can specify null as the docName to get a random doc name.
+    if query.doc is null
+      lastReceivedCollection = query.c
+      query.doc = lastReceivedDoc = hat()
+    else if query.doc != undefined
+      lastReceivedCollection = query.c
+      lastReceivedDoc = query.doc
+    else
+      unless lastReceivedDoc and lastReceivedCollection
+        console.warn "msg.doc or collection missing in query #{query} from #{agent.sessionId}"
         # The disconnect handler will be called when we do this, which will clean up the open docs.
-          return session.abort()
+        return callback 'c or doc missing'
 
-        query.doc = lastReceivedDoc
+      query.c = lastReceivedCollection
+      query.doc = lastReceivedDoc
 
-      docState[query.doc] or= queue: syncQueue (query, callback) ->
-        # When the session is closed, we'll nuke docState. When that happens, no more messages
-        # should be handled.
-        return callback() unless docState
+    reply = (msg) ->
+      msg.a = query.a unless msg.a
+      msg.c = query.c
+      msg.doc = query.doc
+      send msg
 
-        # Close messages are {open:false}
-        if query.open == false
-          handleClose query, callback
-
-            # Open messages are {open:true}. There's a lot of shared logic with getting snapshots
-            # and creating documents. These operations can be done together; and I'll handle them
-            # together.
-        else if query.open or query.snapshot is null or query.create
-                 # You can open, request a snapshot and create all in the same
-                 # request. They're all handled together.
-          handleOpenCreateSnapshot query, callback
-
-                 # The socket is submitting an op.
-        else if query.op? or query.meta?.path?
-          handleOp query, callback
-
-        else
-          console.warn "Invalid query #{JSON.stringify query} from #{agent.sessionId}"
-          session.abort()
+    switch query.a
+      when 'fetch'
+        agent.fetch query.c, query.doc, (err, data) ->
+          return callback err if err
+          reply v:data.v, snapshot:data.data
           callback()
 
-      # ... And add the message to the queue.
-      docState[query.doc].queue query
+      when 'sub'
+        collection = query.c
+        doc = query.doc
 
+        pipe = do (collection, doc) -> (stream) ->
+          stream.on 'data', (data) ->
+            msg =
+              a: 'op'
+              c: collection
+              doc: doc
+              v: data.v
+              src: data.src
+              seq: data.seq
 
-    # # Some utility methods for message handlers
+            msg.op = data.op if data.op
+            msg.create = data.create if data.create
+            msg.del = true if data.del
+  
+            send msg
+        if query.v
+          agent.subscibe collection, doc, query.v, (err, stream) ->
+            return callback err if err
 
-    # Send a message to the socket.
-    # msg _must_ have the doc:DOCNAME property set. We'll remove it if its the same as lastReceivedDoc.
-    send = (response) ->
-      if response.doc is lastSentDoc
-        delete response.doc
-      else
-        lastSentDoc = response.doc
-
-      
-      # Its invalid to send a message to a closed session. We'll silently drop messages if the
-      # session has closed.
-      if session.ready()
-        session.send response
-
-    # Open the given document name, at the requested version.
-    # callback(error, version)
-    open = (docName, version, callback) ->
-      return callback 'Session closed' unless docState
-      return callback 'Document already open' if docState[docName].listener
-      #p "Registering listener on #{docName} by #{socket.id} at #{version}"
-
-      docState[docName].listener = listener = (opData) ->
-        # Listener can be called after close
-        return unless docState?[docName]
-        throw new Error 'Consistency violation - doc listener invalid' unless docState[docName].listener == listener
-
-        #p "listener doc:#{docName} opdata:#{i opData} v:#{version}"
-
-        # Skip the op if this socket sent it.
-        return if opData.meta.source is agent.sessionId
-
-        opMsg =
-          doc: docName
-          op: opData.op
-          v: opData.v
-          meta: opData.meta
-
-        send opMsg
-
-      # Tell the socket the doc is open at the requested version
-      agent.listen docName, version, listener, (error, v) ->
-        delete docState[docName].listener if error
-        callback error, v
-
-    # Close the named document.
-    # callback([error])
-    close = (docName, callback) ->
-      #p "Closing #{docName}"
-      return callback 'Session closed' unless docState
-      listener = docState[docName].listener
-      return callback 'Doc already closed' unless listener?
-
-      agent.removeListener docName
-      delete docState[docName].listener
-      callback()
-
-    # Handles messages with any combination of the open:true, create:true and snapshot:null parameters
-    handleOpenCreateSnapshot = (query, finished) ->
-      docName = query.doc
-      msg = doc:docName
-
-      callback = (error) ->
-        if error
-          close(docName) if msg.open == true
-          msg.open = false if query.open == true
-          msg.snapshot = null if query.snapshot != undefined
-          delete msg.create
-
-          msg.error = error
-
-        send msg
-        finished()
-
-      return callback 'No docName specified' unless query.doc?
-
-      if query.create == true
-        if typeof query.type != 'string'
-          return callback 'create:true requires type specified'
-
-      if query.meta != undefined
-        unless typeof query.meta == 'object' and Array.isArray(query.meta) == false
-          return callback 'meta must be an object'
-
-      docData = undefined
-
-      # This is implemented with a series of cascading methods for each different type of
-      # thing this method can handle. This would be so much nicer with an async library. Welcome to
-      # callback hell.
-
-      step1Create = ->
-        return step2Snapshot() if query.create != true
-
-        # The document obviously already exists if we have a snapshot.
-        if docData
-          msg.create = false
-          step2Snapshot()
+            reply v:query.v
+            pipe stream
+            callback()
         else
-          agent.create docName, query.type, query.meta || {}, (error) ->
-            if error is 'Document already exists'
-                # We've called getSnapshot (-> null), then create (-> already exists). Its possible
-                # another agent has called create() between our getSnapshot and create() calls.
-              agent.getSnapshot docName, (error, data) ->
-                return callback error if error
+          agent.fetchAndSubscribe collection, doc, (err, data, stream) ->
+            return callback err if err
+            # Send the snapshot separately. They should both end up on the wire together, but its
+            # easier to process in the client this way.
+            console.log 'want to subscribe user'
+            send a:'data', c:collection, doc:doc, v:data.v, type:data.type, snapshot:data.data, meta:data.meta
+            reply v:data.v
+            pipe stream
+            callback()
 
-                docData = data
-                msg.create = false
-                step2Snapshot()
-            else if error
-              callback error
-            else
-              msg.create = true
-              step2Snapshot()
+      when 'op'
+        # Shallow copy of just the op data parts.
+        opData = {op:query.op, v:query.v, src:query.src, seq:query.seq}
+        opData.create = query.create if query.create
+        opData.del = query.del if query.del
+        
+        unless query.src
+          opData.src = agent.sessionId
+          opData.seq = seq++
 
-      # The socket requested a document snapshot
-      step2Snapshot = ->
-                          #        if query.create or query.open or query.snapshot == null
-                          #          msg.meta = docData.meta
-
-        # Skip inserting a snapshot if the document was just created.
-        if query.snapshot != null or msg.create == true
-          step3Open()
-          return
-
-        if docData
-          msg.v = docData.v
-          msg.type = docData.type.name unless query.type == docData.type.name
-          msg.snapshot = docData.snapshot
-        else
-          return callback 'Document does not exist'
-
-        step3Open()
-
-      # Attempt to open a document with a given name. Version is optional.
-      # callback(opened at version) or callback(null, errormessage)
-      step3Open = ->
-        return callback() if query.open != true
-
-        # Verify the type matches
-        return callback 'Type mismatch' if query.type and docData and query.type != docData.type.name
-
-        open docName, query.v, (error, version) ->
-          return callback error if error
-
-          # + Should fail if the type is wrong.
-
-          #p "Opened #{docName} at #{version} by #{socket.id}"
-          msg.open = true
-          msg.v = version
-          callback()
-
-      # Technically, we don't need a snapshot if the user called create but not open or createSnapshot,
-      # but no clients do that yet anyway.
-      if query.snapshot == null or query.open == true #and query.type
-        agent.getSnapshot query.doc, (error, data) ->
-          return callback error if error and error != 'Document does not exist'
-
-          docData = data
-          step1Create()
-      else
-        step1Create()
-
-    # The socket closes a document
-    handleClose = (query, callback) ->
-      close query.doc, (error) ->
-        if error
-            # An error closing still results in the doc being closed.
-          send {doc:query.doc, open:false, error:error}
-        else
-          send {doc:query.doc, open:false}
-
-        callback()
-
-    # We received an op from the socket
-    handleOp = (query, callback) ->
-      # ...
-      #throw new Error 'No version specified' unless query.v?
-
-      opData = {v:query.v, op:query.op, meta:query.meta, dupIfSource:query.dupIfSource}
-
-      # If it's a metaOp don't send a response
-      agent.submitOp query.doc, opData, if (not opData.op? and opData.meta?.path?) then callback else (error, appliedVersion) ->
-        msg = if error
-                  #p "Sending error to socket: #{error}"
-          {doc:query.doc, v:null, error:error}
-        else
-          {doc:query.doc, v:appliedVersion}
-
-        send msg
-        callback()
-
-    # Authentication process has failed, send error and stop session
-    failAuthentication = (error) ->
-      session.send
-        auth: null
-        error: error
-      
-      session.stop()
-
-    # Wait for client to send an auth message, but don't wait forever
-    timeout = setTimeout () ->
-      failAuthentication('Timeout waiting for client auth message')
-    , AUTH_TIMEOUT
-
-    # We don't process any messages from the agent until they've authorized. Instead,
-    # they are stored in this buffer.
-    buffer = []
-    session.on 'message', bufferMsg = (msg) ->
-      if typeof msg.auth != 'undefined'
-        clearTimeout timeout
-        data.authentication = msg.auth
-        createAgent data, (error, agent_) ->
-          if error
-            # The client is not authorized, so they shouldn't try and reconnect.
-            failAuthentication(error)
+        agent.submit query.c, query.doc, opData, (err, v) ->
+          if err
+            reply {a:'ack', error:err}
           else
-            agent = agent_
-            session.send auth:agent.sessionId
+            reply {a:'ack'}
+          callback()
 
-          # Ok. Now we can handle all the messages in the buffer. They'll go straight to
-          # handleMessage from now on.
-            session.removeListener 'message', bufferMsg
-            handleMessage msg for msg in buffer
-            buffer = null
-            session.on 'message', handleMessage
       else
-        buffer.push msg
+        console.warn 'invalid message', query
+        callback 'invalid or unknown message'
 
-    session.on 'close', ->
-      return unless agent
-      #console.log "Client #{agent.sessionId} disconnected"
-      for docName, {listener} of docState
-        agent.removeListener docName if listener
-      docState = null
+
+  agent = createAgent options, stream
+  stream.write protocol:0, id:agent.sessionId
+
+  do pump = ->
+    msg = stream.read()
+    
+    unless msg
+      stream.once 'readable', pump
+      return
+
+    # We've already authed successfully. Process the message.
+    handleMessage msg, (err) ->
+      return close err if err
+      pump()
+
+
+
