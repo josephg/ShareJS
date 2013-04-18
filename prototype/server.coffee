@@ -6,11 +6,12 @@ argv = require('optimist').argv
 
 webserver = connect(
   #  connect.logger()
-  connect.static "#{__dirname}/../public"
+  connect.static "#{__dirname}/public"
+  connect.static "#{__dirname}/../webclient"
 )
 
 sharejs = require '../src'
-shareClient = sharejs.createClient db:sharejs.db.mongo 'localhost:27017/test?auto_reconnect', safe:false
+shareClient = sharejs.server.createClient db:sharejs.db.mongo 'localhost:27017/test?auto_reconnect', safe:false
 
 opts = {webserver}
 webserver.use browserChannel opts, (client) ->

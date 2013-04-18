@@ -16,5 +16,4 @@ module.exports = (options, stream) ->
     do (fn) ->
       agent[fn] = (args...) -> backend[fn](args...)
 
-  console.log backend
   agent

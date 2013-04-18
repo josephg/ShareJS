@@ -33,9 +33,9 @@
     "sharejs-exampleserver": "bin/exampleserver"
   },
   "scripts": {
-    "build": "cake build",
-    "test": "cake test",
-    "prepublish": "cake webclient"
+    "build": "make",
+    "test": "mocha",
+    "prepublish": "make webclient"
   },
   "licenses": [
     {

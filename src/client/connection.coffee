@@ -30,20 +30,8 @@
 
 if WEB?
   types = ottypes
-  {BCSocket, SockJS, WebSocket} = window
-  if BCSocket
-    socketImpl = 'channel'
-  else
-    if SockJS
-      socketImpl = 'sockjs'
-    else
-      socketImpl = 'websocket'
 else
   types = require 'ot-types'
-  {BCSocket} = require 'browserchannel'
-  Doc = require('./doc').Doc
-  WebSocket = require 'ws'
-  socketImpl = null
 
 class Connection
   _error: (e) ->

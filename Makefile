@@ -11,11 +11,12 @@ CLIENT = \
 	index.coffee \
 	textarea.coffee
 
-CLIENT_EXTRA = \
+BUNDLED_TYPES = \
 	node_modules/ot-types/webclient/text.js \
-	node_modules/ot-types/webclient/json0.js
+	src/types/text-api.coffee \
+#	node_modules/ot-types/webclient/json0.js
 
-CLIENT_SRCS = $(addprefix src/client/, $(CLIENT)) $(CLIENT_EXTRA)
+CLIENT_SRCS = $(addprefix src/client/, $(CLIENT))
 
 all: webclient
 
@@ -26,9 +27,10 @@ clean:
 test:
 	node_modules/.bin/mocha
 
-webclient/share.uncompressed.js: $(CLIENT_SRCS)
+webclient/share.uncompressed.js: $(CLIENT_SRCS) $(BUNDLED_TYPES)
+	mkdir -p webclient
+	cat $(filter %.js,$^) > $@
 	coffee -j $@ -c $(filter %.coffee,$^)
-	cat $(filter %.js,$^) >> $@
 
 # Uglify.
 webclient/%.js: webclient/%.uncompressed.js
@@ -36,4 +38,6 @@ webclient/%.js: webclient/%.uncompressed.js
 
 # Compile the types for a browser.
 webclient: webclient/share.js
+	cp node_modules/ot-types/webclient/text.js webclient/
+	cp node_modules/ot-types/webclient/json0.js webclient/
 
