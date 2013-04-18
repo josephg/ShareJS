@@ -42,15 +42,15 @@ window.sharejs.extendDoc 'attach_textarea', (elem) ->
     prevvalue = elem.value.replace /\r\n/g, '\n'
     replaceText prevvalue[...pos] + text + prevvalue[pos..], transformCursor
   
-  @on 'delete', delete_listener = (pos, text) ->
+  @on 'delete', delete_listener = (pos, length) ->
     transformCursor = (cursor) ->
       if pos < cursor
-        cursor - Math.min(text.length, cursor - pos)
+        cursor - Math.min(length, cursor - pos)
       else
         cursor
     #for IE8 and Opera that replace \n with \r\n.
     prevvalue = elem.value.replace /\r\n/g, '\n'
-    replaceText prevvalue[...pos] + prevvalue[pos + text.length..], transformCursor
+    replaceText prevvalue[...pos] + prevvalue[pos + length..], transformCursor
 
   genOp = (event) ->
     onNextTick = (fn) -> setTimeout fn, 0

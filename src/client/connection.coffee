@@ -46,8 +46,6 @@ else
   socketImpl = null
 
 class Connection
-  _get: (c, doc) -> @collections[c]?[doc]
-
   _error: (e) ->
     @setState 'stopped', e
     @disconnect e
@@ -82,7 +80,7 @@ class Connection
         collection = msg.c = @lastReceivedCollection
         docName = msg.doc = @lastReceivedDoc
 
-      if (doc = @_get collection, docName)
+      if (doc = @get collection, docName)
         doc._onMessage msg
       else
         console?.error 'Unhandled message', msg
@@ -147,21 +145,70 @@ class Connection
     #console.warn 'calling close on the socket'
     @socket.close()
 
+
   # *** Doc management
- 
-  makeDoc: (collection, name, data, callback) ->
-    throw new Error("Doc #{name} already open") if @_get collection, name
-    doc = new Doc(@, collection, name, data)
-    c = (@collections[collection] ||= {})
-    c[name] = doc
+  get: (collection, name) -> @collections[collection]?[name]
+  getOrCreate: (collection, name, data) ->
+    doc = @get collection, name
+    return doc if doc
 
-    doc.open (error) =>
-      if error
-        delete c[name]
+    doc = new Doc this, collection, name, data
+    collection = (@collections[collection] ||= {})
+    collection[name] = doc
+    
+
+### 
+  open: (collection, docName, options, callback) ->
+    doc = @openSync collection, name
+    doc.on 'ready', ->
+      if doc.type and options.type
+        doc.create type, -> callback()
       else
-        doc.on 'closed', => delete c[name]
+        callback()
 
-      callback error, (doc unless error)
+  openSync: (collection, docName, options = {}) ->
+    # options can have:
+    # - type:'text'
+    # - snapshot:{...}
+    # - v:  (if you have a snapshot you also need a version and a type).
+    #
+    # - subscribe:true / false. Default true.
+
+    
+    options.type = types[options.type] if typeof options.type is 'string'
+
+    if typeof options.v is 'number'
+      throw new Error 'Missing snapshot' if options.snapshot is undefined
+      throw new Error 'Missing type' if options.type is undefined
+    else
+      delete options.snapshot
+
+    doc = @_get collection, docName
+    if doc
+      if options.subscribe isnt false
+        doc.subscribe()
+
+      return doc
+
+    else
+      return @makeDoc collection, docName, options
+
+
+
+
+  makeDoc: (collection, docName, data, callback) ->
+    throw new Error("Doc #{docName} already open") if @_get collection, docName
+    doc = new Doc(this, collection, docName, data)
+    c = (@collections[collection] ||= {})
+    c[docName] = doc
+
+    #doc.open (error) =>
+    #  if error
+    #    delete c[name]
+    #  else
+    #    doc.on 'closed', => delete c[name]
+
+    #  callback error, (doc unless error)
 
   # Open a document that already exists
   # callback(error, doc)
@@ -212,7 +259,7 @@ class Connection
       when 'opening' then @on 'open', -> callback null, doc
       when 'closed' then doc.open (error) -> callback error, (doc unless error)
     return
-
+###
 # Not currently working.
 #  create: (type, callback) ->
 #    open null, type, callback
