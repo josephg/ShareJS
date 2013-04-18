@@ -1,32 +1,45 @@
 # Text document API for text
 
-text = require './text' if typeof WEB is 'undefined'
+if WEB?
+  type = ottypes.text
+else
+  type = require './text'
 
-text.api =
+type.api =
   provides: {text:true}
 
   # The number of characters in the string
-  getLength: -> @snapshot.length
+  getLength: -> @getSnapshot().length
 
   # Get the text contents of a document
-  getText: -> @snapshot
+  getText: -> @getSnapshot()
 
   insert: (pos, text, callback) ->
-    op = [{p:pos, i:text}]
+    op = type.normalize [pos, text]
     
     @submitOp op, callback
     op
   
-  del: (pos, length, callback) ->
-    op = [{p:pos, d:@snapshot[pos...(pos + length)]}]
+  remove: (pos, length, callback) ->
+    op = type.normalize [pos, d:length]
 
     @submitOp op, callback
     op
-  
-  _register: ->
-    @on 'remoteop', (op) ->
-      for component in op
-        if component.i != undefined
-          @emit 'insert', component.p, component.i
-        else
-          @emit 'delete', component.p, component.d
+
+  _onOp: (op, isLocal) ->
+    return if isLocal
+
+    pos = spos = 0 # Reported insert position and snapshot position.
+    for component in op
+      switch typeof component
+        when 'number'
+          pos += component
+          spos += component
+        when 'string'
+          @emit 'insert', pos, component
+          pos += component.length
+        when 'object'
+          @emit 'remove', pos, component.d
+          spos += component.d
+
+

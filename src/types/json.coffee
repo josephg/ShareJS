@@ -120,6 +120,12 @@ json.apply = (snapshot, op) ->
 
   container.data
 
+json.incrementalUpdate = (snapshot, op, _yield) ->
+  for c in op
+    smallOp = [c]
+    snapshot = json.apply snapshot, smallOp
+    _yield smallOp, snapshot
+
 # Checks if two paths, p1 and p2 match.
 json.pathMatches = (p1, p2, ignoreLast) ->
   return false unless p1.length == p2.length

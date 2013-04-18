@@ -117,7 +117,7 @@ class Doc
     @snapshot = null unless @type
 
     # And register any new API methods.
-    if type.api
+    if type?.api
       this[k] = v for k, v of type.api
       @on 'op', @_onOp if @_onOp
     else
@@ -144,8 +144,6 @@ class Doc
     @version = data.v
     @snapshot = data.snapshot
     @_setType data.type
-
-    setTimeout (=> @emit 'ready'), 0
 
   setNoOp = (data) ->
     delete data.op
@@ -189,6 +187,7 @@ class Doc
       @_setType create.type
       @snapshot = @type.create create.data
 
+      setTimeout (=> @emit 'ready', isLocal), 0
       setTimeout (=> @emit 'created', isLocal), 0
     else if opData.del
       # The type should always exist in this case. del x _ = del
@@ -212,7 +211,7 @@ class Doc
         @emit 'op', op, isLocal
     else
       # no-op. Ignore.
-      console.warn 'Ignoring received no-op.', opData
+      console?.warn 'Ignoring received no-op.', opData
 
   # This should be called right after _otApply.
   _afterOtApply: (opData, isLocal) ->
@@ -287,6 +286,7 @@ class Doc
       when 'data'
         # Nom.
         @_injestData msg
+        @emit 'ready' if @type
         @emit 'fetched'
 
       when 'sub'
@@ -347,7 +347,7 @@ class Doc
 
   _submitOpData: (opData, callback) ->
     error = (err) ->
-      if callback then callback(err) else console.warn 'Failed attempt to submitOp:', err
+      if callback then callback(err) else console?.warn 'Failed attempt to submitOp:', err
 
     return error 'You cannot currently submit operations to an unsubscribed document' unless @subscribeRequested
     return error "Cannot call submitOp from inside an 'op' event handler" if @locked
@@ -383,7 +383,7 @@ class Doc
   submitOp: (op, callback) -> @_submitOpData {op}, callback
 
   create: (type, data, callback) ->
-    [data, callback] = [undefined, data] if typeof callback is 'function'
+    [data, callback] = [undefined, data] if typeof data is 'function'
     return callback? 'Document already exists' if @type
     @_submitOpData {create:{type, data}}, callback
 
@@ -419,6 +419,8 @@ class Doc
 
     @inflightData = @pendingData.shift()
     @_sendOpData @inflightData
+
+  getSnapshot: -> @snapshot
   
 # Make documents event emitters
 unless WEB?
