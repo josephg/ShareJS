@@ -1,6 +1,6 @@
 {
   "name": "share",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "A database for concurrent document editing",
   "keywords": [
     "operational transformation",
@@ -13,22 +13,20 @@
   "homepage": "",
   "author": "Joseph Gentle <josephg@gmail.com>",
   "dependencies": {
+    "livedb": "*",
     "ot-types": "*",
-    "ws": "*",
-    "connect": "<3.x",
-    "request": ">= 2.1.1",
-    "coffee-script": "<1.6",
+    "coffee-script": "<=1.6",
     "hat": "*"
   },
   "devDependencies": {
+    "shelljs": "*",
     "express": "~ 3.x",
     "optimist": ">= 0.2.4",
+    "browserchannel": "*",
     "mocha": "*",
-    "shelljs": "*",
-    "uglify-js": "~1",
-    "websocket": "*"
+    "uglify-js": "~2"
   },
-  "engine": "node >= 0.10",
+  "engine": "node >= 0.6",
   "main": "index.js",
   "bin": {
     "sharejs": "bin/sharejs",
