@@ -83,7 +83,7 @@ class Connection
         @setState 'stopped', @lastError or reason
 
     @socket.onerror = (e) =>
-      #console.warn 'onerror', e
+      console?.warn 'onerror', e
       @emit 'error', e
 
     @socket.onopen = =>
@@ -102,6 +102,7 @@ class Connection
       @setState 'connecting'
 
   setState: (state, data) ->
+    console.log "connection state #{@state} -> #{state}"
     return if @state is state
     @state = state
 
@@ -140,7 +141,8 @@ class Connection
     doc.open (error) =>
       delete @docs[name] if error
       unless error
-        doc.on 'closed', => delete @docs[name]
+        doc.on 'closed', =>
+          delete @docs[name] unless doc.autoOpen
       callback error, (doc unless error)
 
   # Open a document that already exists
@@ -160,7 +162,9 @@ class Connection
 
     # Wait for the connection to open
     if @state is 'connecting'
-      @on 'handshaking', -> @open(docName, type, callback)
+      @on 'handshaking', ->
+        @open(docName, type, callback)
+        callback = null # When we reconnect, don't call the callback again.
       return
 
     if typeof type is 'function'

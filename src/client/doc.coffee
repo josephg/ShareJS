@@ -93,6 +93,7 @@ class Doc
     @emit state, data
 
   _setType: (type) ->
+    return if @type
     if typeof type is 'string'
       type = types[type]
 
