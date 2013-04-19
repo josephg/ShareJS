@@ -103,6 +103,19 @@ tests =
     test.strictEqual calls, 1
     test.done()
 
+  'this is bound correctly in event callbacks': (test) ->
+    e = @e
+    calls = 0
+    @e.once 'foo', ->
+      test.strictEqual this, e
+      calls++
+    @e.on 'foo', ->
+      test.strictEqual this, e
+      calls++
+    @e.emit 'foo'
+    test.strictEqual calls, 2
+    test.done()
+
 
 # The tests above are run both with a new MicroEvent and with an object with
 # microevent mixed in.

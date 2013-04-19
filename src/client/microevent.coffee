@@ -35,7 +35,7 @@ class MicroEvent
   once: (event, f) ->
     @on event, listener = (args...) =>
       @removeListener event, listener
-      f args...
+      f.apply this, args
 
 # mixin will delegate all MicroEvent.js function in the destination object
 MicroEvent.mixin = (obj) ->
