@@ -83,7 +83,7 @@ class Connection
         @setState 'stopped', @lastError or reason
 
     @socket.onerror = (e) =>
-      console?.warn 'onerror', e
+      #console?.warn 'onerror', e
       @emit 'error', e
 
     @socket.onopen = =>
@@ -102,7 +102,7 @@ class Connection
       @setState 'connecting'
 
   setState: (state, data) ->
-    console.log "connection state #{@state} -> #{state}"
+    #console.log "connection state #{@state} -> #{state}"
     return if @state is state
     @state = state
 
