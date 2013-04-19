@@ -43,6 +43,9 @@ class Connection
     # Map of collection -> docname -> doc
     @collections = {}
 
+    @nextQueryId = 1
+    @queries = {} # map from query id -> query object
+
     # States:
     # - 'connecting': The connection has been established, but we don't have our client ID yet
     # - 'connected': We have connected and recieved our client ID. Ready for data.
@@ -53,26 +56,31 @@ class Connection
     @socket.onmessage = (msg) =>
       console.log 'RECV', msg
 
-      if msg.id
-        throw new Error 'Invalid protocol version' unless msg.protocol is 0
-        throw new Error 'Invalid client id' unless typeof msg.id is 'string'
+      switch msg.a
+        when 'init'
+          throw new Error 'Invalid protocol version' unless msg.protocol is 0
+          throw new Error 'Invalid client id' unless typeof msg.id is 'string'
 
-        # Our very own client id.
-        @id = msg.id
-        @setState 'connected'
-        return
+          # Our very own client id.
+          @id = msg.id
+          @setState 'connected'
 
-      if msg.doc isnt undefined
-        collection = @lastReceivedCollection = msg.c
-        docName = @lastReceivedDoc = msg.doc
-      else
-        collection = msg.c = @lastReceivedCollection
-        docName = msg.doc = @lastReceivedDoc
+        when 'q'
+          # Its a query response. Handle that here.
+          @queries[msg.id].onmessage msg
 
-      if (doc = @get collection, docName)
-        doc._onMessage msg
-      else
-        console?.error 'Unhandled message', msg
+        else # Everything else should be passed to the document.
+          if msg.doc isnt undefined
+            collection = @lastReceivedCollection = msg.c
+            docName = @lastReceivedDoc = msg.doc
+          else
+            collection = msg.c = @lastReceivedCollection
+            docName = msg.doc = @lastReceivedDoc
+
+          if (doc = @get collection, docName)
+            doc._onMessage msg
+          else
+            console?.error 'Unhandled message', msg
 
     @connected = false
     @socket.onclose = (reason) =>
@@ -116,7 +124,7 @@ class Connection
 
   send: (data) ->
     console.log "SEND:", data
-    if data.doc # data.doc not set when sending auth request
+    if data.doc # data.doc not set when sending auth request or queries.
       docName = data.doc
       collection = data.c
 
@@ -145,6 +153,33 @@ class Connection
     collection = (@collections[collection] ||= {})
     collection[name] = doc
     
+
+  query: (collection, q, callback) ->
+    id = @nextQueryId++
+    @queries[id] = query =
+      state: 'loading'
+      onmessage: (msg) ->
+        if @state is 'loading'
+          if msg.error
+            @state = 'error'
+            @emit 'error', msg.error
+            @emit 'loaded', msg.error
+          else
+            @state = 'ok'
+            @data = msg.data
+            @emit 'loaded', msg, msg.data
+
+        if msg.add
+          console.log 'add', msg.add
+        else if msg.remove
+          console.log 'remove', msg.rm
+
+    MicroEvent.mixin query
+    query.once 'loaded', callback
+
+    @send a:'q', id:id, q:q
+
+    query
 
 ### 
   open: (collection, docName, options, callback) ->

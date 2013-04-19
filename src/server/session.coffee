@@ -61,6 +61,16 @@ module.exports = (options, stream) ->
 
   seq = 1
 
+  # We need to track which documents are subscribed by the client. This is a map of
+  # collection name -> {doc name: stream}
+  collections = {}
+
+  setSubscribed = (c, doc, value = true) ->
+    docs = (collections[c] ||= {})
+    docs[doc] = value
+
+  isSubscribed = (c, doc) -> collections[c]?[doc]
+
   # Send a message to the socket.
   # msg _must_ have the c:Collection,doc:DocName properties set. We'll remove if they're the same as lastReceivedDoc.
   send = (response) ->
@@ -74,7 +84,6 @@ module.exports = (options, stream) ->
     # Its invalid to send a message to a closed stream. We'll silently drop messages if the
     # stream has closed.
     stream.write response
-
 
   # We'll only handle one message from each client at a time.
   handleMessage = (query, callback) ->

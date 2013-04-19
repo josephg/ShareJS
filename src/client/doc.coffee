@@ -54,7 +54,10 @@ class Doc
     @connection.send message
   
   subscribe: (callback) ->
-    return if @subscribeRequested
+    # This error message isn't entirely accurate. We're not necessarily subscribed yet - but we are
+    # subscribing at least.
+    return callback? 'Already subscribed' if @subscribeRequested
+
     @subscribeRequested = yes
     
     if callback then @_subscribeCallback = (error) =>
