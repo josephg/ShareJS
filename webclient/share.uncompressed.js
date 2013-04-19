@@ -147,7 +147,7 @@ Doc = (function() {
     var msg,
       _this = this;
     if (this.subscribeRequested) {
-      return;
+      return typeof callback === "function" ? callback('Already subscribed') : void 0;
     }
     this.subscribeRequested = true;
     if (callback) {
@@ -597,32 +597,37 @@ Connection = (function() {
     var _this = this;
     this.socket = socket;
     this.collections = {};
+    this.nextQueryId = 1;
+    this.queries = {};
     this.state = 'disconnected';
     this.socket.onmessage = function(msg) {
       var collection, doc, docName;
       console.log('RECV', msg);
-      if (msg.id) {
-        if (msg.protocol !== 0) {
-          throw new Error('Invalid protocol version');
-        }
-        if (typeof msg.id !== 'string') {
-          throw new Error('Invalid client id');
-        }
-        _this.id = msg.id;
-        _this.setState('connected');
-        return;
-      }
-      if (msg.doc !== void 0) {
-        collection = _this.lastReceivedCollection = msg.c;
-        docName = _this.lastReceivedDoc = msg.doc;
-      } else {
-        collection = msg.c = _this.lastReceivedCollection;
-        docName = msg.doc = _this.lastReceivedDoc;
-      }
-      if ((doc = _this.get(collection, docName))) {
-        return doc._onMessage(msg);
-      } else {
-        return typeof console !== "undefined" && console !== null ? console.error('Unhandled message', msg) : void 0;
+      switch (msg.a) {
+        case 'init':
+          if (msg.protocol !== 0) {
+            throw new Error('Invalid protocol version');
+          }
+          if (typeof msg.id !== 'string') {
+            throw new Error('Invalid client id');
+          }
+          _this.id = msg.id;
+          return _this.setState('connected');
+        case 'q':
+          return _this.queries[msg.id].onmessage(msg);
+        default:
+          if (msg.doc !== void 0) {
+            collection = _this.lastReceivedCollection = msg.c;
+            docName = _this.lastReceivedDoc = msg.doc;
+          } else {
+            collection = msg.c = _this.lastReceivedCollection;
+            docName = msg.doc = _this.lastReceivedDoc;
+          }
+          if ((doc = _this.get(collection, docName))) {
+            return doc._onMessage(msg);
+          } else {
+            return typeof console !== "undefined" && console !== null ? console.error('Unhandled message', msg) : void 0;
+          }
       }
     };
     this.connected = false;
@@ -711,6 +716,40 @@ Connection = (function() {
     doc = new Doc(this, collection, name, data);
     collection = ((_base = this.collections)[collection] || (_base[collection] = {}));
     return collection[name] = doc;
+  };
+
+  Connection.prototype.query = function(collection, q, callback) {
+    var id, query;
+    id = this.nextQueryId++;
+    this.queries[id] = query = {
+      state: 'loading',
+      onmessage: function(msg) {
+        if (this.state === 'loading') {
+          if (msg.error) {
+            this.state = 'error';
+            this.emit('error', msg.error);
+            this.emit('loaded', msg.error);
+          } else {
+            this.state = 'ok';
+            this.data = msg.data;
+            this.emit('loaded', msg, msg.data);
+          }
+        }
+        if (msg.add) {
+          return console.log('add', msg.add);
+        } else if (msg.remove) {
+          return console.log('remove', msg.rm);
+        }
+      }
+    };
+    MicroEvent.mixin(query);
+    query.once('loaded', callback);
+    this.send({
+      a: 'q',
+      id: id,
+      q: q
+    });
+    return query;
   };
 
   return Connection;
