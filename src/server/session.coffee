@@ -108,25 +108,21 @@ module.exports = (options, stream) ->
       query.c = lastReceivedCollection
       query.doc = lastReceivedDoc
 
-    reply = (msg) ->
-      msg.a = query.a unless msg.a
-      msg.c = query.c
-      msg.doc = query.doc
-      send msg
-
     switch query.a
       when 'fetch'
         agent.fetch query.c, query.doc, (err, data) ->
           return callback err if err
-          reply v:data.v, snapshot:data.data
-          callback()
+          callback null, v:data.v, snapshot:data.data
 
       when 'sub'
         collection = query.c
         doc = query.doc
 
-        pipe = do (collection, doc) -> (stream) ->
-          stream.on 'data', (data) ->
+        return callback null, error:'Already subscribed' if isSubscribed collection, doc
+        setSubscribed collection, doc
+
+        subscribeToStream = do (collection, doc) -> (opstream) ->
+          opstream.on 'data', (data) ->
             msg =
               a: 'op'
               c: collection
@@ -140,23 +136,30 @@ module.exports = (options, stream) ->
             msg.del = true if data.del
   
             send msg
-        if query.v
-          agent.subscibe collection, doc, query.v, (err, stream) ->
-            return callback err if err
 
-            reply v:query.v
-            pipe stream
-            callback()
+          # Stop listening to the stream after the session is closed
+          stream.on 'finish', -> opstream.destroy()
+
+        if query.v
+          agent.subscribe collection, doc, query.v, (err, stream) ->
+            if err
+              setSubscribed collection, doc, false
+              return callback err
+
+            callback null, v:query.v
+            subscribeToStream stream
         else
           agent.fetchAndSubscribe collection, doc, (err, data, stream) ->
-            return callback err if err
+            if err
+              setSubscribed collection, doc, false
+              return callback err
+
             # Send the snapshot separately. They should both end up on the wire together, but its
             # easier to process in the client this way.
             console.log 'want to subscribe user'
             send a:'data', c:collection, doc:doc, v:data.v, type:data.type, snapshot:data.data, meta:data.meta
-            reply v:data.v
-            pipe stream
-            callback()
+            callback null, v:data.v
+            subscribeToStream stream
 
       when 'op'
         # Shallow copy of just the op data parts.
@@ -170,10 +173,22 @@ module.exports = (options, stream) ->
 
         agent.submit query.c, query.doc, opData, (err, v) ->
           if err
-            reply {a:'ack', error:err}
+            callback null, {a:'ack', error:err}
           else
-            reply {a:'ack'}
-          callback()
+            callback null, {a:'ack'}
+
+      when 'q'
+        agent.query query.c, query.q, (err, results) ->
+          callback err if err
+          
+          id = query.id
+          # Results.data contains the initial query result set
+          callback null, id:id, data:results.data
+
+          results.on 'add', (docName) ->
+            send a:'q', id:id, add:docName
+          results.on 'remove', (docName) ->
+            send a:'q', id:id, rm:docName
 
       else
         console.warn 'invalid message', query
@@ -181,18 +196,25 @@ module.exports = (options, stream) ->
 
 
   agent = createAgent options, stream
-  stream.write protocol:0, id:agent.sessionId
+  stream.write a:'init', protocol:0, id:agent.sessionId
 
   do pump = ->
-    msg = stream.read()
+    query = stream.read()
     
-    unless msg
+    unless query
       stream.once 'readable', pump
       return
 
     # We've already authed successfully. Process the message.
-    handleMessage msg, (err) ->
+    reply = (msg) ->
+      msg.a = query.a unless msg.a
+      msg.c = query.c
+      msg.doc = query.doc
+      send msg
+
+    handleMessage query, (err, msg) ->
       return close err if err
+      reply msg if msg
       pump()
 
 

@@ -34,6 +34,11 @@ webserver.use browserChannel opts, (client) ->
   stream.on 'error', (msg) ->
     client.stop()
 
+  client.on 'close', (reason) ->
+    stream.emit 'close'
+    stream.emit 'end'
+    stream.end()
+
   # ... and give the stream to ShareJS.
   shareClient.listen stream
 
