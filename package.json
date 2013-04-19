@@ -20,7 +20,7 @@
     "ws": "*",
     "connect": "<3.x",
     "request": ">= 2.1.1",
-    "coffee-script": "<1.6",
+    "coffee-script": "<1.7",
     "hat": "*"
   },
   "devDependencies": {

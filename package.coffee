@@ -36,7 +36,7 @@ module.exports =
     request: ">= 2.1.1"
 
     # Prevent upgrade failures like v1.3. Bump this when tested.
-    "coffee-script": "<1.6"
+    "coffee-script": "<1.7"
 
     # Useragent hashing
     hat: "*"
