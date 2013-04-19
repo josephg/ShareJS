@@ -75,8 +75,7 @@ module.exports =
     prepublish: "cake webclient"
 
   licenses: [
-    type: "BSD"
-    url: "http://www.freebsd.org/copyright/freebsd-license.html"
+    type: "MIT"
   ]
 
   repository:
