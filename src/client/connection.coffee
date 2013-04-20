@@ -154,8 +154,11 @@ class Connection
     collection[name] = doc
     
 
-  query: (collection, q, callback) ->
+  query: (collection, q, autoFetch, callback) ->
+    [autoFetch, callback] = [false, autoFetch] if typeof autoFetch is 'function'
     id = @nextQueryId++
+    connection = this
+
     @queries[id] = query =
       state: 'loading'
       onmessage: (msg) ->
@@ -166,26 +169,24 @@ class Connection
             @emit 'loaded', msg.error
           else
             @state = 'ok'
-            @data = msg.data
-            @emit 'loaded', msg, msg.data
+            @data = {}
+            @data[name] = connection.getOrCreate collection, name, data for name, data of msg.data
+            @emit 'loaded', null, @data
 
         if msg.add
-          console.log 'add', msg.add
-          if Array.isArray msg.add
-            @data[id] = true for id in msg.add
-          else
-            @data[msg.add] = true
-        else if msg.remove
-          console.log 'remove', msg.rm
-          if Array.isArray msg.add
-            delete @data[id] for id in msg.add
-          else
-            delete @data[msg.add]
+          #console.log 'add', msg.add
+          data = msg.add
+          @data[data.doc] = doc = connection.getOrCreate collection, data.doc, data
+          @emit 'added', doc
+        else if msg.rm
+          #console.log 'remove', msg.rm
+          @emit 'removed', @data[msg.rm]
+          delete @data[msg.rm]
 
     MicroEvent.mixin query
     query.once 'loaded', callback if callback
 
-    @send a:'q', c:collection, id:id, q:q
+    @send a:'q', c:collection, f:autoFetch, id:id, q:q
 
     query
 

@@ -46,7 +46,7 @@ class Doc
     # This is a list of {[create:{...}], [del:true], [op:...], callbacks:[...]}
     @pendingData = []
 
-    @_injestData data if data
+    @_injestData data if data?.snapshot isnt undefined
 
   _send: (message) ->
     message.c = @collection
@@ -54,9 +54,11 @@ class Doc
     @connection.send message
   
   subscribe: (callback) ->
-    # This error message isn't entirely accurate. We're not necessarily subscribed yet - but we are
-    # subscribing at least.
-    return callback? 'Already subscribed' if @subscribeRequested
+    # If we're already subscribed, just call the callback and be done with it.
+    return callback?() if @subscribed
+    if @subscribeRequested
+      @once 'subscribed', callback if callback
+      return
 
     @subscribeRequested = yes
     

@@ -84,7 +84,7 @@ window.sharejs.extendDoc 'attach_textarea', (elem) ->
       else
         elem.detachEvent 'on'+event, genOp
 
-    elem.disabled = true
+    #elem.disabled = true
     doc.once 'ready', attach
 
 
