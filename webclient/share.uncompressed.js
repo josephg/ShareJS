@@ -6,7 +6,7 @@
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   window.sharejs = exports = {
-    'version': '0.6.1'
+    'version': '0.6.2'
   };
 
   if (typeof WEB === 'undefined') {
@@ -1066,9 +1066,6 @@
         }
       };
       this.socket.onerror = function(e) {
-        if (typeof console !== "undefined" && console !== null) {
-          console.warn('onerror', e);
-        }
         return _this.emit('error', e);
       };
       this.socket.onopen = function() {
@@ -1086,7 +1083,6 @@
     Connection.prototype.setState = function(state, data) {
       var doc, docName, _ref, _results;
 
-      console.log("connection state " + this.state + " -> " + state);
       if (this.state === state) {
         return;
       }
