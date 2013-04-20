@@ -171,13 +171,21 @@ class Connection
 
         if msg.add
           console.log 'add', msg.add
+          if Array.isArray msg.add
+            @data[id] = true for id in msg.add
+          else
+            @data[msg.add] = true
         else if msg.remove
           console.log 'remove', msg.rm
+          if Array.isArray msg.add
+            delete @data[id] for id in msg.add
+          else
+            delete @data[msg.add]
 
     MicroEvent.mixin query
-    query.once 'loaded', callback
+    query.once 'loaded', callback if callback
 
-    @send a:'q', id:id, q:q
+    @send a:'q', c:collection, id:id, q:q
 
     query
 

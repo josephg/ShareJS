@@ -91,31 +91,34 @@ module.exports = (options, stream) ->
 
     error = null
     # + check collection
-    error = 'Invalid docName' unless query.doc is null or typeof query.doc is 'string' or (query.doc is undefined and lastReceivedDoc)
-    error = "'v' invalid" unless query.v is undefined or (typeof query.v is 'number' and query.v >= 0)
+    if query.a isnt 'q'
+      error = 'Invalid docName' unless query.doc is undefined or typeof query.doc is 'string' or (query.doc is undefined and lastReceivedDoc)
+      error = 'missing or invalid collection' if (query.doc or query.doc is null) and typeof query.c isnt 'string'
+
     error = 'invalid action' unless query.a is undefined or query.a in ['op', 'sub', 'unsub', 'fetch', 'q', 'qsub', 'qunsub']
-    error = 'missing or invalid collection' if (query.doc or query.doc is null) and typeof query.c isnt 'string'
+    error = "'v' invalid" unless query.v is undefined or (typeof query.v is 'number' and query.v >= 0)
 
     if error
-      console.warn "Invalid query #{query} from #{agent?.sessionId}: #{error}"
+      console.warn "Invalid query ", query, " from #{agent?.sessionId}: #{error}"
       #stream.emit 'error', error
       return callback error
 
     # The agent can specify null as the docName to get a random doc name.
-    if query.doc is null
-      lastReceivedCollection = query.c
-      query.doc = lastReceivedDoc = hat()
-    else if query.doc != undefined
-      lastReceivedCollection = query.c
-      lastReceivedDoc = query.doc
-    else
-      unless lastReceivedDoc and lastReceivedCollection
-        console.warn "msg.doc or collection missing in query #{query} from #{agent.sessionId}"
-        # The disconnect handler will be called when we do this, which will clean up the open docs.
-        return callback 'c or doc missing'
+    if query.a isnt 'q'
+      if query.doc is null
+        lastReceivedCollection = query.c
+        query.doc = lastReceivedDoc = hat()
+      else if query.doc != undefined
+        lastReceivedCollection = query.c
+        lastReceivedDoc = query.doc
+      else
+        unless lastReceivedDoc and lastReceivedCollection
+          console.warn "msg.doc or collection missing in query #{query} from #{agent.sessionId}"
+          # The disconnect handler will be called when we do this, which will clean up the open docs.
+          return callback 'c or doc missing'
 
-      query.c = lastReceivedCollection
-      query.doc = lastReceivedDoc
+        query.c = lastReceivedCollection
+        query.doc = lastReceivedDoc
 
     switch query.a
       when 'fetch'
