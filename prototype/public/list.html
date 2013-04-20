@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<style>
+  body {
+    /*font-family: monaco;*/
+    font-size: 16px;
+    margin: 0px;
+
+  }
+  * {
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+  }
+
+  #container {
+    width: 100%;
+    height: 100%;
+    
+    position: absolute;
+  }
+
+  #list {
+    background-color: #ccc;
+    float: left;
+
+    width: 300px;
+    height: 100%;
+
+    position: normal;
+    overflow-x: hidden;
+  }
+
+  #list .item {
+    background-color: white;
+
+    padding: 3px;
+    border-right: 1px solid black;
+    border-bottom: 1px solid black;
+    cursor: default;
+  }
+
+  #list .item.selected {
+    background-color: red !important;
+  }
+  #list .item:hover {
+    background-color: #ddd;
+  }
+
+  #content {
+    position: absolute;
+    background-color: #ccc;
+    /*width: 100%;
+    height: 100%;*/
+    top: 0px;
+    left: 0px;
+    bottom: 0px;
+    right: 0px;
+    padding: 10px;
+
+    margin-left: 300px;
+  }
+
+  #editor {
+    border-radius: 10px;
+    height: 100%;
+    width: 100%;
+    padding: 10px;
+
+    font-size: 20px;
+  }
+</style>
+<div id='container'>
+  <div id='list'>
+  </div>
+  <div id='content'>
+    <textarea id="editor">Internet!</textarea>
+  </div>
+</div>
+
+<script src="channel/bcsocket.js"></script>
+<script src="text.js"></script>
+<script src="json0.js"></script>
+<script src="share.uncompressed.js"></script>
+<script>
+
+var s = new BCSocket(null, {reconnect: true});
+var sjs = new window.sharejs.Connection(s);
+
+var listElem = document.getElementById('list');
+var editor = document.getElementById('editor');
+
+var select = function(doc) {
+  doc.subscribe(function() {
+    if (editor.detach_share) editor.detach_share();
+
+    if (doc.provides.text) {
+      console.log('text!');
+      doc.attach_textarea(editor);
+      editor.focus();
+    } else {
+      console.warn('not text :(');
+    }
+  });
+};
+
+//q = sjs.query('users', {'data.x':5}, true, function(err, data) { console.log(err, data); });
+q = sjs.query('users', {}, true, function(err, data) {
+  if (err) {
+    console.error(err);
+    return;
+  }
+
+  var selected = null;
+
+  var docs = [];
+  for (var name in data) {
+    docs.push(name);
+  }
+  docs.sort();
+
+  for (var i = 0; i < docs.length; i++) {
+    // To enclose doc and item..
+    (function() {
+      var doc = data[docs[i]];
+
+      var item = document.createElement('div');
+      item.className = 'item';
+      item.textContent = doc.name + " (" + doc.type.name + ")";
+      item.onclick = function(e) {
+        if (selected) {
+          selected.className = 'item';
+        }
+        selected = item;
+        item.className = 'item selected';
+
+        select(doc);
+      };
+      item.onmousedown = function() { return false; };
+
+      listElem.appendChild(item);
+    })();
+  }
+});
+
+</script>
