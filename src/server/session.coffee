@@ -190,15 +190,26 @@ module.exports = (options, stream) ->
             callback null, {a:'ack'}
 
       when 'q'
+        autoFetch = query.f
         agent.query query.c, query.q, (err, results) ->
           callback err if err
           
           id = query.id
           # Results.data contains the initial query result set
+          for doc, data of results.data
+            if autoFetch
+              # The data object has the snapshot called 'data'. I need to make this consistent.
+              data.snapshot = data.data
+            delete data.data
+
           callback null, id:id, data:results.data
 
           results.on 'add', (docName) ->
-            send a:'q', id:id, add:docName
+            data = results.data[docName]
+            data.doc = docName
+            data.snapshot = data.data if autoFetch
+            delete data.data
+            send a:'q', id:id, add:data
           results.on 'remove', (docName) ->
             send a:'q', id:id, rm:docName
 
