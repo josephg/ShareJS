@@ -79,10 +79,8 @@ class Doc
     return unless @subscribeRequested
     @subscribeRequested = false
 
-    return if @connection.state is 'disconnected'
-    if callback then @_unsubscribeCallback = (error) =>
-      @_unsubscribeCallback = null
-      callback error
+    return callback?() if @connection.state is 'disconnected'
+    @once 'unsubscribed', callback if callback
 
     @_send a:'unsub'
 
@@ -315,7 +313,6 @@ class Doc
         # The document has been closed
         @subscribed = no
         @emit 'unsubscribed'
-        @_unsubscribeCallback?()
 
       when 'ack' # Acknowledge a locally submitted operation
         @_opAcknowledged msg if msg.error
