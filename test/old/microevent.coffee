@@ -1,9 +1,9 @@
 # Tests for event framework
 
-testCase = require('nodeunit').testCase
+#testCase = require('nodeunit').testCase
 
-MicroEvent = require '../src/client/microevent'
-makePassPart = require('./helpers').makePassPart
+MicroEvent = require '../../src/client/microevent'
+makePassPart = require('../helpers').makePassPart
 
 tests =
   'emit an event with no listeners does nothing': (test) ->
@@ -32,24 +32,11 @@ tests =
     @e.emit 'foo', 1, 2, 3
   
   'multiple event listeners are fired': (test) ->
-    passPart = makePassPart test, 2
+    passPart = makePassPart 2, test.done
     @e.on 'foo', passPart
     @e.on 'foo', passPart
     @e.emit 'foo'
 
-  'functions can be chained': (test) ->
-    err = -> throw new Error 'removed event listener fired'
-    passPart = makePassPart test, 3
-
-    @e.on('foo', passPart).
-      on('foo', passPart).
-      on('bar', passPart).
-      on('zat', err).
-      emit('foo').
-      removeListener('zat', err).
-      emit('zat').
-      emit('bar')
-  
   'removing a missing event listener does nothing': (test) ->
     @e.removeListener 'foo', ->
     @e.emit 'foo' # Does nothing.
@@ -58,16 +45,8 @@ tests =
     @e.removeListener 'foo', ->
     @e.emit 'foo'
 
-  'removing an event listener while handling an event works (before)': (test) ->
-    fn2 = -> throw new Error 'should not be fired'
-    @e.on 'foo', => @e.removeListener 'foo', fn2
-    @e.on 'foo', fn2
-
-    @e.emit 'foo'
-    test.done()
-
   'removing an event listener while handling an event works (after)': (test) ->
-    passPart = makePassPart test, 3
+    passPart = makePassPart 3, test.done
     fn = -> passPart()
     @e.on 'foo', fn
     @e.on 'foo', =>
@@ -91,8 +70,11 @@ tests =
     @e.emit 'bar'
 
   'a listener registered with once fires': (test) ->
-    @e.once 'foo', -> test.done()
-    @e.emit 'foo'
+    @e.once 'foo', (x, y) ->
+      test.strictEqual x, 1
+      test.strictEqual y, 2
+      test.done()
+    @e.emit 'foo', 1, 2
 
   'a listener registered with once only fires once': (test) ->
     calls = 0
@@ -104,7 +86,7 @@ tests =
     test.done()
 
   'Listeners are called in the proper context': (test) ->
-    passPart = makePassPart test, 2
+    passPart = makePassPart 2, test.done
     e = @e
     @e.once 'foo', ->
       test.strictEqual this, e
@@ -114,21 +96,25 @@ tests =
       passPart()
     @e.emit 'foo'
 
+  'An event can be emitted before anything is registered': (test) ->
+    @e.emit 'blah'
+    test.done()
+
 # The tests above are run both with a new MicroEvent and with an object with
 # microevent mixed in.
 
-raw =
+exports.raw = raw =
   setUp: (callback) ->
     @e = new MicroEvent
     callback()
 
-mixinObj =
+exports.mixinObj = mixinObj =
   setUp: (callback) ->
     @e = {}
     MicroEvent.mixin @e
     callback()
 
-mixinClass =
+exports.mixinClass = mixinClass =
   setUp: (callback) ->
     class Foo
       bar: ->
@@ -137,11 +123,14 @@ mixinClass =
     @e = new Foo
     callback()
 
+# Test that the same behaviour holds with nodejs's event emitters.
+exports.eventEmitter = eventEmitter =
+  setUp: (callback) ->
+    @e = new (require 'events').EventEmitter
+    callback()
+
 for name, test of tests
   raw[name] = test
   mixinObj[name] = test
   mixinClass[name] = test
-
-exports.raw = testCase raw
-exports.mixinObj = testCase mixinObj
-exports.mixinClass = testCase mixinClass
+  eventEmitter[name] = test
