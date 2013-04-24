@@ -572,7 +572,7 @@ Doc.prototype._onMessage = function(msg) {
 
       if (this.inflightData) this._xf(this.inflightData, msg);
 
-      for (var i = 0; i < this.pendingData; i++) {
+      for (var i = 0; i < this.pendingData.length; i++) {
         this._xf(this.pendingData[i], msg);
       }
 
