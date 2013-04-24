@@ -63,7 +63,6 @@ window.sharejs.Doc::attach_textarea = (elem) ->
     return console?.warn 'Could not attach document: text api incompatible' unless doc.provides.text
     ctx = doc.createEditingContext()
 
-    console.log 'attach', ctx
     prevvalue = elem.value = ctx.getText()
     ctx.onInsert = insert_listener
     ctx.onRemove = remove_listener
@@ -87,7 +86,6 @@ window.sharejs.Doc::attach_textarea = (elem) ->
 
     #elem.disabled = true
     doc.once 'ready', attach
-
 
   if doc.type
     attach()
