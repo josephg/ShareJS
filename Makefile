@@ -7,7 +7,7 @@ CLIENT = \
 	web-prelude.js \
 	microevent.js \
 	doc.js \
-	connection.coffee \
+	connection.js \
 	textarea.coffee
 
 # not included:	index.coffee 
