@@ -49,7 +49,7 @@ MicroEvent.prototype.emit = function(event) {
   }
 
   var listeners = events[event];
-  for (i = 0; i < listeners.length; i++) {
+  for (var i = 0; i < listeners.length; i++) {
     if (listeners[i]) {
       listeners[i].apply(this, args);
     }
