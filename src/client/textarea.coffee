@@ -4,7 +4,7 @@
 # always localised, the diffing is quite easy.
 #
 # This algorithm is O(N), but I suspect you could speed it up somehow using regular expressions.
-applyChange = (doc, oldval, newval) ->
+applyChange = (ctx, oldval, newval) ->
   return if oldval == newval
   commonStart = 0
   commonStart++ while oldval.charAt(commonStart) == newval.charAt(commonStart)
@@ -13,11 +13,11 @@ applyChange = (doc, oldval, newval) ->
   commonEnd++ while oldval.charAt(oldval.length - 1 - commonEnd) == newval.charAt(newval.length - 1 - commonEnd) and
     commonEnd + commonStart < oldval.length and commonEnd + commonStart < newval.length
 
-  doc.remove commonStart, oldval.length - commonStart - commonEnd unless oldval.length == commonStart + commonEnd
-  doc.insert commonStart, newval[commonStart ... newval.length - commonEnd] unless newval.length == commonStart + commonEnd
+  ctx.remove commonStart, oldval.length - commonStart - commonEnd unless oldval.length == commonStart + commonEnd
+  ctx.insert commonStart, newval[commonStart ... newval.length - commonEnd] unless newval.length == commonStart + commonEnd
 
-window.sharejs.extendDoc 'attach_textarea', (elem) ->
-  doc = this
+window.sharejs.Doc::attach_textarea = (elem) ->
+  ctx = null
 
   replaceText = (newText, transformCursor) ->
     newSelection = [
@@ -57,14 +57,16 @@ window.sharejs.extendDoc 'attach_textarea', (elem) ->
         # IE constantly replaces unix newlines with \r\n. ShareJS docs
         # should only have unix newlines.
         prevvalue = elem.value
-        applyChange doc, doc.getText(), elem.value.replace /\r\n/g, '\n'
+        applyChange ctx, ctx.getText(), elem.value.replace /\r\n/g, '\n'
 
   attach = ->
     return console?.warn 'Could not attach document: text api incompatible' unless doc.provides.text
+    ctx = doc.createEditingContext()
 
-    prevvalue = elem.value = doc.getText()
-    doc.on 'insert', insert_listener
-    doc.on 'remove', remove_listener
+    console.log 'attach', ctx
+    prevvalue = elem.value = ctx.getText()
+    ctx.onInsert = insert_listener
+    ctx.onRemove = remove_listener
 
     for event in ['textInput', 'keydown', 'keyup', 'select', 'cut', 'paste']
       if elem.addEventListener
@@ -75,8 +77,7 @@ window.sharejs.extendDoc 'attach_textarea', (elem) ->
     doc.once 'deleted', detach
 
   detach = elem.detach_share = ->
-    doc.removeListener 'insert', insert_listener
-    doc.removeListener 'remove', remove_listener
+    ctx.onInsert = ctx.onRemove = null
 
     for event in ['textInput', 'keydown', 'keyup', 'select', 'cut', 'paste']
       if elem.removeEventListener

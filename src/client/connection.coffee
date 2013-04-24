@@ -28,10 +28,8 @@
 # The socket should probably automatically reconnect. If so, it should emit the appropriate events as it
 # disconnects & reconnects. (onclose(), onconnecting(), onopen()).
 
-if WEB?
-  types = ottypes
-else
-  types = require 'ot-types'
+if typeof window is 'undefined'
+  ottypes = require 'ot-types'
   {Doc} = require './doc'
 
 class Connection
@@ -107,11 +105,15 @@ class Connection
   setState: (newState, data) ->
     return if @state is newState
 
+    # I made a state diagram. Its invalid getting from 'connecting' from
+    # anywhere other than 'disconnected' and its invalid getting to 'connected'
+    # from anywhere other than 'connecting'.
     if (newState is 'connecting' and @state isnt 'disconnected') or
         (newState is 'connected' and @state isnt 'connecting')
       throw new Error "Cannot transition directly from #{@state} to #{newState}"
 
     @state = newState
+    @canSend = newState in ['connecting', 'connected']
 
     @reset() if newState is 'disconnected'
     @emit newState, data
@@ -298,7 +300,7 @@ class Connection
 #    open null, type, callback
 
 # Make connections event emitters.
-unless WEB?
+if typeof window == 'undefined'
   MicroEvent = require './microevent'
 
 MicroEvent.mixin Connection

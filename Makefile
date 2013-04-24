@@ -4,16 +4,17 @@ COFFEE = node_modules/.bin/coffee
 UGLIFY = node_modules/.bin/uglifyjs -d WEB=true
 
 CLIENT = \
-	web-prelude.coffee \
-	microevent.coffee \
-	doc.coffee \
+	web-prelude.js \
+	microevent.js \
+	doc.js \
 	connection.coffee \
-	index.coffee \
 	textarea.coffee
+
+# not included:	index.coffee 
 
 BUNDLED_TYPES = \
 	node_modules/ot-types/webclient/text.js \
-	src/types/text-api.coffee \
+	src/types/text-api.js \
 #	node_modules/ot-types/webclient/json0.js
 
 CLIENT_SRCS = $(addprefix src/client/, $(CLIENT))
@@ -27,9 +28,7 @@ clean:
 test:
 	node_modules/.bin/mocha
 
-t: $(CLIENT_SRCS) $(BUNDLED_TYPES)
-
-webclient/share.uncompressed.js: $(CLIENT_SRCS) $(BUNDLED_TYPES)
+webclient/share.uncompressed.js: $(BUNDLED_TYPES) $(CLIENT_SRCS)
 	mkdir -p webclient
 	echo '(function(){' > $@
 	cat $(filter %.js,$^) >> $@

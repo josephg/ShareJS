@@ -22,10 +22,10 @@ var sjs = new window.sharejs.Connection(s);
 
 var doc = sjs.getOrCreate('users', 'seph');
 console.log(doc);
-doc.subscribe(function(error) {
-  console.log("subscribed");
-  
-  if (doc) doc.attach_textarea(elem);
+doc.subscribe();
+
+doc.whenReady(function () {
+  doc.attach_textarea(elem);
 });
 
 </script>

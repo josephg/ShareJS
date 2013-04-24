@@ -73,7 +73,5 @@ MicroEvent.mixin = function(obj) {
   return obj;
 };
 
-if (typeof window === "undefined" || WEB === null) {
-  module.exports = MicroEvent;
-}
+if (typeof window == "undefined") module.exports = MicroEvent;
 
