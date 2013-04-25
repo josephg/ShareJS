@@ -8,7 +8,8 @@ CLIENT = \
 	microevent.js \
 	doc.js \
 	connection.js \
-	textarea.coffee
+	textarea.js \
+	query.coffee
 
 # not included:	index.coffee 
 
