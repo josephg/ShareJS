@@ -41,7 +41,7 @@ var Doc = exports.Doc = function(connection, collection, name, data) {
 
   // Do we automatically connect when our connection to the server
   // is restarted?
-  this.autoConnect = false;
+  this.autoSubscribe = false;
 
   // Are we ready for submitOp() calls? This means we know the snapshot at the
   // server at some version. If this.ready is true, this.version must be set
@@ -58,6 +58,10 @@ var Doc = exports.Doc = function(connection, collection, name, data) {
   // This has the same format as an entry in pendingData, which is:
   // {[create:{...}], [del:true], [op:...], callbacks:[...], src:, seq:}
   this.inflightData = null;
+
+  // The editing contexts. These are usually instances of the type API when the
+  // document is ready for edits.
+  this.editingContexts = [];
   
   // All ops that are waiting for the server to acknowledge @inflightData
   // This used to just be a single operation, but creates & deletes can't be composed with
@@ -94,13 +98,13 @@ Doc.prototype._send = function(message) {
 //
 // Only call this once per document.
 Doc.prototype.subscribe = function() {
-  this.autoConnect = true;
+  this.autoSubscribe = true;
   if (this.connection.canSend)
     this._send(this.ready ? {a:'fetchsub', v:this.version} : {a:'sub'});
 };
 
 Doc.prototype.unsubscribed = function() {
-  this.autoConnect = false;
+  this.autoSubscribe = false;
   if (this.connection.canSend)
     this._send({a:'unsub'});
 };
@@ -114,7 +118,7 @@ Doc.prototype.fetch = function() {
 // happen when we get disconnected & reconnect.
 Doc.prototype._connectionStateChanged = function(state, reason) {
   if (state === 'connecting') {
-    if (this.autoConnect) {
+    if (this.autoSubscribe) {
       this.subscribe();
     }
     if (this.inflightData) {
@@ -124,30 +128,58 @@ Doc.prototype._connectionStateChanged = function(state, reason) {
 };
 
 // This creates and returns an editing context using the current OT type.
-Doc.prototype.createEditingContext = function() {
+Doc.prototype.createContext = function() {
   var type = this.type;
-  if (!type || !type.api) throw new Error('Missing type API');
+  if (!type) throw new Error('Missing type');
 
   // I could use the prototype chain to do this instead, but Object.create
   // isn't defined on old browsers. This will be fine.
-  var _this = this;
+  var doc = this;
   var context = {
     getSnapshot: function() {
-      return _this.snapshot;
+      return doc.snapshot;
     },
     submitOp: function(op, callback) {
-      _this.submitOp(op, context, callback);
+      doc.submitOp(op, context, callback);
+    },
+    destroy: function() {
+      if (this.detach) {
+        this.detach();
+        // Don't double-detach.
+        delete this.detach;
+      }
+      // It will be removed from the actual editingContexts list next time
+      // we receive an op on the document (and the list is iterated through).
+      //
+      // This is potentially dodgy, allowing a memory leak if you create &
+      // destroy a whole bunch of contexts without receiving or sending any ops
+      // to the document.
+      delete this._onOp;
+      this.remove = true;
     },
   };
 
-  // Copy everything else from the type's API into the editing context.
-  for (k in type.api) {
-    context[k] = type.api[k];
+  if (type.api) {
+    // Copy everything else from the type's API into the editing context.
+    for (k in type.api) {
+      context[k] = type.api[k];
+    }
+  } else {
+    context.provides = {};
   }
 
   this.editingContexts.push(context);
 
   return context;
+};
+
+Doc.prototype.removeContexts = function() {
+  if (this.editingContexts) {
+    for (var i = 0; i < this.editingContexts.length; i++) {
+      this.editingContexts[i].destroy();
+    }
+  }
+  this.editingContexts.length = 0;
 };
 
 // Set the document's type, and associated properties. Most of the logic in
@@ -158,6 +190,7 @@ Doc.prototype._setType = function(newType) {
     if (!types[newType]) throw new Error("Missing type " + newType);
     newType = types[newType];
   }
+  this.removeContexts();
 
   // Set the new type
   this.type = newType;
@@ -166,11 +199,9 @@ Doc.prototype._setType = function(newType) {
   if (!newType) {
     delete this.snapshot;
     this.provides = {};
-    delete this.editingContexts;
   } else if (newType.api) {
     // Register the new type's API.
     this.provides = newType.api.provides;
-    this.editingContexts = [];
   }
 };
 
@@ -304,13 +335,16 @@ Doc.prototype._afterOtApply = function(opData, context) {
   this.locked = false;
   this.emit('unlocked');
   if (opData.op) {
-    if (this.editingContexts) {
+    var contexts = this.editingContexts;
+    if (contexts) {
       // Notify all the contexts about the op (well, all the contexts except
       // the one which initiated the submit in the first place).
-      for (var i = 0; i < this.editingContexts.length; i++) {
-        var c = this.editingContexts[i];
-        if (context != c && c._onOp)
-          c._onOp(opData.op);
+      for (var i = 0; i < contexts.length; i++) {
+        var c = contexts[i];
+        if (context != c && c._onOp) c._onOp(opData.op);
+      }
+      for (var i = 0; i < contexts.length; i++) {
+        if (contexts.remove) contexts.splice(i--, 1);
       }
     }
 
@@ -534,7 +568,7 @@ Doc.prototype._onMessage = function(msg) {
       if (msg.error) {
         if (console) console.error("Could not open document: " + msg.error);
         this.emit('error', msg.error);
-        this.autoConnect = false;
+        this.autoSubscribe = false;
       } else {
         this.subscribed = true;
         this.flush();
