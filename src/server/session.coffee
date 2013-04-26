@@ -65,6 +65,10 @@ module.exports = (options, stream) ->
   # collection name -> {doc name: stream}
   collections = {}
 
+  # Map from query ID -> stream
+  queries = {}
+
+
   setSubscribed = (c, doc, value = true) ->
     docs = (collections[c] ||= {})
     docs[doc] = value
@@ -86,49 +90,51 @@ module.exports = (options, stream) ->
     stream.write response
 
   # We'll only handle one message from each client at a time.
-  handleMessage = (query, callback) ->
-    #console.log 'handleMessage', query
+  handleMessage = (req, callback) ->
+    #console.log 'handleMessage', req
 
     error = null
     # + check collection
-    if query.a isnt 'qsub'
-      error = 'Invalid docName' unless query.doc is undefined or typeof query.doc is 'string' or (query.doc is undefined and lastReceivedDoc)
-      error = 'missing or invalid collection' if (query.doc or query.doc is null) and typeof query.c isnt 'string'
+    if req.a in ['qsub', 'qunsub']
+      error = 'Missing query ID' unless typeof req.id is 'number'
+    else
+      error = 'Invalid docName' unless req.doc is undefined or typeof req.doc is 'string' or (req.doc is undefined and lastReceivedDoc)
+      error = 'missing or invalid collection' if (req.doc or req.doc is null) and typeof req.c isnt 'string'
 
-    error = 'invalid action' unless query.a is undefined or query.a in ['op', 'sub', 'unsub', 'fetch', 'qsub', 'qunsub']
-    error = "'v' invalid" unless query.v is undefined or (typeof query.v is 'number' and query.v >= 0)
+    error = 'invalid action' unless req.a is undefined or req.a in ['op', 'sub', 'unsub', 'fetch', 'qsub', 'qunsub']
+    error = "'v' invalid" unless req.v is undefined or (typeof req.v is 'number' and req.v >= 0)
 
     if error
-      console.warn "Invalid query ", query, " from #{agent?.sessionId}: #{error}"
+      console.warn "Invalid req ", req, " from #{agent?.sessionId}: #{error}"
       #stream.emit 'error', error
       return callback error
 
     # The agent can specify null as the docName to get a random doc name.
-    if query.a isnt 'qsub'
-      if query.doc is null
-        lastReceivedCollection = query.c
-        query.doc = lastReceivedDoc = hat()
-      else if query.doc != undefined
-        lastReceivedCollection = query.c
-        lastReceivedDoc = query.doc
+    if req.a not in ['qsub', 'qunsub']
+      if req.doc is null
+        lastReceivedCollection = req.c
+        req.doc = lastReceivedDoc = hat()
+      else if req.doc != undefined
+        lastReceivedCollection = req.c
+        lastReceivedDoc = req.doc
       else
         unless lastReceivedDoc and lastReceivedCollection
-          console.warn "msg.doc or collection missing in query #{query} from #{agent.sessionId}"
+          console.warn "msg.doc or collection missing in req #{req} from #{agent.sessionId}"
           # The disconnect handler will be called when we do this, which will clean up the open docs.
           return callback 'c or doc missing'
 
-        query.c = lastReceivedCollection
-        query.doc = lastReceivedDoc
+        req.c = lastReceivedCollection
+        req.doc = lastReceivedDoc
 
-    switch query.a
+    switch req.a
       when 'fetch'
-        agent.fetch query.c, query.doc, (err, data) ->
+        agent.fetch req.c, req.doc, (err, data) ->
           return callback err if err
           callback null, v:data.v, snapshot:data.data
 
       when 'sub'
-        collection = query.c
-        doc = query.doc
+        collection = req.c
+        doc = req.doc
 
         return callback null, error:'Already subscribed' if isSubscribed collection, doc
         setSubscribed collection, doc
@@ -152,13 +158,13 @@ module.exports = (options, stream) ->
           # Stop listening to the stream after the session is closed
           stream.on 'finish', -> opstream.destroy()
 
-        if query.v
-          agent.subscribe collection, doc, query.v, (err, stream) ->
+        if req.v
+          agent.subscribe collection, doc, req.v, (err, stream) ->
             if err
               setSubscribed collection, doc, false
               return callback err
 
-            callback null, v:query.v
+            callback null, v:req.v
             subscribeToStream stream
         else
           agent.fetchAndSubscribe collection, doc, (err, data, stream) ->
@@ -175,26 +181,31 @@ module.exports = (options, stream) ->
 
       when 'op'
         # Shallow copy of just the op data parts.
-        opData = {op:query.op, v:query.v, src:query.src, seq:query.seq}
-        opData.create = query.create if query.create
-        opData.del = query.del if query.del
+        opData = {op:req.op, v:req.v, src:req.src, seq:req.seq}
+        opData.create = req.create if req.create
+        opData.del = req.del if req.del
         
-        unless query.src
+        unless req.src
           opData.src = agent.sessionId
           opData.seq = seq++
 
-        agent.submit query.c, query.doc, opData, (err, v) ->
+        agent.submit req.c, req.doc, opData, (err, v) ->
           if err
             callback null, {a:'ack', error:err}
           else
             callback null, {a:'ack'}
 
       when 'qsub'
-        autoFetch = query.f
-        agent.query query.c, query.q, (err, results) ->
-          callback err if err
+        autoFetch = req.f
+        agent.query req.c, req.q, (err, results) ->
+          return callback err if err
           
-          id = query.id
+          id = req.id
+        
+          return callback 'ID in use' if queries[id]
+
+          queries[id] = results
+
           # Results.data contains the initial query result set
           for doc, data of results.data
             if autoFetch
@@ -213,8 +224,17 @@ module.exports = (options, stream) ->
           results.on 'remove', (docName) ->
             send a:'q', id:id, rm:docName
 
+      when 'qunsub'
+        id = req.id
+        query = queries[id]
+        if query
+          query.destroy()
+          delete queries[id]
+
+        callback()
+
       else
-        console.warn 'invalid message', query
+        console.warn 'invalid message', req
         callback 'invalid or unknown message'
 
 
@@ -222,22 +242,27 @@ module.exports = (options, stream) ->
   stream.write a:'init', protocol:0, id:agent.sessionId
 
   do pump = ->
-    query = stream.read()
+    req = stream.read()
     
-    unless query
+    unless req
       stream.once 'readable', pump
       return
 
     # We've already authed successfully. Process the message.
-    reply = (msg) ->
-      msg.a = query.a unless msg.a
-      msg.c = query.c
-      msg.doc = query.doc
+    reply = (err, msg) ->
+      if err
+        msg = {a:req.a, error:err}
+      else
+        msg.a = req.a unless msg.a
+
+      msg.c = req.c if req.c
+      msg.doc = req.doc if req.doc
+      msg.id = req.id if req.id
       send msg
 
-    handleMessage query, (err, msg) ->
-      return close err if err
-      reply msg if msg
+    handleMessage req, (err, msg) ->
+      #return close err if err
+      reply err, msg if err or msg
       pump()
 
 

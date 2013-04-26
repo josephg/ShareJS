@@ -84,6 +84,8 @@ var Connection = exports.Connection = function (socket) {
         break;
 
       case 'qsub':
+      case 'q':
+      case 'qunsub':
         // Query message. Pass this to the appropriate query object.
         _this.queries[msg.id]._onMessage(msg);
         break;
@@ -225,6 +227,10 @@ Connection.prototype.createQuery = function(collection, q, autoFetch) {
   query.autoFetch = autoFetch;
   this.queries[id] = query;
   return query;
+};
+
+Connection.prototype.destroyQuery = function(query) {
+  delete this.queries[query.id];
 };
 
 if (typeof window === 'undefined') {

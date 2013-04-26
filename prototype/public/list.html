@@ -5,9 +5,9 @@
     /*font-family: monaco;*/
     font-size: 16px;
     margin: 0px;
-
   }
-  * {
+
+  *:not(.jsoneditor *) { /* setting box-sizing breaks some of JSON editor's styling */
     -moz-box-sizing: border-box;
     box-sizing: border-box;
   }
@@ -60,7 +60,7 @@
     margin-left: 300px;
   }
 
-  .editor {
+  textarea.editor {
     border-radius: 10px;
     height: 100%;
     width: 100%;
@@ -70,9 +70,28 @@
     background-color: white;
     border: 1px solid;
   }
+
+  .editor .jsoneditor {
+    border-radius: 5px;
+    background-color: white;
+    height: 100%;
+    width: 100%;
+    border: 1px solid;
+  }
+
+  #q {
+    width: 300px;
+    font-size: 16px;
+  }
+
+  #q.err {
+    color: red;
+  }
+
 </style>
 <div id='container'>
   <div id='list'>
+    <input id=q type=search results=5 placeholder="{'data.x': 5}" autofocus autosave='sharejsquery' incremental=true pattern='^[0-9]$' />
   </div>
   <div id='content'>
   </div>
@@ -119,10 +138,14 @@ var select = function(doc) {
       ctx = doc.createContext();
       editorElem = jsonEditor;
 
-      var editor = new jsoneditor.JSONEditor(editorElem);
-      editor.set(doc.snapshot);
+      var editor = new jsoneditor.JSONEditor(editorElem, {change:function() {
+          console.log('change', JSON.stringify(editor.get()));
+          ctx.set(editor.get());
+      }}, ctx.getSnapshot());
 
-      
+      ctx._onOp = function() {
+        editor.set(ctx.getSnapshot());
+      };
 
 
     } else {
@@ -133,40 +156,71 @@ var select = function(doc) {
 };
 
 //q = sjs.query('users', {'data.x':5}, true, function(err, data) { console.log(err, data); });
-query = sjs.createQuery('users', {}, true);
+query = sjs.createQuery('users', {'data.x':5}, true);
+
+var selected;
+query.on('added', function(doc) {
+  console.log('added', doc);
+
+  if (!doc.elem) {
+    var item = document.createElement('div');
+    item.className = 'item';
+    item.textContent = doc.name + " (" + doc.type.name + ")";
+    item.onclick = function(e) {
+      if (selected) {
+        selected.className = 'item';
+      }
+      selected = item;
+      item.className = 'item selected';
+
+      select(doc);
+    };
+    item.onmousedown = function() { return false; };
+
+
+    doc.elem = item;
+  }
+
+  listElem.appendChild(doc.elem);
+});
+
+query.on('removed', function(doc) {
+  console.log('removed', doc);
+
+  listElem.removeChild(doc.elem);
+});
+
 query.subscribe();
 
-query.whenReady(function() {
-  var selected = null;
 
-  var docs = [];
-  for (var name in query.data) {
-    docs.push(name);
+// ****** Set up search box.
+
+var queryBox = document.getElementById('q');
+queryBox.value = JSON.stringify(query.query);
+
+queryBox.onkeyup = function() {
+  try {
+    JSON.parse(queryBox.value);
+    queryBox.className = '';
+  } catch (e) {
+    queryBox.className = 'err';
+
   }
-  docs.sort();
+};
 
-  for (var i = 0; i < docs.length; i++) {
-    // To enclose doc and item..
-    (function() {
-      var doc = query.data[docs[i]];
+queryBox.onsearch = function() {
+  var value = queryBox.value;
+  console.log('search ' + value);
+  try {
+    if (value === '') value = '{}';
+    var q = JSON.parse(value);
 
-      var item = document.createElement('div');
-      item.className = 'item';
-      item.textContent = doc.name + " (" + doc.type.name + ")";
-      item.onclick = function(e) {
-        if (selected) {
-          selected.className = 'item';
-        }
-        selected = item;
-        item.className = 'item selected';
+    query.unsubscribe();
+    query.query = q;
+    query.subscribe();
 
-        select(doc);
-      };
-      item.onmousedown = function() { return false; };
+  } catch (e) {}
 
-      listElem.appendChild(item);
-    })();
-  }
-});
+};
 
 </script>
