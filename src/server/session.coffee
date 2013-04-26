@@ -87,15 +87,15 @@ module.exports = (options, stream) ->
 
   # We'll only handle one message from each client at a time.
   handleMessage = (query, callback) ->
-    console.log 'handleMessage', query
+    #console.log 'handleMessage', query
 
     error = null
     # + check collection
-    if query.a isnt 'q'
+    if query.a isnt 'qsub'
       error = 'Invalid docName' unless query.doc is undefined or typeof query.doc is 'string' or (query.doc is undefined and lastReceivedDoc)
       error = 'missing or invalid collection' if (query.doc or query.doc is null) and typeof query.c isnt 'string'
 
-    error = 'invalid action' unless query.a is undefined or query.a in ['op', 'sub', 'unsub', 'fetch', 'q', 'qsub', 'qunsub']
+    error = 'invalid action' unless query.a is undefined or query.a in ['op', 'sub', 'unsub', 'fetch', 'qsub', 'qunsub']
     error = "'v' invalid" unless query.v is undefined or (typeof query.v is 'number' and query.v >= 0)
 
     if error
@@ -104,7 +104,7 @@ module.exports = (options, stream) ->
       return callback error
 
     # The agent can specify null as the docName to get a random doc name.
-    if query.a isnt 'q'
+    if query.a isnt 'qsub'
       if query.doc is null
         lastReceivedCollection = query.c
         query.doc = lastReceivedDoc = hat()
@@ -189,7 +189,7 @@ module.exports = (options, stream) ->
           else
             callback null, {a:'ack'}
 
-      when 'q'
+      when 'qsub'
         autoFetch = query.f
         agent.query query.c, query.q, (err, results) ->
           callback err if err

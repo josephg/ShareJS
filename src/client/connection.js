@@ -83,9 +83,9 @@ var Connection = exports.Connection = function (socket) {
         _this._setState('connected');
         break;
 
-      case 'q':
+      case 'qsub':
         // Query message. Pass this to the appropriate query object.
-        _this.queries[msg.id].onmessage(msg);
+        _this.queries[msg.id]._onMessage(msg);
         break;
 
       default:
@@ -159,14 +159,17 @@ Connection.prototype._setState = function(newState, data) {
 
   this.emit(newState, data);
 
-  // & Emit the event to all documents. It might make sense for documents to
-  // just register for this stuff using events, but that couples connections
-  // and documents a bit much. Its not a big deal either way.
+  // & Emit the event to all documents & queries. It might make sense for
+  // documents to just register for this stuff using events, but that couples
+  // connections and documents a bit much. Its not a big deal either way.
   for (c in this.collections) {
     var collection = this.collections[c];
     for (docName in collection) {
-      collection[docName]._connectionStateChanged(newState, data);
+      collection[docName]._onConnectionStateChanged(newState, data);
     }
+  }
+  for (c in this.queries) {
+    this.queries[c]._onConnectionStateChanged(newState, data);
   }
 };
 
@@ -216,11 +219,11 @@ Connection.prototype.getOrCreate = function(collection, name, data) {
 
 // **** Queries.
 
-Connection.prototype.query = function(collection, q, autoFetch, callback) {
-  var query;
-  query = new Query(this, this.nextQueryId++, collection, q);
+Connection.prototype.createQuery = function(collection, q, autoFetch) {
+  var id = this.nextQueryId++;
+  var query = new Query(this, id, collection, q);
   query.autoFetch = autoFetch;
-  query.once;
+  this.queries[id] = query;
   return query;
 };
 

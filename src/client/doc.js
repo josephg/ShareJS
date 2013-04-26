@@ -100,7 +100,7 @@ Doc.prototype._send = function(message) {
 Doc.prototype.subscribe = function() {
   this.autoSubscribe = true;
   if (this.connection.canSend)
-    this._send(this.ready ? {a:'fetchsub', v:this.version} : {a:'sub'});
+    this._send(this.ready ? {a:'sub', v:this.version} : {a:'sub'});
 };
 
 Doc.prototype.unsubscribed = function() {
@@ -116,7 +116,7 @@ Doc.prototype.fetch = function() {
 
 // Called whenever (you guessed it!) the connection state changes. This will
 // happen when we get disconnected & reconnect.
-Doc.prototype._connectionStateChanged = function(state, reason) {
+Doc.prototype._onConnectionStateChanged = function(state, reason) {
   if (state === 'connecting') {
     if (this.autoSubscribe) {
       this.subscribe();
@@ -388,7 +388,7 @@ Doc.prototype._submitOpData = function(opData, context, callback) {
     else if (console) console.warn('Failed attempt to submitOp:', err);
   };
 
-  if (!this.subscribed) {
+  if (!this.ready) {
     return error('You cannot currently submit operations to an unsubscribed document');
   }
   if (this.locked) {

@@ -59,7 +59,7 @@
     margin-left: 300px;
   }
 
-  #editor {
+  .editor {
     border-radius: 10px;
     height: 100%;
     width: 100%;
@@ -72,7 +72,6 @@
   <div id='list'>
   </div>
   <div id='content'>
-    <textarea id="editor">Internet!</textarea>
   </div>
 </div>
 
@@ -86,16 +85,33 @@ var s = new BCSocket(null, {reconnect: true});
 var sjs = new window.sharejs.Connection(s);
 
 var listElem = document.getElementById('list');
-var editor = document.getElementById('editor');
+
+var contentArea = document.getElementById('content');
+
+var textEditor = document.createElement('textarea');
+var jsonEditor = document.createElement('div');
+textEditor.className = jsonEditor.className = 'editor';
+
+var currentEditorElem = null;
+var currentCtx = null;
 
 var select = function(doc) {
-  doc.subscribe(function() {
-    if (editor.detach_share) editor.detach_share();
+  if (!doc.autoSubscribe) doc.subscribe();
 
+  if (currentEditorElem) {
+    contentArea.removeChild(currentEditorElem);
+    currentCtx.destroy();
+
+    currentCtx = currentEditorElem = null;
+  }
+
+  doc.whenReady(function() {
     if (doc.provides.text) {
       console.log('text!');
-      doc.attach_textarea(editor);
-      editor.focus();
+      currentCtx = doc.attachTextarea(textEditor);
+      currentEditorElem = textEditor;
+      contentArea.appendChild(textEditor);
+      textEditor.focus();
     } else {
       console.warn('not text :(');
     }
@@ -103,16 +119,14 @@ var select = function(doc) {
 };
 
 //q = sjs.query('users', {'data.x':5}, true, function(err, data) { console.log(err, data); });
-q = sjs.query('users', {}, true, function(err, data) {
-  if (err) {
-    console.error(err);
-    return;
-  }
+query = sjs.createQuery('users', {}, true);
+query.subscribe();
 
+query.whenReady(function() {
   var selected = null;
 
   var docs = [];
-  for (var name in data) {
+  for (var name in query.data) {
     docs.push(name);
   }
   docs.sort();
@@ -120,7 +134,7 @@ q = sjs.query('users', {}, true, function(err, data) {
   for (var i = 0; i < docs.length; i++) {
     // To enclose doc and item..
     (function() {
-      var doc = data[docs[i]];
+      var doc = query.data[docs[i]];
 
       var item = document.createElement('div');
       item.className = 'item';
