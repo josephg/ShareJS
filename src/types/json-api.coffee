@@ -58,6 +58,7 @@ _type.api =
 
   _fixComponentPaths: (c) ->
     # no change to structure
+    return unless @_listeners
     return if c.na != undefined or c.si != undefined or c.sd != undefined
     to_remove = []
     for l, i in @_listeners
