@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <link rel="stylesheet" type="text/css" href="jsoneditor-min.css">
 <style>
+  html {
+    overflow: hidden;
+  }
+
   body {
     /*font-family: monaco;*/
     font-size: 16px;
@@ -26,8 +30,11 @@
     width: 300px;
     height: 100%;
 
-    position: normal;
-    overflow-x: hidden;
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    overflow: auto;
   }
 
   #list .item {
@@ -52,31 +59,38 @@
     /*width: 100%;
     height: 100%;*/
     top: 0px;
-    left: 0px;
+    left: 300px;
     bottom: 0px;
     right: 0px;
-    padding: 10px;
+    overflow: auto;
+  }
 
-    margin-left: 300px;
+  .editor {
+    border-radius: 10px;
+    top: 10px;
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+
+    position: absolute;
+    background-color: white;
+    border: 1px solid;
   }
 
   textarea.editor {
-    border-radius: 10px;
-    height: 100%;
-    width: 100%;
     padding: 10px;
-
     font-size: 20px;
-    background-color: white;
-    border: 1px solid;
   }
 
   .editor .jsoneditor {
-    border-radius: 5px;
-    background-color: white;
     height: 100%;
-    width: 100%;
-    border: 1px solid;
+    width: auto;
+
+    border-radius: 9px;
+  }
+
+  .jsoneditor .menu {
+    background-color: transparent;
   }
 
   #q {
@@ -156,7 +170,7 @@ var select = function(doc) {
 };
 
 //q = sjs.query('users', {'data.x':5}, true, function(err, data) { console.log(err, data); });
-query = sjs.createQuery('users', {'data.x':5}, true);
+query = sjs.createQuery('users', {}, true);
 
 var selected;
 query.on('added', function(doc) {
