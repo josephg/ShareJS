@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<link rel="stylesheet" type="text/css" href="jsoneditor-min.css">
 <style>
   body {
     /*font-family: monaco;*/
@@ -66,6 +67,8 @@
     padding: 10px;
 
     font-size: 20px;
+    background-color: white;
+    border: 1px solid;
   }
 </style>
 <div id='container'>
@@ -75,6 +78,7 @@
   </div>
 </div>
 
+<script src="jsoneditor-min.js"></script>
 <script src="channel/bcsocket.js"></script>
 <script src="text.js"></script>
 <script src="json0.js"></script>
@@ -92,29 +96,39 @@ var textEditor = document.createElement('textarea');
 var jsonEditor = document.createElement('div');
 textEditor.className = jsonEditor.className = 'editor';
 
-var currentEditorElem = null;
-var currentCtx = null;
+var editorElem = null;
+var ctx = null;
 
 var select = function(doc) {
   if (!doc.autoSubscribe) doc.subscribe();
 
-  if (currentEditorElem) {
-    contentArea.removeChild(currentEditorElem);
-    currentCtx.destroy();
+  if (editorElem) {
+    contentArea.removeChild(editorElem);
+    ctx.destroy();
 
-    currentCtx = currentEditorElem = null;
+    ctx = editorElem = null;
   }
 
   doc.whenReady(function() {
     if (doc.provides.text) {
       console.log('text!');
-      currentCtx = doc.attachTextarea(textEditor);
-      currentEditorElem = textEditor;
-      contentArea.appendChild(textEditor);
+      ctx = doc.attachTextarea(textEditor);
+      editorElem = textEditor;
       textEditor.focus();
+    } else if (doc.provides.json) {
+      ctx = doc.createContext();
+      editorElem = jsonEditor;
+
+      var editor = new jsoneditor.JSONEditor(editorElem);
+      editor.set(doc.snapshot);
+
+      
+
+
     } else {
-      console.warn('not text :(');
+      console.warn(':,(');
     }
+    if (editorElem) contentArea.appendChild(editorElem);
   });
 };
 

@@ -14,9 +14,10 @@ CLIENT = \
 # not included:	index.coffee 
 
 BUNDLED_TYPES = \
-	node_modules/ot-types/webclient/text.js \
+	webclient/text.js \
 	src/types/text-api.js \
-#	node_modules/ot-types/webclient/json0.js
+	webclient/json0.js \
+	src/types/json-api.coffee
 
 CLIENT_SRCS = $(addprefix src/client/, $(CLIENT))
 
@@ -24,26 +25,26 @@ all: webclient
 
 clean:
 	rm -rf lib
-	rm -rf webclient
+	rm -rf webclient/*
 
 test:
 	node_modules/.bin/mocha
 
 webclient/share.uncompressed.js: $(BUNDLED_TYPES) $(CLIENT_SRCS)
-	mkdir -p webclient
 	echo '(function(){' > $@
 	cat $(filter %.js,$^) >> $@
 	$(foreach SRC, $(filter %.coffee,$^), coffee -bpc $(SRC) >> $@;)
 	echo '})();' >> $@
 
 
-# Uglify.
+# Copy other types from ot-types.
+webclient/%.js: node_modules/ot-types/webclient/%.js
+	cp $< $@
+
+# .. Or uglify the ones we already have.
 webclient/%.js: webclient/%.uncompressed.js
 	$(UGLIFY) $< -cmo $@
 
 # Compile the types for a browser.
-webclient: webclient/share.js
-	cp node_modules/ot-types/webclient/text.js webclient/
-	cp node_modules/ot-types/webclient/json0.js webclient/
-	cp node_modules/ot-types/webclient/json0.uncompressed.js webclient/
+webclient: webclient/share.js webclient/text.js webclient/json0.js
 
