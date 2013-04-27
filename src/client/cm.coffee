@@ -68,7 +68,7 @@ window.sharejs.extendDoc 'attach_cm', (editor, keepEditorContents) ->
 
     check()
 
-  editor.setOption 'onChange',  editorListener
+  editor.on 'change', editorListener
 
   @on 'insert', (pos, text) ->
     suppress = true
@@ -87,7 +87,7 @@ window.sharejs.extendDoc 'attach_cm', (editor, keepEditorContents) ->
 
   @detach_cm = ->
     # TODO: can we remove the insert and delete event callbacks?
-    editor.setOption 'onChange', null
+    editor.off 'change', editorListener
     delete @detach_cm
 
   return

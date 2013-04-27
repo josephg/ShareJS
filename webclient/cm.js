@@ -66,7 +66,7 @@
       applyToShareJS(editor, change, sharedoc);
       return check();
     };
-    editor.setOption('onChange', editorListener);
+    editor.on('change', editorListener);
     this.on('insert', function(pos, text) {
       suppress = true;
       editor.replaceRange(text, editor.posFromIndex(pos));
@@ -84,7 +84,7 @@
       return check();
     });
     this.detach_cm = function() {
-      editor.setOption('onChange', null);
+      editor.off('change', editorListener);
       return delete this.detach_cm;
     };
   });
