@@ -196,33 +196,35 @@ module.exports = (options, stream) ->
             callback null, {a:'ack'}
 
       when 'qsub'
-        autoFetch = req.f
-        agent.query req.c, req.q, (err, results) ->
+        opts = {}
+        if req.o
+          autoFetch = req.o.f
+          opts.poll = req.o.p
+
+        agent.query req.c, req.q, opts, (err, emitter) ->
           return callback err if err
           
           id = req.id
         
           return callback 'ID in use' if queries[id]
 
-          queries[id] = results
+          queries[id] = emitter
 
           # Results.data contains the initial query result set
-          for doc, data of results.data
+          for data in emitter.data
             if autoFetch
               # The data object has the snapshot called 'data'. I need to make this consistent.
               data.snapshot = data.data
             delete data.data
 
-          callback null, id:id, data:results.data
+          callback null, id:id, data:emitter.data
 
-          results.on 'add', (docName) ->
-            data = results.data[docName]
-            data.doc = docName
+          emitter.on 'add', (data, idx) ->
             data.snapshot = data.data if autoFetch
             delete data.data
-            send a:'q', id:id, add:data
-          results.on 'remove', (docName) ->
-            send a:'q', id:id, rm:docName
+            send a:'q', id:id, add:data, idx:idx
+          emitter.on 'remove', (data, idx) ->
+            send a:'q', id:id, rm:data.docName, idx:idx
 
       when 'qunsub'
         id = req.id

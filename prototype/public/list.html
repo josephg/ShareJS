@@ -23,18 +23,21 @@
     position: absolute;
   }
 
-  #list {
+  #left {
     background-color: #ccc;
     float: left;
 
     width: 300px;
     height: 100%;
-
     position: absolute;
+
     top: 0;
     left: 0;
 
     overflow: auto;
+  }
+
+  #list {
   }
 
   #list .item {
@@ -104,8 +107,9 @@
 
 </style>
 <div id='container'>
-  <div id='list'>
+  <div id='left'>
     <input id=q type=search results=5 placeholder="{'data.x': 5}" autofocus autosave='sharejsquery' incremental=true pattern='^[0-9]$' />
+    <div id='list'></div>
   </div>
   <div id='content'>
   </div>
@@ -170,10 +174,12 @@ var select = function(doc) {
 };
 
 //q = sjs.query('users', {'data.x':5}, true, function(err, data) { console.log(err, data); });
-query = sjs.createQuery('users', {}, true);
+query = sjs.createQuery('users', {$query:{}});
+query.autoFetch = true;
+query.poll = true;
 
 var selected;
-query.on('added', function(doc) {
+query.on('added', function(doc, idx) {
   console.log('added', doc);
 
   if (!doc.elem) {
@@ -195,7 +201,8 @@ query.on('added', function(doc) {
     doc.elem = item;
   }
 
-  listElem.appendChild(doc.elem);
+  listElem.insertBefore(doc.elem, listElem.children[idx]);
+//  listElem.appendChild(doc.elem);
 });
 
 query.on('removed', function(doc) {

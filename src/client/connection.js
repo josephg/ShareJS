@@ -221,10 +221,9 @@ Connection.prototype.getOrCreate = function(collection, name, data) {
 
 // **** Queries.
 
-Connection.prototype.createQuery = function(collection, q, autoFetch) {
+Connection.prototype.createQuery = function(collection, q) {
   var id = this.nextQueryId++;
   var query = new Query(this, id, collection, q);
-  query.autoFetch = autoFetch;
   this.queries[id] = query;
   return query;
 };
