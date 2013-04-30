@@ -26,7 +26,7 @@
 // disconnects & reconnects. (onclose(), onconnecting(), onopen()).
 
 var types, Doc;
-if (typeof window === 'undefined') {
+if (typeof require !== 'undefined') {
   types = require('ot-types');
   Doc = require('./doc').Doc;
 } else {
@@ -232,7 +232,7 @@ Connection.prototype.destroyQuery = function(query) {
   delete this.queries[query.id];
 };
 
-if (typeof window === 'undefined') {
+if (typeof require !== 'undefined') {
   MicroEvent = require('./microevent');
 }
 
