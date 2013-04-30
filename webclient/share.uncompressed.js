@@ -48,7 +48,7 @@ _types['http://sharejs.org/types/textv1'].api = {
     }
   }
 };
-// This file is included at the top of the compiled client JS.
+(function(){var e={exports:{}},i=e.exports;i._bootstrapTransform=function(e,i,n,r){var t,o;return t=function(e,n,r,t){return i(r,e,n,"left"),i(t,n,e,"right")},e.transformX=e.transformX=o=function(e,i){var l,p,d,f,s,a,u,c,h,v,g,m,y,w,O,b,k,E,x;for(n(e),n(i),s=[],v=0,w=i.length;w>v;v++){for(h=i[v],f=[],l=0;e.length>l;){if(a=[],t(e[l],h,f,a),l++,1!==a.length){if(0===a.length){for(E=e.slice(l),g=0,O=E.length;O>g;g++)p=E[g],r(f,p);h=null;break}for(x=o(e.slice(l),a),d=x[0],c=x[1],m=0,b=d.length;b>m;m++)p=d[m],r(f,p);for(y=0,k=c.length;k>y;y++)u=c[y],r(s,u);h=null;break}h=a[0]}null!=h&&r(s,h),e=f}return[e,s]},e.transform=e.transform=function(e,n,r){if("left"!==r&&"right"!==r)throw Error("type must be 'left' or 'right'");return 0===n.length?e:1===e.length&&1===n.length?i([],e[0],n[0],r):"left"===r?o(e,n)[0]:o(n,e)[1]}};var n,r,t,o,l,p,d,f;p={name:"text-old",uri:"http://sharejs.org/types/textv0",create:function(){return""}},l=function(e,i,n){return e.slice(0,i)+n+e.slice(i)},r=function(e){var i,n;if("number"!=typeof e.p)throw Error("component missing position field");if(n=typeof e.i,i=typeof e.d,!("string"===n^"string"===i))throw Error("component needs an i or d field");if(!(e.p>=0))throw Error("position cannot be negative")},t=function(e){var i,n,t;for(n=0,t=e.length;t>n;n++)i=e[n],r(i);return!0},p.apply=function(e,i){var n,r,o,p;for(t(i),o=0,p=i.length;p>o;o++)if(n=i[o],null!=n.i)e=l(e,n.p,n.i);else{if(r=e.slice(n.p,n.p+n.d.length),n.d!==r)throw Error("Delete component '"+n.d+"' does not match deleted text '"+r+"'");e=e.slice(0,n.p)+e.slice(n.p+n.d.length)}return e},p._append=n=function(e,i){var n,r,t;if(""!==i.i&&""!==i.d)return 0===e.length?e.push(i):(n=e[e.length-1],null!=n.i&&null!=i.i&&n.p<=(r=i.p)&&n.p+n.i.length>=r?e[e.length-1]={i:l(n.i,i.p-n.p,i.i),p:n.p}:null!=n.d&&null!=i.d&&i.p<=(t=n.p)&&i.p+i.d.length>=t?e[e.length-1]={d:l(i.d,n.p-i.p,n.d),p:i.p}:e.push(i))},p.compose=function(e,i){var r,o,l,p;for(t(e),t(i),o=e.slice(),l=0,p=i.length;p>l;l++)r=i[l],n(o,r);return o},p.compress=function(e){return p.compose([],e)},p.normalize=function(e){var i,r,t,o,l;for(r=[],(null!=e.i||null!=e.p)&&(e=[e]),t=0,o=e.length;o>t;t++)i=e[t],null==(l=i.p)&&(i.p=0),n(r,i);return r},f=function(e,i,n){return null!=i.i?e>i.p||i.p===e&&n?e+i.i.length:e:i.p>=e?e:i.p+i.d.length>=e?i.p:e-i.d.length},p.transformCursor=function(e,i,n){var r,t,o,l;for(t="right"===n,o=0,l=i.length;l>o;o++)r=i[o],e=f(e,r,t);return e},p._tc=d=function(e,i,r,o){var l,p,d,s,a,u;if(t([i]),t([r]),null!=i.i)n(e,{i:i.i,p:f(i.p,r,"right"===o)});else if(null!=r.i)u=i.d,i.p<r.p&&(n(e,{d:u.slice(0,r.p-i.p),p:i.p}),u=u.slice(r.p-i.p)),""!==u&&n(e,{d:u,p:i.p+r.i.length});else if(i.p>=r.p+r.d.length)n(e,{d:i.d,p:i.p-r.d.length});else if(i.p+i.d.length<=r.p)n(e,i);else{if(s={d:"",p:i.p},i.p<r.p&&(s.d=i.d.slice(0,r.p-i.p)),i.p+i.d.length>r.p+r.d.length&&(s.d+=i.d.slice(r.p+r.d.length-i.p)),d=Math.max(i.p,r.p),p=Math.min(i.p+i.d.length,r.p+r.d.length),l=i.d.slice(d-i.p,p-i.p),a=r.d.slice(d-r.p,p-r.p),l!==a)throw Error("Delete ops delete different text in the same region of the document");""!==s.d&&(s.p=f(s.p,r),n(e,s))}return e},o=function(e){return null!=e.i?{d:e.i,p:e.p}:{i:e.d,p:e.p}},p.invert=function(e){var i,n,r,t,l;for(t=e.slice().reverse(),l=[],n=0,r=t.length;r>n;n++)i=t[n],l.push(o(i));return l},"undefined"==typeof require?i._bootstrapTransform(p,p.transformComponent,p.checkValidOp,p.append):require("./helpers")._bootstrapTransform(p,p.transformComponent,p.checkValidOp,p.append),e.exports=p;var s=function(e){return"[object Array]"==Object.prototype.toString.call(e)},a=function(e){return JSON.parse(JSON.stringify(e))},p="undefined"!=typeof require?require("./text-old"):window.ottypes.text,u={name:"json0",uri:"http://sharejs.org/types/JSONv0"};u.create=function(e){return void 0===e?null:e},u.invertComponent=function(e){var i={p:e.p};return void 0!==e.si&&(i.sd=e.si),void 0!==e.sd&&(i.si=e.sd),void 0!==e.oi&&(i.od=e.oi),void 0!==e.od&&(i.oi=e.od),void 0!==e.li&&(i.ld=e.li),void 0!==e.ld&&(i.li=e.ld),void 0!==e.na&&(i.na=-e.na),void 0!==e.lm&&(i.lm=e.p[e.p.length-1],i.p=e.p.slice(0,e.p.length-1).concat([e.lm])),i},u.invert=function(e){for(var i=e.slice().reverse(),n=[],r=0;i.length>r;r++)n.push(u.invertComponent(i[r]));return n},u.checkValidOp=function(e){for(var i=0;e.length>i;i++)if(!s(e[i].p))throw Error("Missing path")},u.checkList=function(e){if(!s(e))throw Error("Referenced element not a list")},u.checkObj=function(e){if(e.constructor!==Object)throw Error("Referenced element not an object (it was "+JSON.stringify(e)+")")},u.apply=function(e,i){u.checkValidOp(i),i=a(i);for(var n={data:e},r=0;i.length>r;r++){for(var t=i[r],o=null,l=null,p=n,d="data",f=0;t.p.length>f;f++){var s=t.p[f];if(o=p,l=d,p=p[d],d=s,null==o)throw Error("Path invalid")}if(void 0!==t.na){if("number"!=typeof p[d])throw Error("Referenced element not a number");p[d]+=t.na}else if(void 0!==t.si){if("string"!=typeof p)throw Error("Referenced element not a string (it was "+JSON.stringify(p)+")");o[l]=p.slice(0,d)+t.si+p.slice(d)}else if(void 0!==t.sd){if("string"!=typeof p)throw Error("Referenced element not a string");if(p.slice(d,d+t.sd.length)!==t.sd)throw Error("Deleted string does not match");o[l]=p.slice(0,d)+p.slice(d+t.sd.length)}else if(void 0!==t.li&&void 0!==t.ld)u.checkList(p),p[d]=t.li;else if(void 0!==t.li)u.checkList(p),p.splice(d,0,t.li);else if(void 0!==t.ld)u.checkList(p),p.splice(d,1);else if(void 0!==t.lm){if(u.checkList(p),t.lm!=d){var c=p[d];p.splice(d,1),p.splice(t.lm,0,c)}}else if(void 0!==t.oi)u.checkObj(p),p[d]=t.oi;else{if(void 0===t.od)throw Error("invalid / missing instruction in op");u.checkObj(p),delete p[d]}}return n.data},u.incrementalApply=function(e,i,n){for(var r=0;i.length>r;r++){var t=[i[r]];e=u.apply(e,t),n(t,e)}return e},u.pathMatches=function(e,i,n){if(e.length!=i.length)return!1;for(var r=0;e.length>r;r++){var t=e[r];if(t!==i[r]&&(!n||r!==e.length-1))return!1}return!0},u.append=function(e,i){i=a(i);var n;0!=e.length&&u.pathMatches(i.p,(n=e[e.length-1]).p)?void 0!==n.na&&void 0!==i.na?e[e.length-1]={p:n.p,na:n.na+i.na}:void 0!==n.li&&void 0===i.li&&i.ld===n.li?void 0!==n.ld?delete n.li:e.pop():void 0!==n.od&&void 0===n.oi&&void 0!==i.oi&&void 0===i.od?n.oi=i.oi:void 0!==i.lm&&i.p[i.p.length-1]===i.lm||e.push(i):e.push(i)},u.compose=function(e,i){u.checkValidOp(e),u.checkValidOp(i);for(var n=a(e),r=0;i.length>r;r++)u.append(n,i[r]);return n},u.normalize=function(e){var i=[];e=s(e)?e:[e];for(var n=0;e.length>n;n++){var r=e[n];null==r.p&&(r.p=[]),u.append(i,r)}return i},u.canOpAffectOp=function(e,i){if(0===e.length)return!0;if(0===i.length)return!1;i=i.slice(0,i.length-1),e=e.slice(0,e.length-1);for(var n=0;e.length>n;n++){var r=e[n];if(n>=i.length)return!1;if(r!=i[n])return!1}return!0},u.transformComponent=function(e,i,n,r){i=a(i),void 0!==i.na&&i.p.push(0),void 0!==n.na&&n.p.push(0);var t;u.canOpAffectOp(n.p,i.p)&&(t=n.p.length-1);var o;u.canOpAffectOp(i.p,n.p)&&(o=i.p.length-1);var l=i.p.length,d=n.p.length;if(void 0!==i.na&&i.p.pop(),void 0!==n.na&&n.p.pop(),n.na){if(null!=o&&d>=l&&n.p[o]==i.p[o])if(void 0!==i.ld){var f=a(n);f.p=f.p.slice(l),i.ld=u.apply(a(i.ld),[f])}else if(void 0!==i.od){var f=a(n);f.p=f.p.slice(l),i.od=u.apply(a(i.od),[f])}return u.append(e,i),e}if(null!=o&&d>l&&i.p[o]==n.p[o])if(void 0!==i.ld){var f=a(n);f.p=f.p.slice(l),i.ld=u.apply(a(i.ld),[f])}else if(void 0!==i.od){var f=a(n);f.p=f.p.slice(l),i.od=u.apply(a(i.od),[f])}if(null!=t){var s=l==d;if(void 0!==n.na);else if(void 0!==n.si||void 0!==n.sd){if(void 0!==i.si||void 0!==i.sd){if(!s)throw Error("must be a string?");var c=function(e){var i={p:e.p[e.p.length-1]};return null!=e.si?i.i=e.si:i.d=e.sd,i},h=c(i),v=c(n),g=[];p._tc(g,h,v,r);for(var m=0;g.length>m;m++){var y=g[m],w={p:i.p.slice(0,t)};w.p.push(y.p),null!=y.i&&(w.si=y.i),null!=y.d&&(w.sd=y.d),u.append(e,w)}return e}}else if(void 0!==n.li&&void 0!==n.ld){if(n.p[t]===i.p[t]){if(!s)return e;if(void 0!==i.ld){if(void 0===i.li||"left"!==r)return e;i.ld=a(n.li)}}}else if(void 0!==n.li)void 0!==i.li&&void 0===i.ld&&s&&i.p[t]===n.p[t]?"right"===r&&i.p[t]++:n.p[t]<=i.p[t]&&i.p[t]++,void 0!==i.lm&&s&&n.p[t]<=i.lm&&i.lm++;else if(void 0!==n.ld){if(void 0!==i.lm&&s){if(n.p[t]===i.p[t])return e;var O=n.p[t],b=i.p[t],k=i.lm;(k>O||O===k&&k>b)&&i.lm--}if(n.p[t]<i.p[t])i.p[t]--;else if(n.p[t]===i.p[t]){if(l>d)return e;if(void 0!==i.ld){if(void 0===i.li)return e;delete i.ld}}}else if(void 0!==n.lm)if(void 0!==i.lm&&l===d){var b=i.p[t],k=i.lm,E=n.p[t],x=n.lm;if(E!==x)if(b===E){if("left"!==r)return e;i.p[t]=x,b===k&&(i.lm=x)}else b>E&&i.p[t]--,b>x?i.p[t]++:b===x&&E>x&&(i.p[t]++,b===k&&i.lm++),k>E?i.lm--:k===E&&k>b&&i.lm--,k>x?i.lm++:k===x&&(x>E&&k>b||E>x&&b>k?"right"===r&&i.lm++:k>b?i.lm++:k===E&&i.lm--)}else if(void 0!==i.li&&void 0===i.ld&&s){var b=n.p[t],k=n.lm;O=i.p[t],O>b&&i.p[t]--,O>k&&i.p[t]++}else{var b=n.p[t],k=n.lm;O=i.p[t],O===b?i.p[t]=k:(O>b&&i.p[t]--,O>k?i.p[t]++:O===k&&b>k&&i.p[t]++)}else if(void 0!==n.oi&&void 0!==n.od){if(i.p[t]===n.p[t]){if(void 0===i.oi||!s)return e;if("right"===r)return e;i.od=n.oi}}else if(void 0!==n.oi){if(void 0!==i.oi&&i.p[t]===n.p[t]){if("left"!==r)return e;u.append(e,{p:i.p,od:n.oi})}}else if(void 0!==n.od&&i.p[t]==n.p[t]){if(!s)return e;if(void 0===i.oi)return e;delete i.od}}return u.append(e,i),e},"undefined"!=typeof require?require("./helpers")._bootstrapTransform(u,u.transformComponent,u.checkValidOp,u.append):i._bootstrapTransform(u,u.transformComponent,u.checkValidOp,u.append),e.exports=u;var c=window.ottypes=window.ottypes||{},h=e.exports;c[h.name]=h,h.uri&&(c[h.uri]=h)})();// This file is included at the top of the compiled client JS.
 
 // All the modules will just add stuff to exports, and it'll all get exported.
 var exports = window.sharejs = {version: '0.7.0'};
@@ -104,7 +104,7 @@ MicroEvent.prototype.emit = function(event) {
   }
 
   var listeners = events[event];
-  for (i = 0; i < listeners.length; i++) {
+  for (var i = 0; i < listeners.length; i++) {
     if (listeners[i]) {
       listeners[i].apply(this, args);
     }
@@ -132,7 +132,7 @@ if (typeof window == "undefined") module.exports = MicroEvent;
 
 var types, MicroEvent;
 
-if (typeof window === "undefined") {
+if (typeof require !== "undefined") {
   types = require('ot-types');
   MicroEvent = require('./microevent');
 } else {
@@ -173,7 +173,7 @@ var Doc = exports.Doc = function(connection, collection, name, data) {
 
   // Do we automatically connect when our connection to the server
   // is restarted?
-  this.autoConnect = false;
+  this.autoSubscribe = false;
 
   // Are we ready for submitOp() calls? This means we know the snapshot at the
   // server at some version. If this.ready is true, this.version must be set
@@ -190,6 +190,10 @@ var Doc = exports.Doc = function(connection, collection, name, data) {
   // This has the same format as an entry in pendingData, which is:
   // {[create:{...}], [del:true], [op:...], callbacks:[...], src:, seq:}
   this.inflightData = null;
+
+  // The editing contexts. These are usually instances of the type API when the
+  // document is ready for edits.
+  this.editingContexts = [];
   
   // All ops that are waiting for the server to acknowledge @inflightData
   // This used to just be a single operation, but creates & deletes can't be composed with
@@ -226,13 +230,13 @@ Doc.prototype._send = function(message) {
 //
 // Only call this once per document.
 Doc.prototype.subscribe = function() {
-  this.autoConnect = true;
+  this.autoSubscribe = true;
   if (this.connection.canSend)
-    this._send(this.ready ? {a:'fetchsub', v:this.version} : {a:'sub'});
+    this._send(this.ready ? {a:'sub', v:this.version} : {a:'sub'});
 };
 
 Doc.prototype.unsubscribed = function() {
-  this.autoConnect = false;
+  this.autoSubscribe = false;
   if (this.connection.canSend)
     this._send({a:'unsub'});
 };
@@ -244,9 +248,9 @@ Doc.prototype.fetch = function() {
 
 // Called whenever (you guessed it!) the connection state changes. This will
 // happen when we get disconnected & reconnect.
-Doc.prototype._connectionStateChanged = function(state, reason) {
+Doc.prototype._onConnectionStateChanged = function(state, reason) {
   if (state === 'connecting') {
-    if (this.autoConnect) {
+    if (this.autoSubscribe) {
       this.subscribe();
     }
     if (this.inflightData) {
@@ -256,30 +260,58 @@ Doc.prototype._connectionStateChanged = function(state, reason) {
 };
 
 // This creates and returns an editing context using the current OT type.
-Doc.prototype.createEditingContext = function() {
+Doc.prototype.createContext = function() {
   var type = this.type;
-  if (!type || !type.api) throw new Error('Missing type API');
+  if (!type) throw new Error('Missing type');
 
   // I could use the prototype chain to do this instead, but Object.create
   // isn't defined on old browsers. This will be fine.
-  var _this = this;
+  var doc = this;
   var context = {
     getSnapshot: function() {
-      return _this.snapshot;
+      return doc.snapshot;
     },
     submitOp: function(op, callback) {
-      _this.submitOp(op, context, callback);
+      doc.submitOp(op, context, callback);
+    },
+    destroy: function() {
+      if (this.detach) {
+        this.detach();
+        // Don't double-detach.
+        delete this.detach;
+      }
+      // It will be removed from the actual editingContexts list next time
+      // we receive an op on the document (and the list is iterated through).
+      //
+      // This is potentially dodgy, allowing a memory leak if you create &
+      // destroy a whole bunch of contexts without receiving or sending any ops
+      // to the document.
+      delete this._onOp;
+      this.remove = true;
     },
   };
 
-  // Copy everything else from the type's API into the editing context.
-  for (k in type.api) {
-    context[k] = type.api[k];
+  if (type.api) {
+    // Copy everything else from the type's API into the editing context.
+    for (k in type.api) {
+      context[k] = type.api[k];
+    }
+  } else {
+    context.provides = {};
   }
 
   this.editingContexts.push(context);
 
   return context;
+};
+
+Doc.prototype.removeContexts = function() {
+  if (this.editingContexts) {
+    for (var i = 0; i < this.editingContexts.length; i++) {
+      this.editingContexts[i].destroy();
+    }
+  }
+  this.editingContexts.length = 0;
 };
 
 // Set the document's type, and associated properties. Most of the logic in
@@ -290,6 +322,7 @@ Doc.prototype._setType = function(newType) {
     if (!types[newType]) throw new Error("Missing type " + newType);
     newType = types[newType];
   }
+  this.removeContexts();
 
   // Set the new type
   this.type = newType;
@@ -298,11 +331,9 @@ Doc.prototype._setType = function(newType) {
   if (!newType) {
     delete this.snapshot;
     this.provides = {};
-    delete this.editingContexts;
   } else if (newType.api) {
     // Register the new type's API.
     this.provides = newType.api.provides;
-    this.editingContexts = [];
   }
 };
 
@@ -436,13 +467,16 @@ Doc.prototype._afterOtApply = function(opData, context) {
   this.locked = false;
   this.emit('unlocked');
   if (opData.op) {
-    if (this.editingContexts) {
+    var contexts = this.editingContexts;
+    if (contexts) {
       // Notify all the contexts about the op (well, all the contexts except
       // the one which initiated the submit in the first place).
-      for (var i = 0; i < this.editingContexts.length; i++) {
-        var c = this.editingContexts[i];
-        if (context != c && c._onOp)
-          c._onOp(opData.op);
+      for (var i = 0; i < contexts.length; i++) {
+        var c = contexts[i];
+        if (context != c && c._onOp) c._onOp(opData.op);
+      }
+      for (var i = 0; i < contexts.length; i++) {
+        if (contexts.remove) contexts.splice(i--, 1);
       }
     }
 
@@ -486,7 +520,7 @@ Doc.prototype._submitOpData = function(opData, context, callback) {
     else if (console) console.warn('Failed attempt to submitOp:', err);
   };
 
-  if (!this.subscribed) {
+  if (!this.ready) {
     return error('You cannot currently submit operations to an unsubscribed document');
   }
   if (this.locked) {
@@ -666,7 +700,7 @@ Doc.prototype._onMessage = function(msg) {
       if (msg.error) {
         if (console) console.error("Could not open document: " + msg.error);
         this.emit('error', msg.error);
-        this.autoConnect = false;
+        this.autoSubscribe = false;
       } else {
         this.subscribed = true;
         this.flush();
@@ -704,7 +738,7 @@ Doc.prototype._onMessage = function(msg) {
 
       if (this.inflightData) this._xf(this.inflightData, msg);
 
-      for (var i = 0; i < this.pendingData; i++) {
+      for (var i = 0; i < this.pendingData.length; i++) {
         this._xf(this.pendingData[i], msg);
       }
 
@@ -741,385 +775,911 @@ Doc.prototype.getSnapshot = function() {
 
 MicroEvent.mixin(Doc);
 
-// Generated by CoffeeScript 1.6.1
-var Connection, Doc, MicroEvent, ottypes;
+// A Connection wraps a persistant BC connection to a sharejs server.
+//
+// This class implements the client side of the protocol defined here:
+// https://github.com/josephg/ShareJS/wiki/Wire-Protocol
+//
+// The equivalent server code is in src/server/session.
+//
+// This file is a bit of a mess. I'm dreadfully sorry about that. It passes all the tests,
+// so I have hope that its *correct* even if its not clean.
+//
+// To make a connection, use:
+//  new sharejs.Connection(socket)
+//
+// The socket should look like a websocket connection. It should have the following properties:
+//  send(msg): Send the given message. msg may be an object - if so, you might need to JSON.stringify it.
+//  close(): Disconnect the session
+//
+//  onmessage = function(msg){}: Event handler which is called whenever a message is received. The message
+//     passed in should already be an object. (It may need to be JSON.parsed)
+//  onclose
+//  onerror
+//  onopen
+//  onconnecting
+//
+// The socket should probably automatically reconnect. If so, it should emit the appropriate events as it
+// disconnects & reconnects. (onclose(), onconnecting(), onopen()).
 
-if (typeof window === 'undefined') {
-  ottypes = require('ot-types');
+var types, Doc;
+if (typeof require !== 'undefined') {
+  types = require('ot-types');
   Doc = require('./doc').Doc;
+} else {
+  types = window.ottypes;
+  Doc = exports.Doc;
 }
 
-Connection = (function() {
+var Connection = exports.Connection = function (socket) {
+  this.socket = socket;
 
-  Connection.prototype._error = function(e) {
-    this.setState('stopped', e);
-    return this.disconnect(e);
-  };
+  // Map of collection -> docName -> doc object for created documents.
+  // (created documents MUST BE UNIQUE)
+  this.collections = {};
 
-  function Connection(socket) {
-    var _this = this;
-    this.socket = socket;
-    this.collections = {};
-    this.nextQueryId = 1;
-    this.queries = {};
-    this.state = 'disconnected';
-    this.socket.onmessage = function(msg) {
-      var collection, doc, docName;
-      console.log('RECV', msg);
-      switch (msg.a) {
-        case 'init':
-          if (msg.protocol !== 0) {
-            throw new Error('Invalid protocol version');
-          }
-          if (typeof msg.id !== 'string') {
-            throw new Error('Invalid client id');
-          }
-          _this.id = msg.id;
-          return _this.setState('connected');
-        case 'q':
-          return _this.queries[msg.id].onmessage(msg);
-        default:
-          if (msg.doc !== void 0) {
-            collection = _this.lastReceivedCollection = msg.c;
-            docName = _this.lastReceivedDoc = msg.doc;
-          } else {
-            collection = msg.c = _this.lastReceivedCollection;
-            docName = msg.doc = _this.lastReceivedDoc;
-          }
-          if ((doc = _this.get(collection, docName))) {
-            return doc._onMessage(msg);
-          } else {
-            return typeof console !== "undefined" && console !== null ? console.error('Unhandled message', msg) : void 0;
-          }
-      }
-    };
-    this.connected = false;
-    this.socket.onclose = function(reason) {
-      _this.setState('disconnected', reason);
-      if (reason === 'Closed' || reason === 'Stopped by server') {
-        return _this.setState('stopped', _this.lastError || reason);
-      }
-    };
-    this.socket.onerror = function(e) {
-      return _this.emit('error', e);
-    };
-    this.socket.onopen = function() {
-      return _this.setState('connecting');
-    };
-    this.reset();
-  }
+  // Each query is created with an id that the server uses when it sends us
+  // info about the query (updates, etc).
+  this.nextQueryId = 1;
+  // Map from query ID -> query object.
+  this.queries = {};
 
-  Connection.prototype.reset = function() {
-    this.id = this.lastError = this.lastReceivedDoc = this.lastSentDoc = null;
-    return this.seq = 1;
-  };
+  // Connection state.
+  // 
+  // States:
+  // - 'connecting': The connection has been established, but we don't have our client ID yet
+  // - 'connected': We have connected and recieved our client ID. Ready for data.
+  // - 'disconnected': The connection is closed, but it will reconnect automatically.
+  // - 'stopped': The connection is closed, and should not reconnect.
+  this.state = 'disconnected';
 
-  Connection.prototype.setState = function(newState, data) {
-    var c, collection, doc, docName, _ref, _results;
-    if (this.state === newState) {
-      return;
-    }
-    if ((newState === 'connecting' && this.state !== 'disconnected') || (newState === 'connected' && this.state !== 'connecting')) {
-      throw new Error("Cannot transition directly from " + this.state + " to " + newState);
-    }
-    this.state = newState;
-    this.canSend = newState === 'connecting' || newState === 'connected';
-    if (newState === 'disconnected') {
-      this.reset();
-    }
-    this.emit(newState, data);
-    _ref = this.collections;
-    _results = [];
-    for (c in _ref) {
-      collection = _ref[c];
-      _results.push((function() {
-        var _results1;
-        _results1 = [];
-        for (docName in collection) {
-          doc = collection[docName];
-          _results1.push(doc._connectionStateChanged(newState, data));
+  // This is a helper variable the document uses to see whether we're currently
+  // in a 'live' state. It is true if the state is 'connecting' or 'connected'.
+  this.canSend = false;
+
+  // Reset some more state variables.
+  this.reset();
+
+
+  var _this = this;
+
+  // Attach event handlers to the socket.
+  socket.onmessage = function(msg) {
+    console.log('RECV', msg);
+
+    // Switch on the message action. Most messages are for documents and are
+    // handled in the doc class.
+    switch (msg.a) {
+      case 'init':
+        // Client initialization packet. This bundle of joy contains our client
+        // ID.
+        if (msg.protocol !== 0) throw new Error('Invalid protocol version');
+        if (typeof msg.id != 'string') throw new Error('Invalid client id');
+
+        _this.id = msg.id;
+        _this._setState('connected');
+        break;
+
+      case 'qsub':
+      case 'q':
+      case 'qunsub':
+        // Query message. Pass this to the appropriate query object.
+        _this.queries[msg.id]._onMessage(msg);
+        break;
+
+      default:
+        // Document message. Pull out the referenced document and forward the
+        // message.
+        var collection, docName, doc;
+        if (msg.doc) {
+          collection = this._lastReceivedCollection = msg.c;
+          docName = this._lastReceivedDoc = msg.doc;
+        } else {
+          collection = msg.c = this._lastReceivedCollection;
+          docName = msg.doc = this._lastReceivedDoc;
         }
-        return _results1;
-      })());
+
+        doc = _this.get(collection, docName);
+        if (!doc) {
+          if (console) console.error('Message for unknown doc. Ignoring.', msg);
+          break;
+        }
+        doc._onMessage(msg);
     }
-    return _results;
   };
 
-  Connection.prototype.send = function(data) {
-    var collection, docName;
-    console.log("SEND:", data);
-    if (data.doc) {
-      docName = data.doc;
-      collection = data.c;
-      if (collection === this.lastSentCollection && docName === this.lastSentDoc) {
-        delete data.c;
-        delete data.doc;
-      } else {
-        this.lastSentCollection = collection;
-        this.lastSentDoc = docName;
-      }
+  socket.onopen = function() {
+    _this._setState('connecting');
+  };
+
+  socket.onerror = function(e) {
+    _this.emit('error', e);
+  };
+
+  socket.onclose = function(reason) {
+    _this._setState('disconnected', reason);
+    if (reason === 'Closed' || reason === 'Stopped by server') {
+      _this._setState('stopped', reason);
     }
-    return this.socket.send(data);
   };
+}
 
-  Connection.prototype.disconnect = function() {
-    return this.socket.close();
-  };
-
-  Connection.prototype.get = function(collection, name) {
-    var _ref;
-    return (_ref = this.collections[collection]) != null ? _ref[name] : void 0;
-  };
-
-  Connection.prototype.getOrCreate = function(collection, name, data) {
-    var doc, _base;
-    doc = this.get(collection, name);
-    if (doc) {
-      return doc;
-    }
-    doc = new Doc(this, collection, name, data);
-    collection = ((_base = this.collections)[collection] || (_base[collection] = {}));
-    return collection[name] = doc;
-  };
-
-  Connection.prototype.query = function(collection, q, autoFetch, callback) {
-    var query;
-    query = new Query(this, this.nextQueryId++, collection, q);
-    query.autoFetch = autoFetch;
-    query.once;
-    return query;
-  };
-
-  return Connection;
-
-})();
-
-/* 
-  open: (collection, docName, options, callback) ->
-    doc = @openSync collection, name
-    doc.on 'ready', ->
-      if doc.type and options.type
-        doc.create type, -> callback()
-      else
-        callback()
-
-  openSync: (collection, docName, options = {}) ->
-    # options can have:
-    # - type:'text'
-    # - snapshot:{...}
-    # - v:  (if you have a snapshot you also need a version and a type).
-    #
-    # - subscribe:true / false. Default true.
-
-    
-    options.type = ottypes[options.type] if typeof options.type is 'string'
-
-    if typeof options.v is 'number'
-      throw new Error 'Missing snapshot' if options.snapshot is undefined
-      throw new Error 'Missing type' if options.type is undefined
-    else
-      delete options.snapshot
-
-    doc = @_get collection, docName
-    if doc
-      if options.subscribe isnt false
-        doc.subscribe()
-
-      return doc
-
-    else
-      return @makeDoc collection, docName, options
-
-
-
-
-  makeDoc: (collection, docName, data, callback) ->
-    throw new Error("Doc #{docName} already open") if @_get collection, docName
-    doc = new Doc(this, collection, docName, data)
-    c = (@collections[collection] ||= {})
-    c[docName] = doc
-
-    #doc.open (error) =>
-    #  if error
-    #    delete c[name]
-    #  else
-    #    doc.on 'closed', => delete c[name]
-
-    #  callback error, (doc unless error)
-
-  # Open a document that already exists
-  # callback(error, doc)
-  openExisting: (collection, docName, callback) ->
-    return callback 'connection closed' if @state is 'stopped'
-    doc = @_get collection, docName
-    return @_ensureOpenState(doc, callback) if doc
-    doc = @makeDoc collection, docName, {}, callback
-
-  # Open a document. It will be created if it doesn't already exist.
-  # Callback is passed a document or an error
-  # type is either a type name (eg 'text' or 'simple') or the actual type object.
-  # Types must be supported by the server.
-  # callback(error, doc)
-  open: (collection, docName, type, callback) ->
-    return callback 'connection closed' if @state is 'stopped'
-
-    # Wait for the connection to open
-    if @state is 'connecting'
-      @on 'connected', -> @open(collection, docName, type, callback)
-      return
-
-    if typeof type is 'function'
-      callback = type
-      type = 'text'
-
-    callback ||= ->
-
-    type = ottypes[type] if typeof type is 'string'
-
-    throw new Error "OT code for document type missing" unless type
-
-    throw new Error 'Server-generated random doc names are not currently supported' unless docName?
-
-    if (doc = @_get collection, docName)
-      if doc.type is type
-        @_ensureOpenState(doc, callback)
-      else
-        callback 'Type mismatch', doc
-      return
-
-    @makeDoc collection, docName, {create:true, type:type.name}, callback
-
-  # Call the callback after the document object is open
-  _ensureOpenState: (doc, callback) ->
-    switch doc.state
-      when 'open' then callback null, doc
-      when 'opening' then @on 'open', -> callback null, doc
-      when 'closed' then doc.open (error) -> callback error, (doc unless error)
-    return
+/* Why does this function exist? Is it important?
+Connection.prototype._error = function(e) {
+  this._setState('stopped', e);
+  return this.disconnect(e);
+};
 */
 
+Connection.prototype.reset = function() {
+  this.id = this.lastError =
+    this._lastReceivedCollection = this._lastReceivedDoc =
+    this._lastSentCollection = this._lastSentDoc = null;
 
-if (typeof window === 'undefined') {
+  this.seq = 1;
+};
+
+// Set the connection's state. The connection is basically a state machine.
+Connection.prototype._setState = function(newState, data) {
+  if (this.state === newState) return;
+
+  // I made a state diagram. The only invalid transitions are getting to
+  // 'connecting' from anywhere other than 'disconnected' and getting to
+  // 'connected' from anywhere other than 'connecting'.
+  if ((newState === 'connecting' && this.state !== 'disconnected')
+      || (newState === 'connected' && this.state !== 'connecting')) {
+    throw new Error("Cannot transition directly from " + this.state + " to " + newState);
+  }
+
+  this.state = newState;
+  this.canSend = newState === 'connecting' || newState === 'connected';
+
+  if (newState === 'disconnected') this.reset();
+
+  this.emit(newState, data);
+
+  // & Emit the event to all documents & queries. It might make sense for
+  // documents to just register for this stuff using events, but that couples
+  // connections and documents a bit much. Its not a big deal either way.
+  for (c in this.collections) {
+    var collection = this.collections[c];
+    for (docName in collection) {
+      collection[docName]._onConnectionStateChanged(newState, data);
+    }
+  }
+  for (c in this.queries) {
+    this.queries[c]._onConnectionStateChanged(newState, data);
+  }
+};
+
+// Send a message to the connection.
+Connection.prototype.send = function(data) {
+  console.log("SEND:", data);
+
+  if (data.doc) { // Not set for queries.
+    var docName = data.doc;
+    var collection = data.c;
+    if (collection === this._lastSentCollection && docName === this._lastSentDoc) {
+      delete data.c;
+      delete data.doc;
+    } else {
+      this._lastSentCollection = collection;
+      this._lastSentDoc = docName;
+    }
+  }
+
+  this.socket.send(data);
+};
+
+Connection.prototype.disconnect = function() {
+  // This will call @socket.onclose(), which in turn will emit the 'disconnected' event.
+  this.socket.close();
+};
+
+
+// ***** Document management
+
+Connection.prototype.get = function(collection, name) {
+  if (this.collections[collection]) return this.collections[collection][name];
+};
+
+// Create a document if it doesn't exist. Returns the document synchronously.
+Connection.prototype.getOrCreate = function(collection, name, data) {
+  var doc = this.get(collection, name);
+  if (doc) return doc;
+
+  // Create it.
+  doc = new Doc(this, collection, name, data);
+
+  collection = this.collections[collection] = (this.collections[collection] || {});
+  return collection[name] = doc;
+};
+
+
+// **** Queries.
+
+Connection.prototype.createQuery = function(collection, q) {
+  var id = this.nextQueryId++;
+  var query = new Query(this, id, collection, q);
+  this.queries[id] = query;
+  return query;
+};
+
+Connection.prototype.destroyQuery = function(query) {
+  delete this.queries[query.id];
+};
+
+if (typeof require !== 'undefined') {
   MicroEvent = require('./microevent');
 }
 
 MicroEvent.mixin(Connection);
 
-exports.Connection = Connection;
-// Generated by CoffeeScript 1.6.1
-var applyChange;
+/* This contains the textarea binding for ShareJS. This binding is really
+ * simple, and a bit slow on big documents (Its O(N). However, it requires no
+ * changes to the DOM and no heavy libraries like ace. It works for any kind of
+ * text input field.
+ *
+ * You probably want to use this binding for small fields on forms and such.
+ * For code editors or rich text editors or whatever, I recommend something
+ * heavier.
+ */
 
-applyChange = function(ctx, oldval, newval) {
-  var commonEnd, commonStart;
-  if (oldval === newval) {
-    return;
-  }
-  commonStart = 0;
+
+/* applyChange creates the edits to convert oldval -> newval.
+ *
+ * This function should be called every time the text element is changed.
+ * Because changes are always localised, the diffing is quite easy. We simply
+ * scan in from the start and scan in from the end to isolate the edited range,
+ * then delete everything that was removed & add everything that was added.
+ * This wouldn't work for complex changes, but this function should be called
+ * on keystroke - so the edits will mostly just be single character changes.
+ * Sometimes they'll paste text over other text, but even then the diff
+ * generated by this algorithm is correct.
+ *
+ * This algorithm is O(N). I suspect you could speed it up somehow using regular expressions.
+ */
+var applyChange = function(ctx, oldval, newval) {
+  // Strings are immutable and have reference equality. I think this test is O(1), so its worth doing.
+  if (oldval === newval) return;
+
+  var commonStart = 0;
   while (oldval.charAt(commonStart) === newval.charAt(commonStart)) {
     commonStart++;
   }
-  commonEnd = 0;
-  while (oldval.charAt(oldval.length - 1 - commonEnd) === newval.charAt(newval.length - 1 - commonEnd) && commonEnd + commonStart < oldval.length && commonEnd + commonStart < newval.length) {
+
+  var commonEnd = 0;
+  while (oldval.charAt(oldval.length - 1 - commonEnd) === newval.charAt(newval.length - 1 - commonEnd) &&
+      commonEnd + commonStart < oldval.length && commonEnd + commonStart < newval.length) {
     commonEnd++;
   }
+
   if (oldval.length !== commonStart + commonEnd) {
     ctx.remove(commonStart, oldval.length - commonStart - commonEnd);
   }
   if (newval.length !== commonStart + commonEnd) {
-    return ctx.insert(commonStart, newval.slice(commonStart, newval.length - commonEnd));
+    ctx.insert(commonStart, newval.slice(commonStart, newval.length - commonEnd));
   }
 };
 
-window.sharejs.Doc.prototype.attach_textarea = function(elem) {
-  var attach, ctx, detach, genOp, insert_listener, remove_listener, replaceText;
-  ctx = null;
-  replaceText = function(newText, transformCursor) {
-    var newSelection, scrollTop;
-    newSelection = [transformCursor(elem.selectionStart), transformCursor(elem.selectionEnd)];
-    scrollTop = elem.scrollTop;
+// Attach a textarea to a document's editing context.
+//
+// The context is optional, and will be created from the document if its not
+// specified.
+window.sharejs.Doc.prototype.attachTextarea = function(elem, ctx) {
+  if (!ctx) ctx = this.createContext();
+
+  if (!ctx.provides.text) throw new Error('Cannot attach to non-text document');
+
+  elem.value = ctx.getText();
+
+  // The current value of the element's text is stored so we can quickly check
+  // if its been changed in the event handlers. This is mostly for browsers on
+  // windows, where the content contains \r\n newlines. applyChange() is only
+  // called after the \r\n newlines are converted, and that check is quite
+  // slow. So we also cache the string before conversion so we can do a quick
+  // check incase the conversion isn't needed.
+  var prevvalue;
+
+  // Replace the content of the text area with newText, and transform the
+  // current cursor by the specified function.
+  var replaceText = function(newText, transformCursor) {
+    if (transformCursor) {
+      var newSelection = [transformCursor(elem.selectionStart), transformCursor(elem.selectionEnd)];
+    }
+
+    // Fixate the window's scroll while we set the element's value. Otherwise
+    // the browser scrolls to the element.
+    var scrollTop = elem.scrollTop;
     elem.value = newText;
-    if (elem.scrollTop !== scrollTop) {
-      elem.scrollTop = scrollTop;
+    prevvalue = elem.value; // Not done on one line so the browser can do newline conversion.
+    if (elem.scrollTop !== scrollTop) elem.scrollTop = scrollTop;
+
+    // Setting the selection moves the cursor. We'll just have to let your
+    // cursor drift if the element isn't active, though usually users don't
+    // care.
+    if (newSelection && window.document.activeElement === elem) {
+      elem.selectionStart = newSelection[0];
+      elem.selectionEnd = newSelection[1];
     }
-    if (window.document.activeElement === elem) {
-      return elem.selectionStart = newSelection[0], elem.selectionEnd = newSelection[1], newSelection;
-    }
   };
-  insert_listener = function(pos, text) {
-    var prevvalue, transformCursor;
-    transformCursor = function(cursor) {
-      if (pos < cursor) {
-        return cursor + text.length;
-      } else {
-        return cursor;
-      }
+
+  replaceText(ctx.getText());
+
+
+  // *** remote -> local changes
+
+  ctx.onInsert = function(pos, text) {
+    var transformCursor = function(cursor) {
+      return pos < cursor ? cursor + text.length : cursor;
     };
-    prevvalue = elem.value.replace(/\r\n/g, '\n');
-    return replaceText(prevvalue.slice(0, pos) + text + prevvalue.slice(pos), transformCursor);
+
+    // Remove any window-style newline characters. Windows inserts these, and
+    // they mess up the generated diff.
+    var prev = elem.value.replace(/\r\n/g, '\n');
+    replaceText(prev.slice(0, pos) + text + prev.slice(pos), transformCursor);
   };
-  remove_listener = function(pos, length) {
-    var prevvalue, transformCursor;
-    transformCursor = function(cursor) {
-      if (pos < cursor) {
-        return cursor - Math.min(length, cursor - pos);
-      } else {
-        return cursor;
-      }
+
+  ctx.onRemove = function(pos, length) {
+    var transformCursor = function(cursor) {
+      // If the cursor is inside the deleted region, we only want to move back to the start
+      // of the region. Hence the Math.min.
+      return pos < cursor ? cursor - Math.min(length, cursor - pos) : cursor;
     };
-    prevvalue = elem.value.replace(/\r\n/g, '\n');
-    return replaceText(prevvalue.slice(0, pos) + prevvalue.slice(pos + length), transformCursor);
+
+    var prev = elem.value.replace(/\r\n/g, '\n');
+    replaceText(prev.slice(0, pos) + prev.slice(pos + length), transformCursor);
   };
-  genOp = function(event) {
-    var onNextTick;
-    onNextTick = function(fn) {
-      return setTimeout(fn, 0);
-    };
-    return onNextTick(function() {
-      var prevvalue;
+
+
+  // *** local -> remote changes
+
+  // This function generates operations from the changed content in the textarea.
+  var genOp = function(event) {
+    // In a timeout so the browser has time to propogate the event's changes to the DOM.
+    setTimeout(function() {
       if (elem.value !== prevvalue) {
         prevvalue = elem.value;
-        return applyChange(ctx, ctx.getText(), elem.value.replace(/\r\n/g, '\n'));
+        applyChange(ctx, ctx.getText(), elem.value.replace(/\r\n/g, '\n'));
       }
-    });
+    }, 0);
   };
-  attach = function() {
-    var event, prevvalue, _i, _len, _ref;
-    if (!doc.provides.text) {
-      return typeof console !== "undefined" && console !== null ? console.warn('Could not attach document: text api incompatible') : void 0;
+
+  var eventNames = ['textInput', 'keydown', 'keyup', 'select', 'cut', 'paste'];
+  for (var i = 0; i < eventNames.length; i++) {
+    var e = eventNames[i];
+    if (elem.addEventListener) {
+      elem.addEventListener(e, genOp, false);
+    } else {
+      elem.attachEvent('on' + e, genOp);
     }
-    ctx = doc.createEditingContext();
-    prevvalue = elem.value = ctx.getText();
-    ctx.onInsert = insert_listener;
-    ctx.onRemove = remove_listener;
-    _ref = ['textInput', 'keydown', 'keyup', 'select', 'cut', 'paste'];
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      event = _ref[_i];
-      if (elem.addEventListener) {
-        elem.addEventListener(event, genOp, false);
-      } else {
-        elem.attachEvent('on' + event, genOp);
-      }
-    }
-    return doc.once('deleted', detach);
-  };
-  detach = elem.detach_share = function() {
-    var event, _i, _len, _ref;
-    ctx.onInsert = ctx.onRemove = null;
-    _ref = ['textInput', 'keydown', 'keyup', 'select', 'cut', 'paste'];
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      event = _ref[_i];
+  }
+
+  ctx.detach = function() {
+    for (var i = 0; i < eventNames.length; i++) {
+      var e = eventNames[i];
       if (elem.removeEventListener) {
-        elem.removeEventListener(event, genOp, false);
+        elem.removeEventListener(e, genOp, false);
       } else {
-        elem.detachEvent('on' + event, genOp);
+        elem.detachEvent('on' + e, genOp);
       }
     }
-    return doc.once('ready', attach);
   };
-  if (doc.type) {
-    return attach();
+
+  return ctx;
+};
+
+// Queries are live requests to the database for particular sets of fields.
+//
+// The server actively tells the client when there's new data that matches
+// a set of conditions.
+var Query = function(connection, id, collection, query) {
+  this.connection = connection;
+
+  this.id = id;
+  this.collection = collection;
+
+  // The query itself. For mongo, this should look something like {"data.x":5}
+  this.query = query;
+
+  // A list of resulting documents. These are actual documents, complete with
+  // data and all the rest. If autoFetch is false, these documents will not
+  // have any data. You should manually call fetch() or subscribe() on them.
+  //
+  // Calling subscribe() might be a good idea anyway, as you won't be
+  // subscribed to the documents by default.
+  this.results = [];
+  
+  // Do we ask the server to give us snapshots of the documents with the query
+  // results?
+  this.autoFetch = false;
+
+  // Should we automatically resubscribe on reconnect? This is set when you
+  // subscribe and unsubscribe.
+  this.autoSubscribe = false;
+
+  // Do we have some initial data?
+  this.ready = false;
+}
+
+// Like the equivalent in the Doc class, this calls the specified function once
+// the query has data.
+Query.prototype.whenReady = function(fn) {
+  if (this.ready) {
+    fn();
   } else {
-    return doc.once('ready', attach);
+    this.once('ready', fn);
+  }
+};
+
+// Internal method called from connection to pass server messages to the query.
+Query.prototype._onMessage = function(msg) {
+  if (msg.error) return this.emit('error', msg.error);
+
+  if (msg.data) {
+    // This message replaces the entire result set with the set passed.
+
+    // First go through our current data set and remove everything.
+    for (var i = 0; i < this.results.length; i++) {
+      this.emit('removed', this.results[i], 0);
+    }
+
+    this.results.length = 0;
+
+    // Then add everything in the new result set.
+    for (var i = 0; i < msg.data.length; i++) {
+      var docData = msg.data[i];
+      var doc = this.connection.getOrCreate(this.collection, docData.docName, docData);
+      this.results.push(doc);
+      this.emit('added', doc, i);
+    }
+
+    if (!this.ready) {
+      this.ready = true;
+      this.emit('ready', this.results);
+    }
+  } else if (msg.add) {
+    // Just splice in one element to the list.
+    var data = msg.add;
+    var doc = this.connection.getOrCreate(this.collection, data.docName, data);
+    this.results.splice(msg.idx, 0, doc);
+    this.emit('added', doc, msg.idx);
+
+  } else if (msg.rm) {
+    // Remove one.
+    this.emit('removed', this.results[msg.idx], msg.idx);
+    this.results.splice(msg.idx, 1);
+  }
+};
+
+// Subscribe to the query. This means we get the query data + updates. Do not
+// call subscribe multiple times. Once subscribe is called, the query will
+// automatically be resubscribed after the client reconnects.
+Query.prototype.subscribe = function() {
+  this.autoSubscribe = true;
+
+  if (this.connection.canSend) {
+    this.connection.send({
+      a: 'qsub',
+      c: this.collection,
+      o: {f:this.autoFetch, p:this.poll},
+      id: this.id,
+      q: this.query
+    });
+  }
+};
+
+// Unsubscribe from the query.
+Query.prototype.unsubscribe = function() {
+  this.autoSubscribe = false;
+
+  if (this.connection.canSend) {
+    this.connection.send({
+      a: 'qunsub',
+      id: this.id
+    });
+  }
+};
+
+// Destroy the query object. Any subsequent messages for the query will be
+// ignored by the connection. You should unsubscribe from the query before
+// destroying it.
+Query.prototype.destroy = function() {
+  this.connection.destroyQuery(this);
+};
+
+Query.prototype._onConnectionStateChanged = function(state, reason) {
+  if (this.connection.state === 'connecting' && this.autoSubscribe)
+    this.subscribe();
+};
+
+
+MicroEvent.mixin(Query);
+
+// Generated by CoffeeScript 1.6.1
+var SubDoc, depath, extendDoc, pathEquals, traverse, _type, _types,
+  __slice = [].slice;
+
+_types = typeof window === 'undefined' ? require('ot-types') : window.ottypes;
+
+if (typeof WEB !== "undefined" && WEB !== null) {
+  extendDoc = exports.extendDoc;
+  exports.extendDoc = function(name, fn) {
+    SubDoc.prototype[name] = fn;
+    return extendDoc(name, fn);
+  };
+}
+
+depath = function(path) {
+  if (path.length === 1 && path[0].constructor === Array) {
+    return path[0];
+  } else {
+    return path;
+  }
+};
+
+SubDoc = (function() {
+
+  function SubDoc(doc, path) {
+    this.doc = doc;
+    this.path = path;
+  }
+
+  SubDoc.prototype.at = function() {
+    var path;
+    path = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+    return this.doc.at(this.path.concat(depath(path)));
+  };
+
+  SubDoc.prototype.parent = function() {
+    if (this.path.length) {
+      return this.doc.at(this.path.slice(0, this.path.length - 1));
+    } else {
+      return void 0;
+    }
+  };
+
+  SubDoc.prototype.get = function() {
+    return this.doc.getAt(this.path);
+  };
+
+  SubDoc.prototype.set = function(value, cb) {
+    return this.doc.setAt(this.path, value, cb);
+  };
+
+  SubDoc.prototype.insert = function(pos, value, cb) {
+    return this.doc.insertAt(this.path, pos, value, cb);
+  };
+
+  SubDoc.prototype.del = function(pos, length, cb) {
+    return this.doc.deleteTextAt(this.path, length, pos, cb);
+  };
+
+  SubDoc.prototype.remove = function(cb) {
+    return this.doc.removeAt(this.path, cb);
+  };
+
+  SubDoc.prototype.push = function(value, cb) {
+    return this.insert(this.get().length, value, cb);
+  };
+
+  SubDoc.prototype.move = function(from, to, cb) {
+    return this.doc.moveAt(this.path, from, to, cb);
+  };
+
+  SubDoc.prototype.add = function(amount, cb) {
+    return this.doc.addAt(this.path, amount, cb);
+  };
+
+  SubDoc.prototype.on = function(event, cb) {
+    return this.doc.addListener(this.path, event, cb);
+  };
+
+  SubDoc.prototype.removeListener = function(l) {
+    return this.doc.removeListener(l);
+  };
+
+  SubDoc.prototype.getLength = function() {
+    return this.get().length;
+  };
+
+  SubDoc.prototype.getText = function() {
+    return this.get();
+  };
+
+  return SubDoc;
+
+})();
+
+traverse = function(snapshot, path) {
+  var container, elem, key, p, _i, _len;
+  container = {
+    data: snapshot
+  };
+  key = 'data';
+  elem = container;
+  for (_i = 0, _len = path.length; _i < _len; _i++) {
+    p = path[_i];
+    elem = elem[key];
+    key = p;
+    if (typeof elem === 'undefined') {
+      throw new Error('bad path');
+    }
+  }
+  return {
+    elem: elem,
+    key: key
+  };
+};
+
+pathEquals = function(p1, p2) {
+  var e, i, _i, _len;
+  if (p1.length !== p2.length) {
+    return false;
+  }
+  for (i = _i = 0, _len = p1.length; _i < _len; i = ++_i) {
+    e = p1[i];
+    if (e !== p2[i]) {
+      return false;
+    }
+  }
+  return true;
+};
+
+_type = _types['http://sharejs.org/types/JSONv0'];
+
+_type.api = {
+  provides: {
+    json: true
+  },
+  _fixComponentPaths: function(c) {
+    var dummy, i, l, to_remove, xformed, _i, _j, _len, _len1, _ref, _results;
+    if (!this._listeners) {
+      return;
+    }
+    if (c.na !== void 0 || c.si !== void 0 || c.sd !== void 0) {
+      return;
+    }
+    to_remove = [];
+    _ref = this._listeners;
+    for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
+      l = _ref[i];
+      dummy = {
+        p: l.path,
+        na: 0
+      };
+      xformed = _type.transformComponent([], dummy, c, 'left');
+      if (xformed.length === 0) {
+        to_remove.push(i);
+      } else if (xformed.length === 1) {
+        l.path = xformed[0].p;
+      } else {
+        throw new Error("Bad assumption in json-api: xforming an 'na' op will always result in 0 or 1 components.");
+      }
+    }
+    to_remove.sort(function(a, b) {
+      return b - a;
+    });
+    _results = [];
+    for (_j = 0, _len1 = to_remove.length; _j < _len1; _j++) {
+      i = to_remove[_j];
+      _results.push(this._listeners.splice(i, 1));
+    }
+    return _results;
+  },
+  _fixPaths: function(op) {
+    var c, _i, _len, _results;
+    _results = [];
+    for (_i = 0, _len = op.length; _i < _len; _i++) {
+      c = op[_i];
+      _results.push(this._fixComponentPaths(c));
+    }
+    return _results;
+  },
+  _submit: function(op, callback) {
+    this._fixPaths(op);
+    return this.submitOp(op, callback);
+  },
+  at: function() {
+    var path;
+    path = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+    return new SubDoc(this, depath(path));
+  },
+  get: function() {
+    return this.snapshot;
+  },
+  set: function(value, cb) {
+    return this.setAt([], value, cb);
+  },
+  getAt: function(path) {
+    var elem, key, _ref;
+    _ref = traverse(this.snapshot, path), elem = _ref.elem, key = _ref.key;
+    return elem[key];
+  },
+  setAt: function(path, value, cb) {
+    var elem, key, op, _ref;
+    _ref = traverse(this.snapshot, path), elem = _ref.elem, key = _ref.key;
+    op = {
+      p: path
+    };
+    if (elem.constructor === Array) {
+      op.li = value;
+      if (typeof elem[key] !== 'undefined') {
+        op.ld = elem[key];
+      }
+    } else if (typeof elem === 'object') {
+      op.oi = value;
+      if (typeof elem[key] !== 'undefined') {
+        op.od = elem[key];
+      }
+    } else {
+      throw new Error('bad path');
+    }
+    return this._submit([op], cb);
+  },
+  removeAt: function(path, cb) {
+    var elem, key, op, _ref;
+    _ref = traverse(this.snapshot, path), elem = _ref.elem, key = _ref.key;
+    if (typeof elem[key] === 'undefined') {
+      throw new Error('no element at that path');
+    }
+    op = {
+      p: path
+    };
+    if (elem.constructor === Array) {
+      op.ld = elem[key];
+    } else if (typeof elem === 'object') {
+      op.od = elem[key];
+    } else {
+      throw new Error('bad path');
+    }
+    return this._submit([op], cb);
+  },
+  insertAt: function(path, pos, value, cb) {
+    var elem, key, op, _ref;
+    _ref = traverse(this.snapshot, path), elem = _ref.elem, key = _ref.key;
+    op = {
+      p: path.concat(pos)
+    };
+    if (elem[key].constructor === Array) {
+      op.li = value;
+    } else if (typeof elem[key] === 'string') {
+      op.si = value;
+    }
+    return this._submit([op], cb);
+  },
+  moveAt: function(path, from, to, cb) {
+    var op;
+    op = [
+      {
+        p: path.concat(from),
+        lm: to
+      }
+    ];
+    return this._submit(op, cb);
+  },
+  addAt: function(path, amount, cb) {
+    var op;
+    op = [
+      {
+        p: path,
+        na: amount
+      }
+    ];
+    return this._submit(op, cb);
+  },
+  deleteTextAt: function(path, length, pos, cb) {
+    var elem, key, op, _ref;
+    _ref = traverse(this.snapshot, path), elem = _ref.elem, key = _ref.key;
+    op = [
+      {
+        p: path.concat(pos),
+        sd: elem[key].slice(pos, pos + length)
+      }
+    ];
+    return this._submit(op, cb);
+  },
+  addListener: function(path, event, cb) {
+    var l;
+    this._listeners || (this._listeners = []);
+    l = {
+      path: path,
+      event: event,
+      cb: cb
+    };
+    this._listeners.push(l);
+    return l;
+  },
+  removeListener: function(l) {
+    var i;
+    if (!this._listeners) {
+      return;
+    }
+    i = this._listeners.indexOf(l);
+    if (i < 0) {
+      return false;
+    }
+    this._listeners.splice(i, 1);
+    return true;
+  },
+  _onOp: function(op) {
+    var c, cb, child_path, event, match_path, path, _i, _len, _results;
+    _results = [];
+    for (_i = 0, _len = op.length; _i < _len; _i++) {
+      c = op[_i];
+      this._fixComponentPaths(c);
+      match_path = c.na === void 0 ? c.p.slice(0, c.p.length - 1) : c.p;
+      _results.push((function() {
+        var _j, _len1, _ref, _ref1, _results1;
+        _ref = this._listeners;
+        _results1 = [];
+        for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
+          _ref1 = _ref[_j], path = _ref1.path, event = _ref1.event, cb = _ref1.cb;
+          if (pathEquals(path, match_path)) {
+            switch (event) {
+              case 'insert':
+                if (c.li !== void 0 && c.ld === void 0) {
+                  _results1.push(cb(c.p[c.p.length - 1], c.li));
+                } else if (c.oi !== void 0 && c.od === void 0) {
+                  _results1.push(cb(c.p[c.p.length - 1], c.oi));
+                } else if (c.si !== void 0) {
+                  _results1.push(cb(c.p[c.p.length - 1], c.si));
+                } else {
+                  _results1.push(void 0);
+                }
+                break;
+              case 'delete':
+                if (c.li === void 0 && c.ld !== void 0) {
+                  _results1.push(cb(c.p[c.p.length - 1], c.ld));
+                } else if (c.oi === void 0 && c.od !== void 0) {
+                  _results1.push(cb(c.p[c.p.length - 1], c.od));
+                } else if (c.sd !== void 0) {
+                  _results1.push(cb(c.p[c.p.length - 1], c.sd));
+                } else {
+                  _results1.push(void 0);
+                }
+                break;
+              case 'replace':
+                if (c.li !== void 0 && c.ld !== void 0) {
+                  _results1.push(cb(c.p[c.p.length - 1], c.ld, c.li));
+                } else if (c.oi !== void 0 && c.od !== void 0) {
+                  _results1.push(cb(c.p[c.p.length - 1], c.od, c.oi));
+                } else {
+                  _results1.push(void 0);
+                }
+                break;
+              case 'move':
+                if (c.lm !== void 0) {
+                  _results1.push(cb(c.p[c.p.length - 1], c.lm));
+                } else {
+                  _results1.push(void 0);
+                }
+                break;
+              case 'add':
+                if (c.na !== void 0) {
+                  _results1.push(cb(c.na));
+                } else {
+                  _results1.push(void 0);
+                }
+                break;
+              default:
+                _results1.push(void 0);
+            }
+          } else if (_type.canOpAffectOp(path, match_path)) {
+            if (event === 'child op') {
+              child_path = c.p.slice(path.length);
+              _results1.push(cb(child_path, c));
+            } else {
+              _results1.push(void 0);
+            }
+          } else {
+            _results1.push(void 0);
+          }
+        }
+        return _results1;
+      }).call(this));
+    }
+    return _results;
   }
 };
 })();
