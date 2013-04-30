@@ -2,7 +2,7 @@
 //
 // The server actively tells the client when there's new data that matches
 // a set of conditions.
-var Query = function(connection, id, collection, query) {
+var Query = exports.Query = function(connection, id, collection, query) {
   this.connection = connection;
 
   this.id = id;
@@ -122,6 +122,10 @@ Query.prototype._onConnectionStateChanged = function(state, reason) {
     this.subscribe();
 };
 
+var MicroEvent;
+if (typeof require !== 'undefined') {
+  MicroEvent = require('./microevent');
+}
 
 MicroEvent.mixin(Query);
 

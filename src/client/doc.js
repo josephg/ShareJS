@@ -281,14 +281,13 @@ Doc.prototype._xf = function(client, server) {
 Doc.prototype._otApply = function(opData, context) {
   // Lock the document. Nobody is allowed to call submitOp() until _afterOtApply is called.
   this.locked = true;
-  var type = this.type
 
   if (opData.create) {
     // If the type is currently set, it means we tried creating the document
     // and someone else won. client create x server create = server create.
     var create = opData.create;
     this._setType(create.type);
-    this.snapshot = type.create(create.data);
+    this.snapshot = this.type.create(create.data);
 
     // This is a bit heavyweight, but I want the created event to fire outside of the lock.
     this.once('unlocked', function() {
@@ -301,7 +300,9 @@ Doc.prototype._otApply = function(opData, context) {
       this.emit('deleted', context);
     });
   } else if (opData.op) {
-    if (!type) throw new Error('Document does not exist');
+    if (!this.type) throw new Error('Document does not exist');
+
+    var type = this.type;
 
     var op = opData.op;
     this.emit('before op', op, context);

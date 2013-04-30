@@ -29,6 +29,7 @@ var types, Doc;
 if (typeof require !== 'undefined') {
   types = require('ot-types');
   Doc = require('./doc').Doc;
+  Query = require('./query').Query;
 } else {
   types = window.ottypes;
   Doc = exports.Doc;
@@ -221,7 +222,11 @@ Connection.prototype.getOrCreate = function(collection, name, data) {
 
 // **** Queries.
 
-Connection.prototype.createQuery = function(collection, q) {
+/**
+ *
+ * @optional source
+ */
+Connection.prototype.createQuery = function(collection, q, source) {
   var id = this.nextQueryId++;
   var query = new Query(this, id, collection, q);
   this.queries[id] = query;
