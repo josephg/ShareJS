@@ -123,6 +123,13 @@ Doc.prototype._onConnectionStateChanged = function(state, reason) {
     }
     if (this.inflightData) {
       this._sendOpData(this.inflightData);
+    } else {
+      this.flush();
+    }
+  } else if (state === 'disconnected') {
+    if (this.subscribed) {
+      this.subscribed = false;
+      this.emit('unsubscribed');
     }
   }
 };
