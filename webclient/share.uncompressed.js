@@ -128,7 +128,7 @@ MicroEvent.mixin = function(obj) {
   return obj;
 };
 
-if (typeof window == "undefined") module.exports = MicroEvent;
+if (typeof module !== "undefined") module.exports = MicroEvent;
 
 var types, MicroEvent;
 
@@ -235,7 +235,7 @@ Doc.prototype.subscribe = function() {
     this._send(this.ready ? {a:'sub', v:this.version} : {a:'sub'});
 };
 
-Doc.prototype.unsubscribed = function() {
+Doc.prototype.unsubscribe = function() {
   this.autoSubscribe = false;
   if (this.connection.canSend)
     this._send({a:'unsub'});
@@ -413,14 +413,13 @@ Doc.prototype._xf = function(client, server) {
 Doc.prototype._otApply = function(opData, context) {
   // Lock the document. Nobody is allowed to call submitOp() until _afterOtApply is called.
   this.locked = true;
-  var type = this.type
 
   if (opData.create) {
     // If the type is currently set, it means we tried creating the document
     // and someone else won. client create x server create = server create.
     var create = opData.create;
     this._setType(create.type);
-    this.snapshot = type.create(create.data);
+    this.snapshot = this.type.create(create.data);
 
     // This is a bit heavyweight, but I want the created event to fire outside of the lock.
     this.once('unlocked', function() {
@@ -433,7 +432,9 @@ Doc.prototype._otApply = function(opData, context) {
       this.emit('deleted', context);
     });
   } else if (opData.op) {
-    if (!type) throw new Error('Document does not exist');
+    if (!this.type) throw new Error('Document does not exist');
+
+    var type = this.type;
 
     var op = opData.op;
     this.emit('before op', op, context);
@@ -806,6 +807,7 @@ var types, Doc;
 if (typeof require !== 'undefined') {
   types = require('ot-types');
   Doc = require('./doc').Doc;
+  Query = require('./query').Query;
 } else {
   types = window.ottypes;
   Doc = exports.Doc;
@@ -998,7 +1000,11 @@ Connection.prototype.getOrCreate = function(collection, name, data) {
 
 // **** Queries.
 
-Connection.prototype.createQuery = function(collection, q) {
+/**
+ *
+ * @optional source
+ */
+Connection.prototype.createQuery = function(collection, q, source) {
   var id = this.nextQueryId++;
   var query = new Query(this, id, collection, q);
   this.queries[id] = query;
@@ -1173,7 +1179,7 @@ window.sharejs.Doc.prototype.attachTextarea = function(elem, ctx) {
 //
 // The server actively tells the client when there's new data that matches
 // a set of conditions.
-var Query = function(connection, id, collection, query) {
+var Query = exports.Query = function(connection, id, collection, query) {
   this.connection = connection;
 
   this.id = id;
@@ -1293,6 +1299,10 @@ Query.prototype._onConnectionStateChanged = function(state, reason) {
     this.subscribe();
 };
 
+var MicroEvent;
+if (typeof require !== 'undefined') {
+  MicroEvent = require('./microevent');
+}
 
 MicroEvent.mixin(Query);
 
