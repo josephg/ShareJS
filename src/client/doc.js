@@ -103,7 +103,7 @@ Doc.prototype.subscribe = function() {
     this._send(this.ready ? {a:'sub', v:this.version} : {a:'sub'});
 };
 
-Doc.prototype.unsubscribed = function() {
+Doc.prototype.unsubscribe = function() {
   this.autoSubscribe = false;
   if (this.connection.canSend)
     this._send({a:'unsub'});
