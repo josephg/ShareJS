@@ -176,7 +176,7 @@ var select = function(doc) {
 //q = sjs.query('users', {'data.x':5}, true, function(err, data) { console.log(err, data); });
 query = sjs.createQuery('users', {$query:{}});
 query.autoFetch = true;
-query.poll = true;
+//query.poll = true;
 
 var selected;
 query.on('added', function(doc, idx) {

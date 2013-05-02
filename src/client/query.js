@@ -23,6 +23,12 @@ var Query = exports.Query = function(connection, id, collection, query) {
   // results?
   this.autoFetch = false;
 
+  // Do we repoll the entire query whenever anything changes? (As opposed to
+  // just polling the changed item). This needs to be enabled to be able to use
+  // ordered queries (sortby:) and paginated queries. Set to undefined, it will
+  // be enabled / disabled automatically based on the query's properties.
+  this.poll = undefined;
+
   // Should we automatically resubscribe on reconnect? This is set when you
   // subscribe and unsubscribe.
   this.autoSubscribe = false;
@@ -88,13 +94,17 @@ Query.prototype.subscribe = function() {
   this.autoSubscribe = true;
 
   if (this.connection.canSend) {
-    this.connection.send({
+    var msg = {
       a: 'qsub',
       c: this.collection,
-      o: {f:this.autoFetch, p:this.poll},
+      o: {f:this.autoFetch},
       id: this.id,
       q: this.query
-    });
+    };
+
+    if (this.poll !== undefined) msg.o.p = this.poll;
+
+    this.connection.send(msg);
   }
 };
 
