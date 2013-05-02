@@ -179,7 +179,7 @@ Doc.prototype.createContext = function() {
 
   if (type.api) {
     // Copy everything else from the type's API into the editing context.
-    for (k in type.api) {
+    for (var k in type.api) {
       context[k] = type.api[k];
     }
   } else {

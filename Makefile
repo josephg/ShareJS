@@ -43,7 +43,7 @@ webclient/%.js: node_modules/ot-types/webclient/%.js
 
 # .. Or uglify the ones we already have.
 webclient/%.js: webclient/%.uncompressed.js
-	$(UGLIFY) $< -cmo $@
+	$(UGLIFY) $< -c unsafe=true --lint -mo $@
 
 # Compile the types for a browser.
 webclient: webclient/share.js webclient/text.js webclient/json0.js

@@ -170,14 +170,14 @@ Connection.prototype._setState = function(newState, data) {
   // & Emit the event to all documents & queries. It might make sense for
   // documents to just register for this stuff using events, but that couples
   // connections and documents a bit much. Its not a big deal either way.
-  for (c in this.collections) {
+  for (var c in this.collections) {
     var collection = this.collections[c];
-    for (docName in collection) {
+    for (var docName in collection) {
       collection[docName]._onConnectionStateChanged(newState, data);
     }
   }
-  for (c in this.queries) {
-    this.queries[c]._onConnectionStateChanged(newState, data);
+  for (var id in this.queries) {
+    this.queries[id]._onConnectionStateChanged(newState, data);
   }
 };
 
