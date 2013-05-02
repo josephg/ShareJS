@@ -334,9 +334,10 @@ Doc.prototype._otApply = function(opData, context) {
     });
   } else if (opData.del) {
     // The type should always exist in this case. del x _ = del
+    var oldSnapshot = this.snapshot;
     this._setType(null);
     this.once('unlock', function() {
-      this.emit('del', context);
+      this.emit('del', context, oldSnapshot);
     });
   } else if (opData.op) {
     if (!this.type) throw new Error('Document does not exist');
