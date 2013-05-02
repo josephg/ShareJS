@@ -53,12 +53,9 @@ Query.prototype._onMessage = function(msg) {
 
   if (msg.data) {
     // This message replaces the entire result set with the set passed.
+    var previous = this.results.slice();
 
-    // First go through our current data set and remove everything.
-    for (var i = 0; i < this.results.length; i++) {
-      this.emit('removed', this.results[i], 0);
-    }
-
+    // Remove all current results.
     this.results.length = 0;
 
     // Then add everything in the new result set.
@@ -66,24 +63,26 @@ Query.prototype._onMessage = function(msg) {
       var docData = msg.data[i];
       var doc = this.connection.getOrCreate(this.collection, docData.docName, docData);
       this.results.push(doc);
-      this.emit('added', doc, i);
     }
 
     if (!this.ready) {
       this.ready = true;
       this.emit('ready', this.results);
+    } else {
+      this.emit('change', this.results, previous);
     }
+
   } else if (msg.add) {
     // Just splice in one element to the list.
     var data = msg.add;
     var doc = this.connection.getOrCreate(this.collection, data.docName, data);
     this.results.splice(msg.idx, 0, doc);
-    this.emit('added', doc, msg.idx);
+    this.emit('insert', doc, msg.idx);
 
   } else if (msg.rm) {
     // Remove one.
-    this.emit('removed', this.results[msg.idx], msg.idx);
-    this.results.splice(msg.idx, 1);
+    var removed = this.results.splice(msg.idx, 1);
+    this.emit('remove', removed[0], msg.idx);
   }
 
   if (msg.a === 'qfetch') {
