@@ -69,7 +69,7 @@ var Connection = exports.Connection = function (socket) {
 
   // Attach event handlers to the socket.
   socket.onmessage = function(msg) {
-    console.log('RECV', msg);
+    console.log('RECV', JSON.stringify(msg));
 
     // Switch on the message action. Most messages are for documents and are
     // handled in the doc class.
@@ -178,7 +178,7 @@ Connection.prototype._setState = function(newState, data) {
 
 // Send a message to the connection.
 Connection.prototype.send = function(data) {
-  console.log("SEND:", data);
+  console.log("SEND:", JSON.stringify(data));
 
   if (data.doc) { // Not set for queries.
     var docName = data.doc;

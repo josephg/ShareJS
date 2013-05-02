@@ -306,8 +306,11 @@ Doc.prototype._xf = function(client, server) {
     client.op = result[0];
     server.op = result[1];
   } else {
-    client.op = client.type.transform(client.op, server.op, 'left');
-    server.op = client.type.transform(server.op, client.op, 'right');
+    //console.log('xf', JSON.stringify(client.op), JSON.stringify(server.op));
+    var _c = client.type.transform(client.op, server.op, 'left');
+    var _s = client.type.transform(server.op, client.op, 'right');
+    client.op = _c; server.op = _s;
+    //console.log('->', JSON.stringify(client.op), JSON.stringify(server.op));
   }
 };
 
@@ -440,7 +443,8 @@ var _tryCompose = function(type, data1, data2) {
 //
 // context is optional.
 Doc.prototype._submitOpData = function(opData, context, callback) {
-  console.log("version = " + this.version);
+  //console.log('submit', JSON.stringify(opData), 'v=', this.version);
+
   if (typeof context === 'function') {
     callback = context;
     context = true; // The default context is true.
@@ -655,7 +659,6 @@ Doc.prototype._onMessage = function(msg) {
       break;
 
     case 'op':
-      console.log("version = " + this.version);
       if (this.inflightData &&
           msg.src === this.inflightData.src &&
           msg.seq === this.inflightData.seq) {
@@ -678,6 +681,7 @@ Doc.prototype._onMessage = function(msg) {
       this.version++;
       this._otApply(msg, false);
       this._afterOtApply(msg, false);
+      //console.log('applied', JSON.stringify(msg));
       break;
 
     case 'meta':
@@ -723,8 +727,9 @@ Doc.prototype.flush = function() {
     this.inflightData = opData;
 
     // Delay for debugging.
-    var that = this;
-    setTimeout(function() { that._sendOpData(opData); }, 1000);
+    //var that = this;
+    //setTimeout(function() { that._sendOpData(opData); }, 1000);
+    this._sendOpData(opData);
   }
 };
 
