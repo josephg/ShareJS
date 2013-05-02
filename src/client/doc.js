@@ -708,7 +708,7 @@ Doc.prototype.flush = function() {
   } else if (this.state === 'unsubscribed' && this.wantSubscribe) {
     this.state = 'subscribing'
     this._send(this.ready ? {a:'sub', v:this.version} : {a:'sub'});
-  } else {
+  } else if (this.state === 'subscribed' || this.state === 'unsubscribed') {
     // Try and send any pending ops.
 
     // First pump and dump any no-ops from the front of the pending op list.
