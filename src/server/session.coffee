@@ -89,6 +89,21 @@ module.exports = (options, stream) ->
     # stream has closed.
     stream.write response
 
+  sendOp = (collection, doc, data) ->
+    msg =
+      a: 'op'
+      c: collection
+      doc: doc
+      v: data.v
+      src: data.src
+      seq: data.seq
+
+    msg.op = data.op if data.op and data.src != agent.sessionId
+    msg.create = data.create if data.create
+    msg.del = true if data.del
+
+    send msg
+
   # We'll only handle one message from each client at a time.
   handleMessage = (req, callback) ->
     #console.log 'handleMessage', req
@@ -102,7 +117,9 @@ module.exports = (options, stream) ->
       error = 'missing or invalid collection' if (req.doc or req.doc is null) and typeof req.c isnt 'string'
 
     error = 'invalid action' unless req.a is undefined or req.a in ['op', 'sub', 'unsub', 'fetch', 'qsub', 'qunsub']
-    error = "'v' invalid" unless req.v is undefined or (typeof req.v is 'number' and req.v >= 0)
+
+    if req.a is 'op'
+      error = "'v' invalid" unless req.v is null or (typeof req.v is 'number' and req.v >= 0)
 
     if error
       console.warn "Invalid req ", req, " from #{agent?.sessionId}: #{error}"
@@ -126,34 +143,24 @@ module.exports = (options, stream) ->
         req.c = lastReceivedCollection
         req.doc = lastReceivedDoc
 
+    collection = req.c
+    doc = req.doc
+
     switch req.a
       when 'fetch'
-        agent.fetch req.c, req.doc, (err, data) ->
+        agent.fetch collection, doc, (err, data) ->
           return callback err if err
           callback null, v:data.v, snapshot:data.data
 
       when 'sub'
-        collection = req.c
-        doc = req.doc
-
         return callback null, error:'Already subscribed' if isSubscribed collection, doc
         setSubscribed collection, doc
 
         subscribeToStream = do (collection, doc) -> (opstream) ->
-          opstream.on 'data', (data) ->
-            msg =
-              a: 'op'
-              c: collection
-              doc: doc
-              v: data.v
-              src: data.src
-              seq: data.seq
+          setSubscribed collection, doc, opstream
 
-            msg.op = data.op if data.op
-            msg.create = data.create if data.create
-            msg.del = true if data.del
-  
-            send msg
+          # Rewrite me to use the new streams api
+          opstream.on 'data', (data) -> sendOp collection, doc, data
 
           # Stop listening to the stream after the session is closed
           stream.on 'finish', -> opstream.destroy()
@@ -174,25 +181,34 @@ module.exports = (options, stream) ->
 
             # Send the snapshot separately. They should both end up on the wire together, but its
             # easier to process in the client this way.
-            console.log 'want to subscribe user'
             send a:'data', c:collection, doc:doc, v:data.v, type:data.type, snapshot:data.data, meta:data.meta
             callback null, v:data.v
             subscribeToStream stream
+
+      when 'unsub'
+        opstream = isSubscribed collection, doc
+        return callback null, error:'Already unsubscribed' unless opstream
+        opstream.destroy()
+        setSubscribed collection, doc, false
+        callback null, {}
 
       when 'op'
         # Shallow copy of just the op data parts.
         opData = {op:req.op, v:req.v, src:req.src, seq:req.seq}
         opData.create = req.create if req.create
         opData.del = req.del if req.del
-        
+
         unless req.src
           opData.src = agent.sessionId
           opData.seq = seq++
 
-        agent.submit req.c, req.doc, opData, (err, v) ->
+        agent.submit collection, doc, opData, (err, v, ops) ->
           if err
             callback null, {a:'ack', error:err}
           else
+            if !isSubscribed collection, doc
+              sendOp collection, doc, op for op in ops
+              sendOp collection, doc, opData # Thankfully, the op is transformed & etc in place.
             callback null, {a:'ack'}
 
       when 'qsub'
@@ -201,7 +217,7 @@ module.exports = (options, stream) ->
           autoFetch = req.o.f
           opts.poll = req.o.p
 
-        agent.query req.c, req.q, opts, (err, emitter) ->
+        agent.query collection, req.q, opts, (err, emitter) ->
           return callback err if err
           
           id = req.id

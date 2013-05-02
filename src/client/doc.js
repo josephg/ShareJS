@@ -39,18 +39,33 @@ var Doc = exports.Doc = function(connection, collection, name, data) {
   this.collection = collection;
   this.name = name;
 
+  this.version = null;
+
   // Do we automatically connect when our connection to the server
   // is restarted?
-  this.autoSubscribe = false;
+  this.wantSubscribe = false;
 
-  // Are we ready for submitOp() calls? This means we know the snapshot at the
-  // server at some version. If this.ready is true, this.version must be set
-  // to a version and this.snapshot cannot be undefined.
+  // The state according to the server.
+  //
+  // Possible values:
+  // - unsubscribed
+  // - subscribing
+  // - subscribed
+  // - unsubscribing
+  this.state = 'unsubscribed'
+
+  // Do we have a document snapshot at a known version on the server?  If
+  // this.ready is true, this.version must be set to a version and
+  // this.snapshot cannot be undefined.
   this.ready = false;
 
   // This doesn't provide any standard API access right now.
   this.provides = {};
 
+  // The editing contexts. These are usually instances of the type API when the
+  // document is ready for edits.
+  this.editingContexts = [];
+  
   // The op that is currently roundtripping to the server, or null.
   //
   // When the connection reconnects, the inflight op is resubmitted.
@@ -59,10 +74,6 @@ var Doc = exports.Doc = function(connection, collection, name, data) {
   // {[create:{...}], [del:true], [op:...], callbacks:[...], src:, seq:}
   this.inflightData = null;
 
-  // The editing contexts. These are usually instances of the type API when the
-  // document is ready for edits.
-  this.editingContexts = [];
-  
   // All ops that are waiting for the server to acknowledge @inflightData
   // This used to just be a single operation, but creates & deletes can't be composed with
   // regular operations.
@@ -98,39 +109,35 @@ Doc.prototype._send = function(message) {
 //
 // Only call this once per document.
 Doc.prototype.subscribe = function() {
-  this.autoSubscribe = true;
-  if (this.connection.canSend)
-    this._send(this.ready ? {a:'sub', v:this.version} : {a:'sub'});
+  this.wantSubscribe = true;
+  this.flush();
 };
 
 Doc.prototype.unsubscribe = function() {
-  this.autoSubscribe = false;
-  if (this.connection.canSend)
-    this._send({a:'unsub'});
+  this.wantSubscribe = false;
+  this.flush();
 };
 
 // Call to request fresh data from the server.
 Doc.prototype.fetch = function() {
-  this._send({a: 'fetch'});
+  if (!this.ready || this.state !== 'subscribed')
+    this._send({a: 'fetch'});
 };
 
 // Called whenever (you guessed it!) the connection state changes. This will
 // happen when we get disconnected & reconnect.
 Doc.prototype._onConnectionStateChanged = function(state, reason) {
   if (state === 'connecting') {
-    if (this.autoSubscribe) {
-      this.subscribe();
-    }
     if (this.inflightData) {
       this._sendOpData(this.inflightData);
     } else {
       this.flush();
     }
   } else if (state === 'disconnected') {
-    if (this.subscribed) {
-      this.subscribed = false;
+    if (this.state !== 'unsubscribed')
       this.emit('unsubscribed');
-    }
+
+    this.state = 'unsubscribed';
   }
 };
 
@@ -164,6 +171,10 @@ Doc.prototype.createContext = function() {
       delete this._onOp;
       this.remove = true;
     },
+
+    // This is dangerous, but really really useful for debugging. I hope people
+    // don't depend on it.
+    _doc: this,
   };
 
   if (type.api) {
@@ -217,14 +228,32 @@ Doc.prototype._setType = function(newType) {
 // that was received from the server during a fetch.
 Doc.prototype._injestData = function(data) {
   if (typeof data.v !== 'number') throw new Error('Missing version in injested data');
-  if (typeof this.version === 'number') {
+  if (this.ready) {
     if (typeof console !== "undefined") console.warn('Ignoring extra attempt to injest data');
     return;
   }
 
+  if (this.pendingData.length) {
+    // We've done ops locally, which have to include a create. Make sure the
+    // document hasn't been created by someone else.
+    if (data.type) {
+      // Uh oh. Error all the pending ops.
+      for (var p = 0; p < this.pendingData.length; p++) {
+        var callbacks = this.pendingData[p].callbacks;
+        for (var i = 0; i < callbacks.length; i++) {
+          callbacks[i]('Document already exists');
+        }
+      }
+      this.pendingData.length = 0;
+      this._setType(null);
+    }
+  }
+
   this.version = data.v;
-  this.snapshot = data.snapshot;
-  this._setType(data.type);
+  if (!this.type) {
+    this.snapshot = data.snapshot;
+    this._setType(data.type);
+  }
 
   this.ready = true;
   this.emit('ready');
@@ -241,6 +270,10 @@ var setNoOp = function(opData) {
   delete opData.del;
 };
 
+var isNoOp = function(opData) {
+  return !opData.op && !opData.create && !opData.del;
+}
+
 // Transform server op data by a client op, and vice versa. Ops are edited in place.
 Doc.prototype._xf = function(client, server) {
   // In this case, we're in for some fun. There are some local operations
@@ -251,15 +284,11 @@ Doc.prototype._xf = function(client, server) {
   //
   // The client becomes a no-op, and we keep the server op entirely.
   if (server.create || server.del) return setNoOp(client);
+  if (client.create) throw new Error('Invalid state. This is a bug.');
 
   // The client has deleted the document while the server edited it. Kill the
   // server's op.
   if (client.del) return setNoOp(server);
-
-  // It should be impossible to create a document when it currently already
-  // exists.
-  if (client.create)
-    throw new Error('Invalid state. This is a bug. Please file an issue on github');
 
   // We only get here if either the server or client ops are no-op. Carry on,
   // nothing to see here.
@@ -362,15 +391,21 @@ Doc.prototype._afterOtApply = function(opData, context) {
 
 // Internal method to actually send op data to the server.
 Doc.prototype._sendOpData = function(d) {
+  if (this.state === 'subscribing' || this.state === 'unsubscribing')
+    throw new Error('invalid state for sendOpData');
+
   var msg = {a: 'op', v: this.version};
   if (d.src) {
     msg.src = d.src;
     msg.seq = d.seq;
   }
 
+  if (this.state === 'unsubscribed') msg.f = true; // fetch intermediate ops
+
   if (d.op) msg.op = d.op;
   if (d.create) msg.create = d.create;
   if (d.del) msg.del = d.del;
+
 
   this._send(msg);
   
@@ -381,10 +416,31 @@ Doc.prototype._sendOpData = function(d) {
   }
 };
 
+// Try to compose data2 into data1. Returns truthy if it succeeds, otherwise falsy.
+var _tryCompose = function(type, data1, data2) {
+  if (data1.create && data2.del) {
+    setNoOp(data1);
+  } else if (data1.create && data2.op) {
+    // Compose the data into the create data.
+    var data = (data1.create.data === undefined) ? type.create() : data1.create.data;
+    data1.create.data = type.apply(data, data2.op);
+  } else if (isNoOp(data1)) {
+    data1.create = data2.create;
+    data1.del = data2.del;
+    data1.op = data2.op;
+  } else if (data1.op && data2.op && type.compose) {
+    data1.op = type.compose(data1.op, data2.op);
+  } else {
+    return false;
+  }
+  return true;
+};
+
 // Internal method called to do the actual work for submitOp(), create() and del(), below.
 //
 // context is optional.
 Doc.prototype._submitOpData = function(opData, context, callback) {
+  console.log("version = " + this.version);
   if (typeof context === 'function') {
     callback = context;
     context = true; // The default context is true.
@@ -396,9 +452,6 @@ Doc.prototype._submitOpData = function(opData, context, callback) {
     else if (console) console.warn('Failed attempt to submitOp:', err);
   };
 
-  if (!this.ready) {
-    return error('You cannot currently submit operations to an unsubscribed document');
-  }
   if (this.locked) {
     return error("Cannot call submitOp from inside an 'op' event handler");
   }
@@ -417,12 +470,11 @@ Doc.prototype._submitOpData = function(opData, context, callback) {
 
   // If the type supports composes, try to compose the operation onto the end
   // of the last pending operation.
-  var entry;
-  if (opData.op &&
-      this.pendingData.length &&
-      (entry = this.pendingData[this.pendingData.length - 1]).op &&
-      this.type.compose) {
-    entry.op = this.type.compose(entry.op, opData.op);
+  var entry = this.pendingData[this.pendingData.length - 1];
+
+  if (this.pendingData.length &&
+      (entry = this.pendingData[this.pendingData.length - 1],
+       _tryCompose(this.type, entry, opData))) {
   } else {
     entry = opData;
     opData.type = this.type;
@@ -502,10 +554,10 @@ Doc.prototype._tryRollback = function(opData) {
     // by the server, the editor window should update to reflect the undo.
     this._otApply(undo, false);
     this._afterOtApply(undo, false);
-  } else {
+  } else if (opData.op || opData.del) {
     // This is where an undo stack would come in handy.
     this._setType(null);
-    this.v = null;
+    this.version = null;
     this.ready = false;
     this.emit('error', "Op apply failed and the operation could not be reverted");
 
@@ -533,7 +585,7 @@ Doc.prototype._opAcknowledged = function(msg) {
     // We'll send the error message to the user and try to roll back the change.
     this._tryRollback(acknowledgedData);
   } else {
-    if (msg.v !== this.version) {
+    if (this.ready && msg.v !== this.version) {
       // This should never happen - it means that we've received operations out of order.
       throw new Error('Invalid version from server. Please file an issue, this is a bug.');
     }
@@ -544,7 +596,7 @@ Doc.prototype._opAcknowledged = function(msg) {
   }
 
   for (var i = 0; i < acknowledgedData.callbacks; i++) {
-    acknowledgedData.callbacks[i](msg.error);
+    acknowledgedData.callbacks[i](msg.error || acknowledgedData.error);
   }
 
   // Consider sending the next op.
@@ -574,20 +626,23 @@ Doc.prototype._onMessage = function(msg) {
     case 'sub':
       // Subscribe reply.
       if (msg.error) {
-        if (console) console.error("Could not open document: " + msg.error);
+        if (console) console.error("Could not subscribe: " + msg.error);
         this.emit('error', msg.error);
-        this.autoSubscribe = false;
+        this.wantSubscribe = false;
+        this.state = 'unsubscribed';
       } else {
-        this.subscribed = true;
-        this.flush();
+        this.state = 'subscribed';
       }
+      // Should I really emit a 'subscribed' error if we couldn't subscribe?
       this.emit('subscribed', msg.error);
+      this.flush();
       break;
 
     case 'unsub':
       // Unsubscribe reply
-      this.subscribed = false;
+      this.state = 'unsubscribed';
       this.emit('unsubscribed');
+      this.flush();
       break;
 
     case 'ack':
@@ -600,9 +655,11 @@ Doc.prototype._onMessage = function(msg) {
       break;
 
     case 'op':
+      console.log("version = " + this.version);
       if (this.inflightData &&
           msg.src === this.inflightData.src &&
           msg.seq === this.inflightData.seq) {
+        // This one is mine. Accept it as acknowledged.
         this._opAcknowledged(msg);
         break;
       }
@@ -638,10 +695,37 @@ Doc.prototype._onMessage = function(msg) {
 // Only one operation can be in-flight at a time. If an operation is already on
 // its way, or we're not currently connected, this method does nothing.
 Doc.prototype.flush = function() {
-  if (!this.connection.canSend || this.inflightData || this.pendingData.length == 0) return;
+  if (!this.connection.canSend || this.inflightData) return;
 
-  this.inflightData = this.pendingData.shift();
-  this._sendOpData(this.inflightData);
+  // First consider changing state
+  if (this.state === 'subscribed' && !this.wantSubscribe) {
+    this.state = 'unsubscribing';
+    this._send({a:'unsub'});
+  } else if (this.state === 'unsubscribed' && this.wantSubscribe) {
+    this.state = 'subscribing'
+    this._send(this.ready ? {a:'sub', v:this.version} : {a:'sub'});
+  } else {
+    // Try and send any pending ops.
+
+    // First pump and dump any no-ops from the front of the pending op list.
+    var opData;
+    while (this.pendingData.length && isNoOp(opData = this.pendingData.shift())) {
+      var callbacks = opData.callbacks;
+      for (var i = 0; i < callbacks.length; i++) {
+        callbacks[i](opData.error);
+      }
+      opData = null;
+    }
+
+    // No ops to send after all.
+    if (!opData) return;
+
+    this.inflightData = opData;
+
+    // Delay for debugging.
+    var that = this;
+    setTimeout(function() { that._sendOpData(opData); }, 1000);
+  }
 };
 
 // Get and return the current document snapshot.
