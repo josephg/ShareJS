@@ -85,6 +85,38 @@ Query.prototype._onMessage = function(msg) {
     this.emit('removed', this.results[msg.idx], msg.idx);
     this.results.splice(msg.idx, 1);
   }
+
+  if (msg.a === 'qfetch') {
+    if (this.fetchCallback) this.fetchCallback(null, this.results);
+    delete this.fetchCallback;
+  }
+};
+
+// Helper for subscribe & fetch, since they share the same message format.
+Query.prototype._subFetch = function(action) {
+  var msg = {
+    a: action,
+    id: this.id,
+    c: this.collection,
+    o: {f:this.autoFetch},
+    q: this.query
+  };
+
+  if (this.poll !== undefined) msg.o.p = this.poll;
+
+  this.connection.send(msg);
+};
+
+// Fetch the query results but do not subscribe to them.
+Query.prototype.fetch = function(callback) {
+  if (!this.connection.canSend) {
+    callback('Not connected');
+  } else if (this.fetchCallback !== undefined) {
+    callback('Already fetching');
+  } else {
+    this.fetchCallback = callback || null;
+    this._subFetch('qfetch');
+  }
 };
 
 // Subscribe to the query. This means we get the query data + updates. Do not
@@ -92,32 +124,17 @@ Query.prototype._onMessage = function(msg) {
 // automatically be resubscribed after the client reconnects.
 Query.prototype.subscribe = function() {
   this.autoSubscribe = true;
-
-  if (this.connection.canSend) {
-    var msg = {
-      a: 'qsub',
-      c: this.collection,
-      o: {f:this.autoFetch},
-      id: this.id,
-      q: this.query
-    };
-
-    if (this.poll !== undefined) msg.o.p = this.poll;
-
-    this.connection.send(msg);
+  if (this.connected.canSend) {
+    this._subFetch('qsub');
   }
-};
+}
 
 // Unsubscribe from the query.
 Query.prototype.unsubscribe = function() {
   this.autoSubscribe = false;
 
-  if (this.connection.canSend) {
-    this.connection.send({
-      a: 'qunsub',
-      id: this.id
-    });
-  }
+  if (this.connection.canSend)
+    this.connection.send({a:'qunsub', id:this.id});
 };
 
 // Destroy the query object. Any subsequent messages for the query will be
@@ -129,7 +146,7 @@ Query.prototype.destroy = function() {
 
 Query.prototype._onConnectionStateChanged = function(state, reason) {
   if (this.connection.state === 'connecting' && this.autoSubscribe)
-    this.subscribe();
+    this._subFetch('qsub');
 };
 
 var MicroEvent;

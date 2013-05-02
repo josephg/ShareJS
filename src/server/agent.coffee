@@ -12,7 +12,7 @@ module.exports = (options, stream) ->
   agent =
     sessionId: hat()
 
-  for fn in ['fetch', 'subscribe', 'submit', 'query', 'fetchAndSubscribe']
+  for fn in ['fetch', 'subscribe', 'submit', 'queryFetch', 'query', 'fetchAndSubscribe']
     do (fn) ->
       agent[fn] = (args...) -> backend[fn](args...)
 

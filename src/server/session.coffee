@@ -110,13 +110,13 @@ module.exports = (options, stream) ->
 
     error = null
     # + check collection
-    if req.a in ['qsub', 'qunsub']
+    if req.a in ['qsub', 'qfetch', 'qunsub']
       error = 'Missing query ID' unless typeof req.id is 'number'
     else
       error = 'Invalid docName' unless req.doc is undefined or typeof req.doc is 'string' or (req.doc is undefined and lastReceivedDoc)
       error = 'missing or invalid collection' if (req.doc or req.doc is null) and typeof req.c isnt 'string'
 
-    error = 'invalid action' unless req.a is undefined or req.a in ['op', 'sub', 'unsub', 'fetch', 'qsub', 'qunsub']
+    error = 'invalid action' unless req.a is undefined or req.a in ['op', 'sub', 'unsub', 'fetch', 'qfetch', 'qsub', 'qunsub']
 
     if req.a is 'op'
       error = "'v' invalid" unless req.v is null or (typeof req.v is 'number' and req.v >= 0)
@@ -126,8 +126,18 @@ module.exports = (options, stream) ->
       #stream.emit 'error', error
       return callback error
 
+    collection = req.c
+
     # The agent can specify null as the docName to get a random doc name.
-    if req.a not in ['qsub', 'qunsub']
+    if req.a in ['qfetch', 'qsub', 'qunsub']
+      # Query based query.
+      qid = req.id
+      qopts = {}
+      if req.o
+        autoFetch = req.o.f
+        qopts.poll = req.o.p
+    else
+      # Document based query.
       if req.doc is null
         lastReceivedCollection = req.c
         req.doc = lastReceivedDoc = hat()
@@ -143,8 +153,8 @@ module.exports = (options, stream) ->
         req.c = lastReceivedCollection
         req.doc = lastReceivedDoc
 
-    collection = req.c
-    doc = req.doc
+      doc = req.doc
+
 
     switch req.a
       when 'fetch'
@@ -211,20 +221,25 @@ module.exports = (options, stream) ->
               sendOp collection, doc, opData # Thankfully, the op is transformed & etc in place.
             callback null, {a:'ack'}
 
-      when 'qsub'
-        opts = {}
-        if req.o
-          autoFetch = req.o.f
-          opts.poll = req.o.p
+      when 'qfetch'
+        agent.queryFetch collection, req.q, (err, results) ->
+          return callback err if err
 
-        agent.query collection, req.q, opts, (err, emitter) ->
+          for r in results
+            if autoFetch
+              r.snapshot = r.data
+            delete r.data
+
+          callback null, id:qid, data:results
+        
+      when 'qsub'
+        agent.query collection, req.q, qopts, (err, emitter) ->
           return callback err if err
           
-          id = req.id
         
-          return callback 'ID in use' if queries[id]
+          return callback 'ID in use' if queries[qid]
 
-          queries[id] = emitter
+          queries[qid] = emitter
 
           # Results.data contains the initial query result set
           for data in emitter.data
@@ -233,21 +248,20 @@ module.exports = (options, stream) ->
               data.snapshot = data.data
             delete data.data
 
-          callback null, id:id, data:emitter.data
+          callback null, id:qid, data:emitter.data
 
           emitter.on 'add', (data, idx) ->
             data.snapshot = data.data if autoFetch
             delete data.data
-            send a:'q', id:id, add:data, idx:idx
+            send a:'q', id:qid, add:data, idx:idx
           emitter.on 'remove', (data, idx) ->
-            send a:'q', id:id, rm:data.docName, idx:idx
+            send a:'q', id:qid, rm:data.docName, idx:idx
 
       when 'qunsub'
-        id = req.id
-        query = queries[id]
+        query = queries[qid]
         if query
           query.destroy()
-          delete queries[id]
+          delete queries[qid]
 
         callback()
 
