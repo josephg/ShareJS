@@ -126,12 +126,11 @@ module.exports = (options, stream) ->
       #stream.emit 'error', error
       return callback error
 
-    collection = req.c
-
     # The agent can specify null as the docName to get a random doc name.
     if req.a in ['qfetch', 'qsub', 'qunsub']
       # Query based query.
       qid = req.id
+      collection = req.c
       qopts = {}
       if req.o
         autoFetch = req.o.f
@@ -154,6 +153,7 @@ module.exports = (options, stream) ->
         req.doc = lastReceivedDoc
 
       doc = req.doc
+      collection = req.c
 
 
     switch req.a
