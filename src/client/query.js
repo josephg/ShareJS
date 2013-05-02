@@ -124,7 +124,7 @@ Query.prototype.fetch = function(callback) {
 // automatically be resubscribed after the client reconnects.
 Query.prototype.subscribe = function() {
   this.autoSubscribe = true;
-  if (this.connected.canSend) {
+  if (this.connection.canSend) {
     this._subFetch('qsub');
   }
 }
