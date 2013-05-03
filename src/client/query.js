@@ -130,6 +130,7 @@ Query.prototype.subscribe = function() {
 
 // Unsubscribe from the query.
 Query.prototype.unsubscribe = function() {
+  this.ready = false;
   this.autoSubscribe = false;
 
   if (this.connection.canSend)
