@@ -25,7 +25,8 @@ console.log(doc);
 doc.subscribe();
 
 doc.whenReady(function () {
-  doc.attachTextarea(elem);
+  if (doc.type && doc.type.name === 'text')
+    doc.attachTextarea(elem);
 });
 
 </script>

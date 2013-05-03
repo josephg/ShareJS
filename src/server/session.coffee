@@ -158,9 +158,14 @@ module.exports = (options, stream) ->
 
     switch req.a
       when 'fetch'
-        agent.fetch collection, doc, (err, data) ->
-          return callback err if err
-          callback null, v:data.v, snapshot:data.data
+        if req.v
+          # It says 'fetch' on the tin, but actually the client wants me to fetch some ops.
+          callback 'not implemented'
+
+        else
+          agent.fetch collection, doc, (err, data) ->
+            return callback err if err
+            callback null, v:data.v, snapshot:data.data
 
       when 'sub'
         return callback null, error:'Already subscribed' if isSubscribed collection, doc
