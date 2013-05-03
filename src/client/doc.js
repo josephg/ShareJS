@@ -158,6 +158,10 @@ Doc.prototype._onConnectionStateChanged = function(state, reason) {
     } else {
       this.flush();
     }
+  } else if (state === 'connected') {
+    // We go into the connected state once we have a sessionID. We can't send
+    // new ops until then, so we need to flush again.
+    this.flush();
   } else if (state === 'disconnected') {
     this.action = null;
     if (this.subscribed)
@@ -628,7 +632,11 @@ Doc.prototype._opAcknowledged = function(msg) {
     // We'll send the error message to the user and try to roll back the change.
     this._tryRollback(acknowledgedData);
   } else {
-    if (this.ready && msg.v !== this.version) {
+    if (!this.ready) {
+      if (!acknowledgedData.create) throw new Error('Cannot acknowledge an op.');
+
+      this.version = msg.v;
+    } else if (msg.v !== this.version) {
       // This should never happen - it means that we've received operations out of order.
       throw new Error('Invalid version from server. Please file an issue, this is a bug.');
     }
@@ -638,7 +646,7 @@ Doc.prototype._opAcknowledged = function(msg) {
     this.emit('acknowledged', acknowledgedData);
   }
 
-  for (var i = 0; i < acknowledgedData.callbacks; i++) {
+  for (var i = 0; i < acknowledgedData.callbacks.length; i++) {
     acknowledgedData.callbacks[i](msg.error || acknowledgedData.error);
   }
 
@@ -672,10 +680,15 @@ Doc.prototype._onMessage = function(msg) {
   switch (msg.a) {
     case 'data':
       // This will happen when we request a fetch or a fetch & subscribe.
-      //
       // _injestData will emit a 'ready' event, which is usually what you want to listen to.
       this._injestData(msg);
-      //this.emit('fetched', this.snapshot);
+      this.wantFetch = false;
+      break;
+
+    case 'fetch':
+      // We're done fetching. This message has no other information.
+      this.wantFetch = false;
+      this._clearAction('fetch');
       break;
 
     case 'sub':
@@ -686,6 +699,7 @@ Doc.prototype._onMessage = function(msg) {
         this.wantSubscribe = false;
       } else {
         this.subscribed = true;
+        this.wantFetch = false;
       }
 
       this._callSubscribeCallbacks(msg.error);
@@ -771,7 +785,7 @@ Doc.prototype.flush = function() {
   } else if (!this.subscribed && this.wantSubscribe) {
     this.action = 'subscribe';
     this._send(this.ready ? {a:'sub', v:this.version} : {a:'sub'});
-  } else if (this.pendingData.length) {
+  } else if (this.pendingData.length && this.connection.id) {
     // Try and send any pending ops.
     this.inflightData = this.pendingData.shift();
 
