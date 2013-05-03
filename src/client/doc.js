@@ -364,14 +364,15 @@ Doc.prototype._otApply = function(opData, context) {
     this.snapshot = this.type.create(create.data);
 
     // This is a bit heavyweight, but I want the created event to fire outside of the lock.
-    this.once('unlocked', function() {
-      this.emit('created', context);
+    this.once('unlock', function() {
+      this.emit('create', context);
     });
   } else if (opData.del) {
     // The type should always exist in this case. del x _ = del
+    var oldSnapshot = this.snapshot;
     this._setType(null);
-    this.once('unlocked', function() {
-      this.emit('deleted', context);
+    this.once('unlock', function() {
+      this.emit('del', context, oldSnapshot);
     });
   } else if (opData.op) {
     if (!this.type) throw new Error('Document does not exist');
@@ -408,7 +409,7 @@ Doc.prototype._otApply = function(opData, context) {
 // This should be called right after _otApply.
 Doc.prototype._afterOtApply = function(opData, context) {
   this.locked = false;
-  this.emit('unlocked');
+  this.emit('unlock');
   if (opData.op) {
     var contexts = this.editingContexts;
     if (contexts) {
