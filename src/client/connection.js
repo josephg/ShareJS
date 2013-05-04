@@ -48,10 +48,6 @@ var Connection = exports.Connection = function (socket) {
   // Map from query ID -> query object.
   this.queries = {};
 
-  // This is a helper variable the document uses to see whether we're currently
-  // in a 'live' state. It is true if the state is 'connecting' or 'connected'.
-  this.canSend = socket.readyState === 0 || socket.readyState === 1;
-
   // Connection state.
   // 
   // States:
@@ -59,11 +55,11 @@ var Connection = exports.Connection = function (socket) {
   // - 'connected': We have connected and recieved our client ID. Ready for data.
   // - 'disconnected': The connection is closed, but it will reconnect automatically.
   // - 'stopped': The connection is closed, and should not reconnect.
-  switch (socket.readyState) {
-    case 0: this.state = 'connecting'; break;
-    case 1: this.state = 'connected'; break;
-    default: this.state = 'disconnected';
-  }
+  this.state = (socket.readyState === 0 || socket.readyState === 1) ? 'connecting' : 'disconnected';
+
+  // This is a helper variable the document uses to see whether we're currently
+  // in a 'live' state. It is true if the state is 'connecting' or 'connected'.
+  this.canSend = this.state === 'connecting';
 
   // Reset some more state variables.
   this.reset();
