@@ -33,25 +33,19 @@ if (typeof require !== "undefined") {
  *   some initial data.
  * - error
  */
-var Doc = exports.Doc = function(connection, collection, name, data) {
+var Doc = exports.Doc = function(connection, collection, name) {
   this.connection = connection;
 
   this.collection = collection;
   this.name = name;
 
-  this.version = null;
+  this.version = this.type = null;
 
-  // Do we want to be subscribed? If this is set, the document will
-  // automatically resubscribe when we reconnect.
-  this.wantSubscribe = false;
-  this._subscribeCallbacks = [];
-
-  this.wantFetch = false;
-  this._fetchCallbacks = [];
-
-  this.subscribed = false;
-
-  // The current action. Only one of these actions can be happening at a time.
+  // **** State in document:
+ 
+  // Action. This is either null, or one of the actions (subscribe,
+  // unsubscribe, fetch, submit). Only one action can be happening at a time to
+  // prevent me from going mad.
   //
   // Possible values:
   // - subscribe
@@ -59,11 +53,26 @@ var Doc = exports.Doc = function(connection, collection, name, data) {
   // - fetch
   // - submit
   this.action = null;
+ 
+  // The data the document object stores can be in one of the following three states:
+  //   - No data. (null) We honestly don't know whats going on.
+  //   - Floating ('floating'): we have a locally created document that hasn't
+  //     been created on the server yet)
+  //   - Live ('ready') (we have data thats current on the server at some version).
+  this.state = null;
 
-  // Do we have a document snapshot at a known version on the server?  If
-  // this.ready is true, this.version must be set to a version and
-  // this.snapshot cannot be undefined.
-  this.ready = false;
+  // Our subscription status. Either we're subscribed on the server, or we aren't.
+  this.subscribed = false;
+  // Either we want to be subscribed (true), we want a new snapshot from the
+  // server ('fetch'), or we don't care (false).  This is also used when we
+  // disconnect & reconnect to decide what to do.
+  this.wantSubscribe = false;
+  // This list is used for subscribe and unsubscribe, since we'll only want to
+  // do one thing at a time.
+  this._subscribeCallbacks = [];
+
+
+  // *** end state stuff.
 
   // This doesn't provide any standard API access right now.
   this.provides = {};
@@ -86,16 +95,12 @@ var Doc = exports.Doc = function(connection, collection, name, data) {
   //
   // This is a list of {[create:{...}], [del:true], [op:...], callbacks:[...]}
   this.pendingData = [];
-
-  if (data && data.snapshot !== undefined) {
-    this._injestData(data);
-  }
 };
 
 // The callback will be called at a time when the document has a snapshot and
 // you can start applying operations. This may be immediately.
 Doc.prototype.whenReady = function(fn) {
-  if (this.ready) {
+  if (this.state === 'ready') {
     fn();
   } else {
     this.on('ready', fn);
@@ -110,21 +115,28 @@ Doc.prototype._send = function(message) {
   this.connection.send(message);
 };
 
+// Value is true, false or 'fetch'.
 Doc.prototype._setWantSubscribe = function(value, callback) {
-  if (this.wantSubscribe === value) {
+  if (this.subscribed === value || value === 'fetch' && this.subscribed) {
     if (callback) callback();
-  } else {
+    return;
+  }
+  
+  if (!this.wantSubscribe !== !value) {
     // Error out all the current unsubscribe callbacks
     for (var i = 0; i < this._subscribeCallbacks.length; i++) {
       this._subscribeCallbacks[i]('Cancelled by request');
     }
     this._subscribeCallbacks.length = 0;
-
-    this.wantSubscribe = value;
-    if (callback) this._subscribeCallbacks.push(callback);
-    this.flush();
   }
-}
+
+  // If we want to subscribe, don't weaken it to a fetch.
+  if (value !== 'fetch' || this.wantSubscribe !== true)
+    this.wantSubscribe = value;
+
+  if (callback) this._subscribeCallbacks.push(callback);
+  this.flush();
+};
 
 // Open the document. There is no callback and no error handling if you're
 // already connected.
@@ -140,14 +152,19 @@ Doc.prototype.unsubscribe = function(callback) {
 
 // Call to request fresh data from the server.
 Doc.prototype.fetch = function(callback) {
-  if (this.subscribed) {
-    if (callback) callback();
-  } else {
-    this.wantFetch = true;
-    if (callback) this._fetchCallbacks.push(callback);
-    this.flush();
-  }
+  this._setWantSubscribe('fetch', callback);
 };
+
+// Called when our subscribe, fetch or unsubscribe messages are acknowledged.
+Doc.prototype._finishSubscribeAction = function(action, error) {
+  for (var i = 0; i < this._subscribeCallbacks.length; i++) {
+    this._subscribeCallbacks[i](error);
+  }
+  this._subscribeCallbacks.length = 0;
+  this._clearAction(action);
+};
+
+
 
 // Called whenever (you guessed it!) the connection state changes. This will
 // happen when we get disconnected & reconnect.
@@ -164,10 +181,8 @@ Doc.prototype._onConnectionStateChanged = function(state, reason) {
     this.flush();
   } else if (state === 'disconnected') {
     this.action = null;
-    if (this.subscribed)
-      this.emit('unsubscribed');
-
     this.subscribed = false;
+    if (this.subscribed) this.emit('unsubscribed');
   }
 };
 
@@ -245,7 +260,6 @@ Doc.prototype._setType = function(newType) {
 
   // If we removed the type from the object, also remove its snapshot.
   if (!newType) {
-    delete this.snapshot;
     this.provides = {};
   } else if (newType.api) {
     // Register the new type's API.
@@ -256,13 +270,24 @@ Doc.prototype._setType = function(newType) {
 // Injest snapshot data. This data must include a version, snapshot and type.
 // This is used both to injest data that was exported with a webpage and data
 // that was received from the server during a fetch.
-Doc.prototype._injestData = function(data) {
-  if (typeof data.v !== 'number') throw new Error('Missing version in injested data');
-  if (this.ready) {
-    if (typeof console !== "undefined") console.warn('Ignoring extra attempt to injest data');
+Doc.prototype.injestData = function(data) {
+  if (this.state) {
+    if (typeof console !== "undefined") console.warn('Ignoring attempt to injest data in state', this.state);
     return;
   }
+  if (typeof data.v !== 'number') throw new Error('Missing version in injested data');
 
+
+  this.version = data.v;
+  this.snapshot = data.snapshot;
+  this._setType(data.type);
+
+  this.state = 'ready';
+  this.emit('ready');
+};
+
+/*
+Doc.prototype.blindCreateAcknowledged = function(msg) {
   if (this.pendingData.length) {
     // We've done ops locally, which have to include a create. Make sure the
     // document hasn't been created by someone else.
@@ -279,25 +304,9 @@ Doc.prototype._injestData = function(data) {
     }
   }
 
-  this.version = data.v;
-  if (!this.type) {
-    this.snapshot = data.snapshot;
-    this._setType(data.type);
-  }
 
-  this.ready = true;
-  this.emit('ready');
-
-  for (var i = 0; i < this._fetchCallbacks.length; i++) {
-    this._fetchCallbacks[i](null, this.snapshot);
-  }
-  this._fetchCallbacks.length = 0;
-  if (this.action === 'fetch') {
-    this.action = null;
-    this.flush();
-  }
 };
-
+*/
 
 
 // ************ Dealing with operations.
@@ -511,6 +520,10 @@ Doc.prototype._submitOpData = function(opData, context, callback) {
     if (this.type.normalize) opData.op = this.type.normalize(opData.op);
   }
 
+  if (!this.state) {
+    this.state = 'floating';
+  }
+
   // Actually apply the operation locally.
   this._otApply(opData, context);
 
@@ -582,8 +595,16 @@ Doc.prototype.del = function(context, callback) {
 // This does NOT get called if our op fails to reach the server for some reason
 // - we optimistically assume it'll make it there eventually.
 Doc.prototype._tryRollback = function(opData) {
+  // This is probably horribly broken.
   if (opData.create) {
-    return this._setType(null);
+    this._setType(null);
+
+    // I don't think its possible to get here if we aren't in a floating state.
+    if (this.state === 'floating')
+      this.state = null;
+    else
+      console.warn('Rollback a create from state ' + this.state);
+
   } else if (opData.op && opData.type.invert) {
     var undo = opData.type.invert(opData.op);
 
@@ -604,7 +625,8 @@ Doc.prototype._tryRollback = function(opData) {
     // This is where an undo stack would come in handy.
     this._setType(null);
     this.version = null;
-    this.ready = this.subscribed = false;
+    this.state = null;
+    this.subscribed = false;
     this.emit('error', "Op apply failed and the operation could not be reverted");
 
     // Trigger a fetch. In our invalid state, we can't really do anything.
@@ -613,8 +635,7 @@ Doc.prototype._tryRollback = function(opData) {
   }
 };
 
-// This is called when the server acknowledges an operation from the client.
-Doc.prototype._opAcknowledged = function(msg) {
+Doc.prototype._opAcknowledgeError = function(msg) {
   // We've tried to resend an op to the server, which has already been received
   // successfully. Do nothing. The op will be confirmed normally when the op
   // itself is echoed back from the server (handled below).
@@ -622,29 +643,48 @@ Doc.prototype._opAcknowledged = function(msg) {
     return;
   }
 
+  // The server has rejected an op from the client for some reason.
+  // We'll send the error message to the user and try to roll back the change.
+  this._tryRollback(this.inflightData);
+
+  var callbacks = this.inflightData.callbacks;
+  for (var i = 0; i < callbacks.length; i++) {
+    callbacks[i](msg.error || this.inflightData.error);
+  }
+
+  this.inflightData = null;
+  this._clearAction('submit');
+};
+
+// This is called when the server acknowledges an operation from the client.
+Doc.prototype._opAcknowledged = function(msg) {
   // Our inflight op has been acknowledged, so we can throw away the inflight data.
   // (We were only holding on to it incase we needed to resend the op.)
   var acknowledgedData = this.inflightData;
   this.inflightData = null;
 
-  if (msg.error) {
-    // The server has rejected an op from the client for some reason.
-    // We'll send the error message to the user and try to roll back the change.
-    this._tryRollback(acknowledgedData);
-  } else {
-    if (!this.ready) {
-      if (!acknowledgedData.create) throw new Error('Cannot acknowledge an op.');
+  if (!this.state) {
+    throw new Error('opAcknowledged called from a null state. This should never happen.');
+  } else if (this.state === 'floating') {
+    if (!acknowledgedData.create) throw new Error('Cannot acknowledge an op.');
 
-      this.version = msg.v;
-    } else if (msg.v !== this.version) {
-      // This should never happen - it means that we've received operations out of order.
+    // Our create has been acknowledged. This is the same as injesting some data.
+    this.version = msg.v;
+    this.state = 'ready';
+    this.emit('ready');
+  } else {
+    // We have a snapshot. The snapshot should be at the acknowledged version,
+    // because the server has sent us all the ops that have happened before
+    // acknowledging our op.
+
+    // This should never happen - something is out of order.
+    if (msg.v !== this.version)
       throw new Error('Invalid version from server. Please file an issue, this is a bug.');
-    }
-    
-    // The op was committed successfully. Increment the version number
-    this.version++;
-    this.emit('acknowledged', acknowledgedData);
   }
+  
+  // The op was committed successfully. Increment the version number
+  this.version++;
+  this.emit('acknowledged', acknowledgedData);
 
   for (var i = 0; i < acknowledgedData.callbacks.length; i++) {
     acknowledgedData.callbacks[i](msg.error || acknowledgedData.error);
@@ -655,20 +695,6 @@ Doc.prototype._opAcknowledged = function(msg) {
 
 // ***** Message handling
 
-Doc.prototype._callSubscribeCallbacks = function(error) {
-  for (var i = 0; i < this._subscribeCallbacks.length; i++) {
-    this._subscribeCallbacks[i](error);
-  }
-  this._subscribeCallbacks.length = 0;
-};
-
-Doc.prototype._clearAction = function(expectedAction) {
-  if (this.action !== expectedAction)
-    console.error('Unexpected action ' + this.action + ' expected: ' + expectedAction);
-  this.action = null;
-  this.flush();
-};
-
 // This is called by the connection when it receives a message for the document.
 Doc.prototype._onMessage = function(msg) {
   if (!(msg.c === this.collection && msg.doc === this.name)) {
@@ -678,17 +704,11 @@ Doc.prototype._onMessage = function(msg) {
 
   // msg.a = the action.
   switch (msg.a) {
-    case 'data':
-      // This will happen when we request a fetch or a fetch & subscribe.
-      // _injestData will emit a 'ready' event, which is usually what you want to listen to.
-      this._injestData(msg);
-      this.wantFetch = false;
-      break;
-
     case 'fetch':
       // We're done fetching. This message has no other information.
-      this.wantFetch = false;
-      this._clearAction('fetch');
+      if (msg.data) this.injestData(msg.data);
+      if (this.wantSubscribe === 'fetch') this.wantSubscribe = false;
+      this._finishSubscribeAction('fetch', msg.error);
       break;
 
     case 'sub':
@@ -696,24 +716,23 @@ Doc.prototype._onMessage = function(msg) {
       if (msg.error) {
         if (console) console.error("Could not subscribe: " + msg.error);
         this.emit('error', msg.error);
+        // There's probably a reason we couldn't subscribe. Don't retry.
         this.wantSubscribe = false;
       } else {
+        if (msg.data) this.injestData(msg.data);
         this.subscribed = true;
-        this.wantFetch = false;
+        this.emit('subscribe', msg.error);
       }
 
-      this._callSubscribeCallbacks(msg.error);
-      this.emit('subscribe', msg.error);
-      this._clearAction('subscribe');
-      // Should I really emit a 'subscribe' error if we couldn't subscribe?
+      this._finishSubscribeAction('subscribe', msg.error);
       break;
 
     case 'unsub':
       // Unsubscribe reply
       this.subscribed = false;
-      this._callSubscribeCallbacks(msg.error);
       this.emit('unsubscribe');
-      this._clearAction('unsubscribe');
+
+      this._finishSubscribeAction('unsubscribe', msg.error);
       break;
 
     case 'ack':
@@ -722,7 +741,7 @@ Doc.prototype._onMessage = function(msg) {
       // I'm not happy with the way this logic (and the logic in the op
       // handler, below) currently works. Its because the server doesn't
       // currently guarantee any particular ordering of op ack & oplog messages.
-      if (msg.error) this._opAcknowledged(msg);
+      if (msg.error) this._opAcknowledgeError(msg);
       break;
 
     case 'op':
@@ -761,6 +780,17 @@ Doc.prototype._onMessage = function(msg) {
   }
 };
 
+// **** Actions.
+
+Doc.prototype._clearAction = function(expectedAction) {
+  if (this.action !== expectedAction)
+    console.error('Unexpected action ' + this.action + ' expected: ' + expectedAction);
+  this.action = null;
+  this.flush();
+};
+
+
+
 // Send the next pending op to the server, if we can.
 //
 // Only one operation can be in-flight at a time. If an operation is already on
@@ -784,19 +814,19 @@ Doc.prototype.flush = function() {
     this._send({a:'unsub'});
   } else if (!this.subscribed && this.wantSubscribe) {
     this.action = 'subscribe';
-    this._send(this.ready ? {a:'sub', v:this.version} : {a:'sub'});
-  } else if (this.pendingData.length && this.connection.id) {
-    // Try and send any pending ops.
+    this._send(this.state === 'ready' ? {a:'sub', v:this.version} : {a:'sub'});
+  } else if (this.pendingData.length && this.connection.state === 'connected') {
+    // Try and send any pending ops. We can't send ops while in 
     this.inflightData = this.pendingData.shift();
 
     // Delay for debugging.
     //var that = this;
-    //setTimeout(function() { that._sendOpData(opData); }, 1000);
+    //setTimeout(function() { that._sendOpData(); }, 1000);
+
+    // This also sets action to 'submit'.
     this._sendOpData();
   } else if (this.wantFetch) {
-//  if (!this.ready || this.state !== 'subscribed')
-//    this._send({a: 'fetch'});
-    this._send(this.ready ? {a:'fetch', v:this.version} : {a:'fetch'});
+    this._send(this.state === 'ready' ? {a:'fetch', v:this.version} : {a:'fetch'});
     this.action = 'fetch';
   }
 };

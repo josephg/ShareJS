@@ -166,9 +166,7 @@ module.exports = (options, stream) ->
 
         else
           agent.fetch collection, doc, (err, data) ->
-            return callback err if err
-            send a:'data', c:collection, doc:doc, v:data.v, type:data.type, snapshot:data.data, meta:data.meta
-            callback null, {}
+            callback err, {data:{v:data.v, type:data.type, snapshot:data.data, meta:data.meta}}
 
       when 'sub'
         return callback null, error:'Already subscribed' if isSubscribed collection, doc
@@ -189,7 +187,7 @@ module.exports = (options, stream) ->
               setSubscribed collection, doc, false
               return callback err
 
-            callback null, v:req.v
+            callback null, {}
             subscribeToStream stream
         else
           agent.fetchAndSubscribe collection, doc, (err, data, stream) ->
@@ -199,8 +197,7 @@ module.exports = (options, stream) ->
 
             # Send the snapshot separately. They should both end up on the wire together, but its
             # easier to process in the client this way.
-            send a:'data', c:collection, doc:doc, v:data.v, type:data.type, snapshot:data.data, meta:data.meta
-            callback null, v:data.v
+            callback null, data:{v:data.v, type:data.type, snapshot:data.data, meta:data.meta}
             subscribeToStream stream
 
       when 'unsub'
