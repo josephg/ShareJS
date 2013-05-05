@@ -209,17 +209,32 @@ Connection.prototype.get = function(collection, name) {
 };
 
 // Create a document if it doesn't exist. Returns the document synchronously.
-Connection.prototype.getOrCreate = function(collection, name, data) {
+Connection.prototype.getOrCreate = function(collection, name) {
   var doc = this.get(collection, name);
   if (doc) return doc;
 
   // Create it.
-  doc = new Doc(this, collection, name, data);
+  doc = new Doc(this, collection, name);
 
-  collection = this.collections[collection] = (this.collections[collection] || {});
-  return collection[name] = doc;
+  var collectionObject = this.collections[collection] =
+    (this.collections[collection] || {});
+  return collectionObject[name] = doc;
 };
 
+Connection.prototype.destroyDoc = function(collection, name) {
+  var collectionObject = this.collections[collection];
+  if (!collectionObject) return;
+  delete collectionObject[name];
+  if (hasKeys(collectionObject)) return;
+  delete this.collections[collection];
+};
+
+function hasKeys(object) {
+  for (var key in object) {
+    return true;
+  }
+  return false;
+}
 
 // **** Queries.
 
