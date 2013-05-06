@@ -159,6 +159,14 @@ Doc.prototype.whenReady = function(fn) {
   }
 };
 
+Doc.prototype.whenNothingPending = function(fn) {
+  if (this.inflightData == null && !this.pendingData.length) {
+    fn();
+  } else {
+    this.on('nothing pending', fn);
+  }
+};
+
 
 // **** Helpers for network messages
 
@@ -212,10 +220,21 @@ Doc.prototype._onMessage = function(msg) {
     case 'ack':
       // Acknowledge a locally submitted operation.
       //
-      // I'm not happy with the way this logic (and the logic in the op
-      // handler, below) currently works. Its because the server doesn't
-      // currently guarantee any particular ordering of op ack & oplog messages.
-      if (msg.error) this._opAcknowledgeError(msg);
+      // Usually we do nothing here - all the interesting logic happens when we
+      // get sent our op back in the op stream (which happens even if we aren't
+      // subscribed). However, if the op doesn't get accepted, we still need to
+      // clear some state.
+      //
+      // If the message error is 'Op already submitted', that means we've
+      // resent an op that the server already got. It will also be confirmed
+      // normally.
+      if (msg.error && msg.error !== 'Op already submitted') {
+        // The server has rejected an op from the client for some reason.
+        // We'll send the error message to the user and try to roll back the change.
+        this._tryRollback(this.inflightData);
+        
+        this._clearInflightOp(msg.error);
+      }
       break;
 
     case 'op':
@@ -726,47 +745,38 @@ Doc.prototype._tryRollback = function(opData) {
   }
 };
 
-Doc.prototype._opAcknowledgeError = function(msg) {
-  // We've tried to resend an op to the server, which has already been received
-  // successfully. Do nothing. The op will be confirmed normally when the op
-  // itself is echoed back from the server (handled below).
-  if (msg.error === 'Op already submitted') {
-    return;
-  }
-
-  // The server has rejected an op from the client for some reason.
-  // We'll send the error message to the user and try to roll back the change.
-  this._tryRollback(this.inflightData);
-
+Doc.prototype._clearInflightOp = function(error) {
   var callbacks = this.inflightData.callbacks;
   for (var i = 0; i < callbacks.length; i++) {
-    callbacks[i](msg.error || this.inflightData.error);
+    callbacks[i](error || this.inflightData.error);
   }
 
   this.inflightData = null;
   this._clearAction('submit');
+
+  if (!this.pendingData.length) {
+    // This isn't a very good name.
+    this.emit('nothing pending');
+  }
 };
 
 // This is called when the server acknowledges an operation from the client.
 Doc.prototype._opAcknowledged = function(msg) {
   // Our inflight op has been acknowledged, so we can throw away the inflight data.
   // (We were only holding on to it incase we needed to resend the op.)
-  var acknowledgedData = this.inflightData;
-  this.inflightData = null;
-
   if (!this.state) {
     throw new Error('opAcknowledged called from a null state. This should never happen.');
   } else if (this.state === 'floating') {
-    if (!acknowledgedData.create) throw new Error('Cannot acknowledge an op.');
+    if (!this.inflightData.create) throw new Error('Cannot acknowledge an op.');
 
     // Our create has been acknowledged. This is the same as injesting some data.
     this.version = msg.v;
     this.state = 'ready';
-    this.emit('ready');
+    setTimeout(function() { this.emit('ready'); }, 0);
   } else {
-    // We have a snapshot. The snapshot should be at the acknowledged version,
-    // because the server has sent us all the ops that have happened before
-    // acknowledging our op.
+    // We already have a snapshot. The snapshot should be at the acknowledged
+    // version, because the server has sent us all the ops that have happened
+    // before acknowledging our op.
 
     // This should never happen - something is out of order.
     if (msg.v !== this.version)
@@ -775,13 +785,8 @@ Doc.prototype._opAcknowledged = function(msg) {
   
   // The op was committed successfully. Increment the version number
   this.version++;
-  this.emit('acknowledged', acknowledgedData);
 
-  for (var i = 0; i < acknowledgedData.callbacks.length; i++) {
-    acknowledgedData.callbacks[i](msg.error || acknowledgedData.error);
-  }
-
-  this._clearAction('submit');
+  this._clearInflightOp();
 };
 
 
