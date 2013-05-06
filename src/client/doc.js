@@ -190,7 +190,7 @@ Doc.prototype._onMessage = function(msg) {
       // We're done fetching. This message has no other information.
       if (msg.data) this.injestData(msg.data);
       if (this.wantSubscribe === 'fetch') this.wantSubscribe = false;
-      this._finishSubscribeAction('fetch', msg.error);
+      this._finishSubscribe('fetch', msg.error);
       break;
 
     case 'sub':
@@ -206,7 +206,7 @@ Doc.prototype._onMessage = function(msg) {
         this.emit('subscribe', msg.error);
       }
 
-      this._finishSubscribeAction('subscribe', msg.error);
+      this._finishSubscribe('subscribe', msg.error);
       break;
 
     case 'unsub':
@@ -214,7 +214,7 @@ Doc.prototype._onMessage = function(msg) {
       this.subscribed = false;
       this.emit('unsubscribe');
 
-      this._finishSubscribeAction('unsubscribe', msg.error);
+      this._finishSubscribe('unsubscribe', msg.error);
       break;
 
     case 'ack':
@@ -350,6 +350,8 @@ Doc.prototype.flush = function() {
 
 // ****** Subscribing, unsubscribing and fetching
 
+// These functions iare copied into the query class as well, so be careful making
+// changes here.
 
 // Value is true, false or 'fetch'.
 Doc.prototype._setWantSubscribe = function(value, callback) {
@@ -392,14 +394,15 @@ Doc.prototype.fetch = function(callback) {
 };
 
 // Called when our subscribe, fetch or unsubscribe messages are acknowledged.
-Doc.prototype._finishSubscribeAction = function(action, error) {
+Doc.prototype._finishSubscribe = function(action, error) {
+  if (this.action !== action) return;
+
   for (var i = 0; i < this._subscribeCallbacks.length; i++) {
     this._subscribeCallbacks[i](error);
   }
   this._subscribeCallbacks.length = 0;
   this._clearAction(action);
 };
-
 
 
 // Operations

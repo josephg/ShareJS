@@ -1,3 +1,8 @@
+var Doc;
+if (typeof require !== 'undefined') {
+  Doc = require('./doc').Doc;
+}
+
 // Queries are live requests to the database for particular sets of fields.
 //
 // The server actively tells the client when there's new data that matches
@@ -29,66 +34,21 @@ var Query = exports.Query = function(connection, id, collection, query) {
   // be enabled / disabled automatically based on the query's properties.
   this.poll = undefined;
 
+
+
   // Should we automatically resubscribe on reconnect? This is set when you
-  // subscribe and unsubscribe.
-  this.autoSubscribe = false;
+  // subscribe and unsubscribe. false, 'fetch' or true.
+  this.wantSubscribe = false;
+
+  // Are we subscribed on the server?
+  this.subscribed = false;
+   
+  // Have we requested a subscribe? false, 'fetch' or true.
+  this._subscribeRequested = false;
+  this._subscribeCallbacks = [];
 
   // Do we have some initial data?
   this.ready = false;
-}
-
-// Like the equivalent in the Doc class, this calls the specified function once
-// the query has data.
-Query.prototype.whenReady = function(fn) {
-  if (this.ready) {
-    fn();
-  } else {
-    this.once('ready', fn);
-  }
-};
-
-// Internal method called from connection to pass server messages to the query.
-Query.prototype._onMessage = function(msg) {
-  if (msg.error) return this.emit('error', msg.error);
-
-  if (msg.data) {
-    // This message replaces the entire result set with the set passed.
-    var previous = this.results.slice();
-
-    // Remove all current results.
-    this.results.length = 0;
-
-    // Then add everything in the new result set.
-    for (var i = 0; i < msg.data.length; i++) {
-      var docData = msg.data[i];
-      var doc = this.connection.getOrCreate(this.collection, docData.docName, docData);
-      this.results.push(doc);
-    }
-
-    if (!this.ready) {
-      this.ready = true;
-      this.emit('ready', this.results);
-    } else {
-      this.emit('change', this.results, previous);
-    }
-
-  } else if (msg.add) {
-    // Just splice in one element to the list.
-    var data = msg.add;
-    var doc = this.connection.getOrCreate(this.collection, data.docName, data);
-    this.results.splice(msg.idx, 0, doc);
-    this.emit('insert', doc, msg.idx);
-
-  } else if (msg.rm) {
-    // Remove one.
-    var removed = this.results.splice(msg.idx, 1);
-    this.emit('remove', removed[0], msg.idx);
-  }
-
-  if (msg.a === 'qfetch') {
-    if (this.fetchCallback) this.fetchCallback(null, this.results);
-    delete this.fetchCallback;
-  }
 };
 
 // Helper for subscribe & fetch, since they share the same message format.
@@ -106,36 +66,38 @@ Query.prototype._subFetch = function(action) {
   this.connection.send(msg);
 };
 
-// Fetch the query results but do not subscribe to them.
-Query.prototype.fetch = function(callback) {
-  if (!this.connection.canSend) {
-    callback('Not connected');
-  } else if (this.fetchCallback !== undefined) {
-    callback('Already fetching');
-  } else {
-    this.fetchCallback = callback || null;
-    this._subFetch('qfetch');
+Query.prototype.flush = function() {
+  if (this.wantSubscribe !== this._subscribeRequested
+      && this.connection.canSend) {
+
+    if (this.wantSubscribe) {
+      this._subFetch(this.wantSubscribe === 'fetch' ? 'qfetch' : 'qsub');
+    } else {
+      // Unsubscribe.
+      this.connection.send({a:'qunsub', id:this.id});
+    }
+
+    this._subscribeRequested = this.wantSubscribe;
   }
 };
 
-// Subscribe to the query. This means we get the query data + updates. Do not
-// call subscribe multiple times. Once subscribe is called, the query will
-// automatically be resubscribed after the client reconnects.
-Query.prototype.subscribe = function() {
-  this.autoSubscribe = true;
-  if (this.connection.canSend) {
-    this._subFetch('qsub');
+// Just copy the code in from the document class. Its fine.
+Query.prototype._setWantSubscribe = Doc.prototype._setWantSubscribe;
+
+Query.prototype.fetch = Doc.prototype.fetch;
+Query.prototype.subscribe = Doc.prototype.subscribe;
+Query.prototype.unsubscribe = Doc.prototype.unsubscribe;
+
+// Called when our subscribe, fetch or unsubscribe messages are acknowledged.
+Doc.prototype._finishSub = function(action, error) {
+  this.subscribed = action === true;
+
+  for (var i = 0; i < this._subscribeCallbacks.length; i++) {
+    this._subscribeCallbacks[i](error);
   }
-}
-
-// Unsubscribe from the query.
-Query.prototype.unsubscribe = function() {
-  this.ready = false;
-  this.autoSubscribe = false;
-
-  if (this.connection.canSend)
-    this.connection.send({a:'qunsub', id:this.id});
+  this._subscribeCallbacks.length = 0;
 };
+
 
 // Destroy the query object. Any subsequent messages for the query will be
 // ignored by the connection. You should unsubscribe from the query before
@@ -145,8 +107,53 @@ Query.prototype.destroy = function() {
 };
 
 Query.prototype._onConnectionStateChanged = function(state, reason) {
-  if (this.connection.state === 'connecting' && this.autoSubscribe)
+  if (this.connection.state === 'connecting' && this.wantSubscribe) {
     this._subFetch('qsub');
+  } else if (this.connection.state === 'disconnected') {
+    this.subscribed = this._subscribeRequested = false;
+  }
+};
+
+// Internal method called from connection to pass server messages to the query.
+Query.prototype._onMessage = function(msg) {
+  if (msg.error) this.emit('error', msg.error);
+
+  if (msg.data) {
+    // This message replaces the entire result set with the set passed.
+    var previous = this.results.slice();
+
+    // Remove all current results.
+    this.results.length = 0;
+
+    // Then add everything in the new result set.
+    for (var i = 0; i < msg.data.length; i++) {
+      var docData = msg.data[i];
+      var doc = this.connection.getOrCreate(this.collection, docData.docName, docData);
+      this.results.push(doc);
+    }
+
+    this.ready = true;
+    this.emit('change', this.results, previous);
+  } else if (msg.add) {
+    // Just splice in one element to the list.
+    var data = msg.add;
+    var doc = this.connection.getOrCreate(this.collection, data.docName, data);
+    this.results.splice(msg.idx, 0, doc);
+    this.emit('insert', doc, msg.idx);
+
+  } else if (msg.rm) {
+    // Remove one.
+    var removed = this.results.splice(msg.idx, 1);
+    this.emit('remove', removed[0], msg.idx);
+  }
+
+  if (msg.a === 'qfetch') {
+    this._finishSubscribe('fetch', msg.error);
+  } else if (msg.a === 'qsub') {
+    this._finishSubscribe(true, msg.error);
+  } else if (msg.a === 'qunsub') {
+    this._finishSubscribe(false, msg.error);
+  }
 };
 
 var MicroEvent;

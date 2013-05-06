@@ -268,7 +268,9 @@ module.exports = (options, stream) ->
           query.destroy()
           delete queries[qid]
 
-        callback()
+        # It seems pointless to send this message back, but whatever. The
+        # client can have unsubscribe callbacks so eh.
+        callback null, {}
 
       else
         console.warn 'invalid message', req
