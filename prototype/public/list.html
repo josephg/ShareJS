@@ -179,8 +179,9 @@ query.autoFetch = true;
 //query.poll = true;
 
 var selected;
-query.on('added', function(doc, idx) {
-  console.log('added', doc);
+var onAdd;
+query.on('insert', onAdd = function(doc, idx) {
+  console.log('add', doc);
 
   if (!doc.elem) {
     var item = document.createElement('div');
@@ -205,13 +206,18 @@ query.on('added', function(doc, idx) {
 //  listElem.appendChild(doc.elem);
 });
 
-query.on('removed', function(doc) {
+query.on('remove', function(doc) {
   console.log('removed', doc);
 
   listElem.removeChild(doc.elem);
 });
 
-query.subscribe();
+query.subscribe(function() {
+  console.log('sub1');
+  for (var i = 0; i < query.results.length; i++) {
+    onAdd(query.results[i], i);
+  }
+});
 
 
 // ****** Set up search box.
@@ -236,9 +242,9 @@ queryBox.onsearch = function() {
     if (value === '') value = '{}';
     var q = JSON.parse(value);
 
-    query.unsubscribe();
+    query.unsubscribe(function() { console.log('unsub'); });
     query.query = q;
-    query.subscribe();
+    query.subscribe(function() { console.log('sub'); });
 
   } catch (e) {}
 

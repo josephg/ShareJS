@@ -775,7 +775,8 @@ Doc.prototype._opAcknowledged = function(msg) {
     // Our create has been acknowledged. This is the same as injesting some data.
     this.version = msg.v;
     this.state = 'ready';
-    setTimeout(function() { this.emit('ready'); }, 0);
+    var _this = this;
+    setTimeout(function() { _this.emit('ready'); }, 0);
   } else {
     // We already have a snapshot. The snapshot should be at the acknowledged
     // version, because the server has sent us all the ops that have happened

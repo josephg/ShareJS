@@ -89,7 +89,9 @@ Query.prototype.subscribe = Doc.prototype.subscribe;
 Query.prototype.unsubscribe = Doc.prototype.unsubscribe;
 
 // Called when our subscribe, fetch or unsubscribe messages are acknowledged.
-Doc.prototype._finishSub = function(action, error) {
+Query.prototype._finishSub = function(action, error) {
+  console.log('_finishSub', action);
+
   this.subscribed = action === true;
 
   for (var i = 0; i < this._subscribeCallbacks.length; i++) {
@@ -148,11 +150,11 @@ Query.prototype._onMessage = function(msg) {
   }
 
   if (msg.a === 'qfetch') {
-    this._finishSubscribe('fetch', msg.error);
+    this._finishSub('fetch', msg.error);
   } else if (msg.a === 'qsub') {
-    this._finishSubscribe(true, msg.error);
+    this._finishSub(true, msg.error);
   } else if (msg.a === 'qunsub') {
-    this._finishSubscribe(false, msg.error);
+    this._finishSub(false, msg.error);
   }
 };
 

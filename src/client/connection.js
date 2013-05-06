@@ -214,7 +214,11 @@ Connection.prototype.getOrCreate = function(collection, name, data) {
   if (doc) return doc;
 
   // Create it.
-  doc = new Doc(this, collection, name, data);
+  doc = new Doc(this, collection, name);
+
+  if (data && data.snapshot !== undefined) {
+    doc.injestData(data);
+  }
 
   collection = this.collections[collection] = (this.collections[collection] || {});
   return collection[name] = doc;
