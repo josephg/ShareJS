@@ -97,6 +97,58 @@ var Doc = exports.Doc = function(connection, collection, name) {
   this.pendingData = [];
 };
 
+MicroEvent.mixin(Doc);
+
+
+
+// ****** Manipulating the document snapshot, version and type.
+
+// Set the document's type, and associated properties. Most of the logic in
+// this function exists to update the document based on any added & removed API
+// methods.
+Doc.prototype._setType = function(newType) {
+  if (typeof newType === 'string') {
+    if (!types[newType]) throw new Error("Missing type " + newType);
+    newType = types[newType];
+  }
+  this.removeContexts();
+
+  // Set the new type
+  this.type = newType;
+
+  // If we removed the type from the object, also remove its snapshot.
+  if (!newType) {
+    this.provides = {};
+  } else if (newType.api) {
+    // Register the new type's API.
+    this.provides = newType.api.provides;
+  }
+};
+
+// Injest snapshot data. This data must include a version, snapshot and type.
+// This is used both to injest data that was exported with a webpage and data
+// that was received from the server during a fetch.
+Doc.prototype.injestData = function(data) {
+  if (this.state) {
+    if (typeof console !== "undefined") console.warn('Ignoring attempt to injest data in state', this.state);
+    return;
+  }
+  if (typeof data.v !== 'number') throw new Error('Missing version in injested data');
+
+
+  this.version = data.v;
+  this.snapshot = data.snapshot;
+  this._setType(data.type);
+
+  this.state = 'ready';
+  this.emit('ready');
+};
+
+// Get and return the current document snapshot.
+Doc.prototype.getSnapshot = function() {
+  return this.snapshot;
+};
+
 // The callback will be called at a time when the document has a snapshot and
 // you can start applying operations. This may be immediately.
 Doc.prototype.whenReady = function(fn) {
@@ -107,13 +159,178 @@ Doc.prototype.whenReady = function(fn) {
   }
 };
 
-// Send a message to the connection from this document. Do not call this
-// directly.
+
+// **** Helpers for network messages
+
+// Send a message to the connection from this document.
 Doc.prototype._send = function(message) {
   message.c = this.collection;
   message.doc = this.name;
   this.connection.send(message);
 };
+
+// This is called by the connection when it receives a message for the document.
+Doc.prototype._onMessage = function(msg) {
+  if (!(msg.c === this.collection && msg.doc === this.name)) {
+    // This should never happen - its a sanity check for bugs in the connection code.
+    throw new Error("Got message for wrong document.");
+  }
+
+  // msg.a = the action.
+  switch (msg.a) {
+    case 'fetch':
+      // We're done fetching. This message has no other information.
+      if (msg.data) this.injestData(msg.data);
+      if (this.wantSubscribe === 'fetch') this.wantSubscribe = false;
+      this._finishSubscribeAction('fetch', msg.error);
+      break;
+
+    case 'sub':
+      // Subscribe reply.
+      if (msg.error) {
+        if (console) console.error("Could not subscribe: " + msg.error);
+        this.emit('error', msg.error);
+        // There's probably a reason we couldn't subscribe. Don't retry.
+        this.wantSubscribe = false;
+      } else {
+        if (msg.data) this.injestData(msg.data);
+        this.subscribed = true;
+        this.emit('subscribe', msg.error);
+      }
+
+      this._finishSubscribeAction('subscribe', msg.error);
+      break;
+
+    case 'unsub':
+      // Unsubscribe reply
+      this.subscribed = false;
+      this.emit('unsubscribe');
+
+      this._finishSubscribeAction('unsubscribe', msg.error);
+      break;
+
+    case 'ack':
+      // Acknowledge a locally submitted operation.
+      //
+      // I'm not happy with the way this logic (and the logic in the op
+      // handler, below) currently works. Its because the server doesn't
+      // currently guarantee any particular ordering of op ack & oplog messages.
+      if (msg.error) this._opAcknowledgeError(msg);
+      break;
+
+    case 'op':
+      if (this.inflightData &&
+          msg.src === this.inflightData.src &&
+          msg.seq === this.inflightData.seq) {
+        // This one is mine. Accept it as acknowledged.
+        this._opAcknowledged(msg);
+        break;
+      }
+
+      if (msg.v !== this.version) {
+        this.emit('error', "Expected version " + this.version + " but got " + msg.v);
+        break;
+      }
+
+      if (this.inflightData) xf(this.inflightData, msg);
+
+      for (var i = 0; i < this.pendingData.length; i++) {
+        xf(this.pendingData[i], msg);
+      }
+
+      this.version++;
+      this._otApply(msg, false);
+      this._afterOtApply(msg, false);
+      //console.log('applied', JSON.stringify(msg));
+      break;
+
+    case 'meta':
+      if (console) console.warn('Unhandled meta op:', msg);
+      break;
+
+    default:
+      if (console) console.warn('Unhandled document message:', msg);
+      break;
+  }
+};
+
+// Called whenever (you guessed it!) the connection state changes. This will
+// happen when we get disconnected & reconnect.
+Doc.prototype._onConnectionStateChanged = function(state, reason) {
+  if (state === 'connecting') {
+    if (this.inflightData) {
+      this._sendOpData();
+    } else {
+      this.flush();
+    }
+  } else if (state === 'connected') {
+    // We go into the connected state once we have a sessionID. We can't send
+    // new ops until then, so we need to flush again.
+    this.flush();
+  } else if (state === 'disconnected') {
+    this.action = null;
+    this.subscribed = false;
+    if (this.subscribed) this.emit('unsubscribed');
+  }
+};
+
+
+
+
+// ****** Dealing with actions
+
+Doc.prototype._clearAction = function(expectedAction) {
+  if (this.action !== expectedAction)
+    console.error('Unexpected action ' + this.action + ' expected: ' + expectedAction);
+  this.action = null;
+  this.flush();
+};
+
+
+
+// Send the next pending op to the server, if we can.
+//
+// Only one operation can be in-flight at a time. If an operation is already on
+// its way, or we're not currently connected, this method does nothing.
+Doc.prototype.flush = function() {
+  if (!this.connection.canSend || this.action) return;
+
+  var opData;
+  // Pump and dump any no-ops from the front of the pending op list.
+  while (this.pendingData.length && isNoOp(opData = this.pendingData[0])) {
+    var callbacks = opData.callbacks;
+    for (var i = 0; i < callbacks.length; i++) {
+      callbacks[i](opData.error);
+    }
+    this.pendingData.shift();
+  }
+
+  // First consider changing state
+  if (this.subscribed && !this.wantSubscribe) {
+    this.action = 'unsubscribe';
+    this._send({a:'unsub'});
+  } else if (!this.subscribed && this.wantSubscribe) {
+    this.action = 'subscribe';
+    this._send(this.state === 'ready' ? {a:'sub', v:this.version} : {a:'sub'});
+  } else if (this.pendingData.length && this.connection.state === 'connected') {
+    // Try and send any pending ops. We can't send ops while in 
+    this.inflightData = this.pendingData.shift();
+
+    // Delay for debugging.
+    //var that = this;
+    //setTimeout(function() { that._sendOpData(); }, 1000);
+
+    // This also sets action to 'submit'.
+    this._sendOpData();
+  } else if (this.wantFetch) {
+    this._send(this.state === 'ready' ? {a:'fetch', v:this.version} : {a:'fetch'});
+    this.action = 'fetch';
+  }
+};
+
+
+// ****** Subscribing, unsubscribing and fetching
+
 
 // Value is true, false or 'fetch'.
 Doc.prototype._setWantSubscribe = function(value, callback) {
@@ -166,147 +383,7 @@ Doc.prototype._finishSubscribeAction = function(action, error) {
 
 
 
-// Called whenever (you guessed it!) the connection state changes. This will
-// happen when we get disconnected & reconnect.
-Doc.prototype._onConnectionStateChanged = function(state, reason) {
-  if (state === 'connecting') {
-    if (this.inflightData) {
-      this._sendOpData();
-    } else {
-      this.flush();
-    }
-  } else if (state === 'connected') {
-    // We go into the connected state once we have a sessionID. We can't send
-    // new ops until then, so we need to flush again.
-    this.flush();
-  } else if (state === 'disconnected') {
-    this.action = null;
-    this.subscribed = false;
-    if (this.subscribed) this.emit('unsubscribed');
-  }
-};
-
-// This creates and returns an editing context using the current OT type.
-Doc.prototype.createContext = function() {
-  var type = this.type;
-  if (!type) throw new Error('Missing type');
-
-  // I could use the prototype chain to do this instead, but Object.create
-  // isn't defined on old browsers. This will be fine.
-  var doc = this;
-  var context = {
-    getSnapshot: function() {
-      return doc.snapshot;
-    },
-    submitOp: function(op, callback) {
-      doc.submitOp(op, context, callback);
-    },
-    destroy: function() {
-      if (this.detach) {
-        this.detach();
-        // Don't double-detach.
-        delete this.detach;
-      }
-      // It will be removed from the actual editingContexts list next time
-      // we receive an op on the document (and the list is iterated through).
-      //
-      // This is potentially dodgy, allowing a memory leak if you create &
-      // destroy a whole bunch of contexts without receiving or sending any ops
-      // to the document.
-      delete this._onOp;
-      this.remove = true;
-    },
-
-    // This is dangerous, but really really useful for debugging. I hope people
-    // don't depend on it.
-    _doc: this,
-  };
-
-  if (type.api) {
-    // Copy everything else from the type's API into the editing context.
-    for (var k in type.api) {
-      context[k] = type.api[k];
-    }
-  } else {
-    context.provides = {};
-  }
-
-  this.editingContexts.push(context);
-
-  return context;
-};
-
-Doc.prototype.removeContexts = function() {
-  if (this.editingContexts) {
-    for (var i = 0; i < this.editingContexts.length; i++) {
-      this.editingContexts[i].destroy();
-    }
-  }
-  this.editingContexts.length = 0;
-};
-
-// Set the document's type, and associated properties. Most of the logic in
-// this function exists to update the document based on any added & removed API
-// methods.
-Doc.prototype._setType = function(newType) {
-  if (typeof newType === 'string') {
-    if (!types[newType]) throw new Error("Missing type " + newType);
-    newType = types[newType];
-  }
-  this.removeContexts();
-
-  // Set the new type
-  this.type = newType;
-
-  // If we removed the type from the object, also remove its snapshot.
-  if (!newType) {
-    this.provides = {};
-  } else if (newType.api) {
-    // Register the new type's API.
-    this.provides = newType.api.provides;
-  }
-};
-
-// Injest snapshot data. This data must include a version, snapshot and type.
-// This is used both to injest data that was exported with a webpage and data
-// that was received from the server during a fetch.
-Doc.prototype.injestData = function(data) {
-  if (this.state) {
-    if (typeof console !== "undefined") console.warn('Ignoring attempt to injest data in state', this.state);
-    return;
-  }
-  if (typeof data.v !== 'number') throw new Error('Missing version in injested data');
-
-
-  this.version = data.v;
-  this.snapshot = data.snapshot;
-  this._setType(data.type);
-
-  this.state = 'ready';
-  this.emit('ready');
-};
-
-/*
-Doc.prototype.blindCreateAcknowledged = function(msg) {
-  if (this.pendingData.length) {
-    // We've done ops locally, which have to include a create. Make sure the
-    // document hasn't been created by someone else.
-    if (data.type) {
-      // Uh oh. Error all the pending ops.
-      for (var p = 0; p < this.pendingData.length; p++) {
-        var callbacks = this.pendingData[p].callbacks;
-        for (var i = 0; i < callbacks.length; i++) {
-          callbacks[i]('Document already exists');
-        }
-      }
-      this.pendingData.length = 0;
-      this._setType(null);
-    }
-  }
-
-
-};
-*/
+// Operations
 
 
 // ************ Dealing with operations.
@@ -322,8 +399,28 @@ var isNoOp = function(opData) {
   return !opData.op && !opData.create && !opData.del;
 }
 
+// Try to compose data2 into data1. Returns truthy if it succeeds, otherwise falsy.
+var tryCompose = function(type, data1, data2) {
+  if (data1.create && data2.del) {
+    setNoOp(data1);
+  } else if (data1.create && data2.op) {
+    // Compose the data into the create data.
+    var data = (data1.create.data === undefined) ? type.create() : data1.create.data;
+    data1.create.data = type.apply(data, data2.op);
+  } else if (isNoOp(data1)) {
+    data1.create = data2.create;
+    data1.del = data2.del;
+    data1.op = data2.op;
+  } else if (data1.op && data2.op && type.compose) {
+    data1.op = type.compose(data1.op, data2.op);
+  } else {
+    return false;
+  }
+  return true;
+};
+
 // Transform server op data by a client op, and vice versa. Ops are edited in place.
-Doc.prototype._xf = function(client, server) {
+var xf = function(client, server) {
   // In this case, we're in for some fun. There are some local operations
   // which are totally invalid - either the client continued editing a
   // document that someone else deleted or a document was created both on the
@@ -441,7 +538,12 @@ Doc.prototype._afterOtApply = function(opData, context) {
   }
 };
 
-// Internal method to actually send op data to the server.
+
+
+// ***** Sending operations
+
+
+// Actually send op data to the server.
 Doc.prototype._sendOpData = function() {
   var d = this.inflightData;
 
@@ -470,27 +572,8 @@ Doc.prototype._sendOpData = function() {
   }
 };
 
-// Try to compose data2 into data1. Returns truthy if it succeeds, otherwise falsy.
-var _tryCompose = function(type, data1, data2) {
-  if (data1.create && data2.del) {
-    setNoOp(data1);
-  } else if (data1.create && data2.op) {
-    // Compose the data into the create data.
-    var data = (data1.create.data === undefined) ? type.create() : data1.create.data;
-    data1.create.data = type.apply(data, data2.op);
-  } else if (isNoOp(data1)) {
-    data1.create = data2.create;
-    data1.del = data2.del;
-    data1.op = data2.op;
-  } else if (data1.op && data2.op && type.compose) {
-    data1.op = type.compose(data1.op, data2.op);
-  } else {
-    return false;
-  }
-  return true;
-};
 
-// Internal method called to do the actual work for submitOp(), create() and del(), below.
+// Internal method called to do the actual work for submitOp(), create() and del().
 //
 // context is optional.
 Doc.prototype._submitOpData = function(opData, context, callback) {
@@ -533,7 +616,7 @@ Doc.prototype._submitOpData = function(opData, context, callback) {
 
   if (this.pendingData.length &&
       (entry = this.pendingData[this.pendingData.length - 1],
-       _tryCompose(this.type, entry, opData))) {
+       tryCompose(this.type, entry, opData))) {
   } else {
     entry = opData;
     opData.type = this.type;
@@ -548,6 +631,9 @@ Doc.prototype._submitOpData = function(opData, context, callback) {
   var _this = this;
   setTimeout((function() { _this.flush(); }), 0);
 };
+
+
+// *** Client OT entrypoints.
 
 // Submit an operation to the document. The op must be valid given the current OT type.
 Doc.prototype.submitOp = function(op, context, callback) {
@@ -587,6 +673,11 @@ Doc.prototype.del = function(context, callback) {
 };
 
 
+
+
+// *** Receiving operations
+
+
 // This will be called when the server rejects our operations for some reason.
 // There's not much we can do here if the OT type is noninvertable, but that
 // shouldn't happen too much in real life because readonly documents should be
@@ -610,7 +701,7 @@ Doc.prototype._tryRollback = function(opData) {
 
     // Transform the undo operation by any pending ops.
     for (var i = 0; i < this.pendingData.length; i++) {
-      this._xf(this.pendingData[i], undo);
+      xf(this.pendingData[i], undo);
     }
 
     // ... and apply it locally, reverting the changes.
@@ -693,148 +784,65 @@ Doc.prototype._opAcknowledged = function(msg) {
   this._clearAction('submit');
 };
 
-// ***** Message handling
 
-// This is called by the connection when it receives a message for the document.
-Doc.prototype._onMessage = function(msg) {
-  if (!(msg.c === this.collection && msg.doc === this.name)) {
-    // This should never happen - its a sanity check for bugs in the connection code.
-    throw new Error("Got message for wrong document.");
-  }
+// API Contexts
 
-  // msg.a = the action.
-  switch (msg.a) {
-    case 'fetch':
-      // We're done fetching. This message has no other information.
-      if (msg.data) this.injestData(msg.data);
-      if (this.wantSubscribe === 'fetch') this.wantSubscribe = false;
-      this._finishSubscribeAction('fetch', msg.error);
-      break;
+// This creates and returns an editing context using the current OT type.
+Doc.prototype.createContext = function() {
+  var type = this.type;
+  if (!type) throw new Error('Missing type');
 
-    case 'sub':
-      // Subscribe reply.
-      if (msg.error) {
-        if (console) console.error("Could not subscribe: " + msg.error);
-        this.emit('error', msg.error);
-        // There's probably a reason we couldn't subscribe. Don't retry.
-        this.wantSubscribe = false;
-      } else {
-        if (msg.data) this.injestData(msg.data);
-        this.subscribed = true;
-        this.emit('subscribe', msg.error);
+  // I could use the prototype chain to do this instead, but Object.create
+  // isn't defined on old browsers. This will be fine.
+  var doc = this;
+  var context = {
+    getSnapshot: function() {
+      return doc.snapshot;
+    },
+    submitOp: function(op, callback) {
+      doc.submitOp(op, context, callback);
+    },
+    destroy: function() {
+      if (this.detach) {
+        this.detach();
+        // Don't double-detach.
+        delete this.detach;
       }
-
-      this._finishSubscribeAction('subscribe', msg.error);
-      break;
-
-    case 'unsub':
-      // Unsubscribe reply
-      this.subscribed = false;
-      this.emit('unsubscribe');
-
-      this._finishSubscribeAction('unsubscribe', msg.error);
-      break;
-
-    case 'ack':
-      // Acknowledge a locally submitted operation.
+      // It will be removed from the actual editingContexts list next time
+      // we receive an op on the document (and the list is iterated through).
       //
-      // I'm not happy with the way this logic (and the logic in the op
-      // handler, below) currently works. Its because the server doesn't
-      // currently guarantee any particular ordering of op ack & oplog messages.
-      if (msg.error) this._opAcknowledgeError(msg);
-      break;
+      // This is potentially dodgy, allowing a memory leak if you create &
+      // destroy a whole bunch of contexts without receiving or sending any ops
+      // to the document.
+      delete this._onOp;
+      this.remove = true;
+    },
 
-    case 'op':
-      if (this.inflightData &&
-          msg.src === this.inflightData.src &&
-          msg.seq === this.inflightData.seq) {
-        // This one is mine. Accept it as acknowledged.
-        this._opAcknowledged(msg);
-        break;
-      }
+    // This is dangerous, but really really useful for debugging. I hope people
+    // don't depend on it.
+    _doc: this,
+  };
 
-      if (msg.v !== this.version) {
-        this.emit('error', "Expected version " + this.version + " but got " + msg.v);
-        break;
-      }
-
-      if (this.inflightData) this._xf(this.inflightData, msg);
-
-      for (var i = 0; i < this.pendingData.length; i++) {
-        this._xf(this.pendingData[i], msg);
-      }
-
-      this.version++;
-      this._otApply(msg, false);
-      this._afterOtApply(msg, false);
-      //console.log('applied', JSON.stringify(msg));
-      break;
-
-    case 'meta':
-      if (console) console.warn('Unhandled meta op:', msg);
-      break;
-
-    default:
-      if (console) console.warn('Unhandled document message:', msg);
-      break;
-  }
-};
-
-// **** Actions.
-
-Doc.prototype._clearAction = function(expectedAction) {
-  if (this.action !== expectedAction)
-    console.error('Unexpected action ' + this.action + ' expected: ' + expectedAction);
-  this.action = null;
-  this.flush();
-};
-
-
-
-// Send the next pending op to the server, if we can.
-//
-// Only one operation can be in-flight at a time. If an operation is already on
-// its way, or we're not currently connected, this method does nothing.
-Doc.prototype.flush = function() {
-  if (!this.connection.canSend || this.action) return;
-
-  var opData;
-  // Pump and dump any no-ops from the front of the pending op list.
-  while (this.pendingData.length && isNoOp(opData = this.pendingData[0])) {
-    var callbacks = opData.callbacks;
-    for (var i = 0; i < callbacks.length; i++) {
-      callbacks[i](opData.error);
+  if (type.api) {
+    // Copy everything else from the type's API into the editing context.
+    for (var k in type.api) {
+      context[k] = type.api[k];
     }
-    this.pendingData.shift();
+  } else {
+    context.provides = {};
   }
 
-  // First consider changing state
-  if (this.subscribed && !this.wantSubscribe) {
-    this.action = 'unsubscribe';
-    this._send({a:'unsub'});
-  } else if (!this.subscribed && this.wantSubscribe) {
-    this.action = 'subscribe';
-    this._send(this.state === 'ready' ? {a:'sub', v:this.version} : {a:'sub'});
-  } else if (this.pendingData.length && this.connection.state === 'connected') {
-    // Try and send any pending ops. We can't send ops while in 
-    this.inflightData = this.pendingData.shift();
+  this.editingContexts.push(context);
 
-    // Delay for debugging.
-    //var that = this;
-    //setTimeout(function() { that._sendOpData(); }, 1000);
+  return context;
+};
 
-    // This also sets action to 'submit'.
-    this._sendOpData();
-  } else if (this.wantFetch) {
-    this._send(this.state === 'ready' ? {a:'fetch', v:this.version} : {a:'fetch'});
-    this.action = 'fetch';
+Doc.prototype.removeContexts = function() {
+  if (this.editingContexts) {
+    for (var i = 0; i < this.editingContexts.length; i++) {
+      this.editingContexts[i].destroy();
+    }
   }
+  this.editingContexts.length = 0;
 };
-
-// Get and return the current document snapshot.
-Doc.prototype.getSnapshot = function() {
-  return this.snapshot;
-};
-
-MicroEvent.mixin(Doc);
 
