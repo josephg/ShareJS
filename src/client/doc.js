@@ -190,7 +190,8 @@ Doc.prototype._onMessage = function(msg) {
       // We're done fetching. This message has no other information.
       if (msg.data) this.injestData(msg.data);
       if (this.wantSubscribe === 'fetch') this.wantSubscribe = false;
-      this._finishSubscribe('fetch', msg.error);
+      this._finishSub('fetch', msg.error);
+      this._clearAction('fetch');
       break;
 
     case 'sub':
@@ -206,7 +207,8 @@ Doc.prototype._onMessage = function(msg) {
         this.emit('subscribe', msg.error);
       }
 
-      this._finishSubscribe('subscribe', msg.error);
+      this._finishSub(true, msg.error);
+      this._clearAction('subscribe');
       break;
 
     case 'unsub':
@@ -214,7 +216,8 @@ Doc.prototype._onMessage = function(msg) {
       this.subscribed = false;
       this.emit('unsubscribe');
 
-      this._finishSubscribe('unsubscribe', msg.error);
+      this._finishSub(false, msg.error);
+      this._clearAction('unsubscribe');
       break;
 
     case 'ack':
@@ -299,8 +302,9 @@ Doc.prototype._onConnectionStateChanged = function(state, reason) {
 // ****** Dealing with actions
 
 Doc.prototype._clearAction = function(expectedAction) {
-  if (this.action !== expectedAction)
-    console.error('Unexpected action ' + this.action + ' expected: ' + expectedAction);
+  if (this.action !== expectedAction) {
+    console.warn('Unexpected action ' + this.action + ' expected: ' + expectedAction);
+  }
   this.action = null;
   this.flush();
 };
@@ -355,7 +359,8 @@ Doc.prototype.flush = function() {
 
 // Value is true, false or 'fetch'.
 Doc.prototype._setWantSubscribe = function(value, callback) {
-  if (this.subscribed === value || value === 'fetch' && this.subscribed) {
+  if (this.subscribed === this.wantSubscribe &&
+      (this.subscribed === value || value === 'fetch' && this.subscribed)) {
     if (callback) callback();
     return;
   }
@@ -394,14 +399,13 @@ Doc.prototype.fetch = function(callback) {
 };
 
 // Called when our subscribe, fetch or unsubscribe messages are acknowledged.
-Doc.prototype._finishSubscribe = function(action, error) {
-  if (this.action !== action) return;
-
-  for (var i = 0; i < this._subscribeCallbacks.length; i++) {
-    this._subscribeCallbacks[i](error);
+Doc.prototype._finishSub = function(value, error) {
+  if (value === this.wantSubscribe) {
+    for (var i = 0; i < this._subscribeCallbacks.length; i++) {
+      this._subscribeCallbacks[i](error);
+    }
+    this._subscribeCallbacks.length = 0;
   }
-  this._subscribeCallbacks.length = 0;
-  this._clearAction(action);
 };
 
 

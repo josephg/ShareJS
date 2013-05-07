@@ -212,13 +212,17 @@ query.on('remove', function(doc) {
   listElem.removeChild(doc.elem);
 });
 
-query.subscribe(function() {
+query.on('change', function() {
   console.log('sub1');
+  while(listElem.firstChild) {
+    listElem.removeChild(listElem.firstChild);
+  }
   for (var i = 0; i < query.results.length; i++) {
     onAdd(query.results[i], i);
   }
 });
 
+query.subscribe();
 
 // ****** Set up search box.
 

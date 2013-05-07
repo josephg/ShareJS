@@ -40,9 +40,6 @@ var Query = exports.Query = function(connection, id, collection, query) {
   // subscribe and unsubscribe. false, 'fetch' or true.
   this.wantSubscribe = false;
 
-  // Are we subscribed on the server?
-  this.subscribed = false;
-   
   // Have we requested a subscribe? false, 'fetch' or true.
   this._subscribeRequested = false;
   this._subscribeCallbacks = [];
@@ -89,17 +86,7 @@ Query.prototype.subscribe = Doc.prototype.subscribe;
 Query.prototype.unsubscribe = Doc.prototype.unsubscribe;
 
 // Called when our subscribe, fetch or unsubscribe messages are acknowledged.
-Query.prototype._finishSub = function(action, error) {
-  console.log('_finishSub', action);
-
-  this.subscribed = action === true;
-
-  for (var i = 0; i < this._subscribeCallbacks.length; i++) {
-    this._subscribeCallbacks[i](error);
-  }
-  this._subscribeCallbacks.length = 0;
-};
-
+Query.prototype._finishSub = Doc.prototype._finishSub;
 
 // Destroy the query object. Any subsequent messages for the query will be
 // ignored by the connection. You should unsubscribe from the query before
@@ -112,7 +99,7 @@ Query.prototype._onConnectionStateChanged = function(state, reason) {
   if (this.connection.state === 'connecting' && this.wantSubscribe) {
     this._subFetch('qsub');
   } else if (this.connection.state === 'disconnected') {
-    this.subscribed = this._subscribeRequested = false;
+    this._subscribeRequested = false;
   }
 };
 
