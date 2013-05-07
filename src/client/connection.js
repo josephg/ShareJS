@@ -209,7 +209,7 @@ Connection.prototype.get = function(collection, name) {
 };
 
 // Create a document if it doesn't exist. Returns the document synchronously.
-Connection.prototype.getOrCreate = function(collection, name) {
+Connection.prototype.getOrCreate = function(collection, name, data) {
   var doc = this.get(collection, name);
   if (doc) return doc;
 
