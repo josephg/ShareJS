@@ -101,7 +101,7 @@ Query.prototype._onMessage = function(msg) {
   switch (msg.a) {
     case 'qfetch':
       var results = msg.data ? this._dataToDocs(msg.data) : undefined;
-      if (this.callback) this.callback(msg.error, this.results);
+      if (this.callback) this.callback(msg.error, results);
       // Once a fetch query gets its data, it is destroyed.
       this.connection.destroyQuery(this);
       break;
