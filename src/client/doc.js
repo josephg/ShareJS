@@ -159,12 +159,8 @@ Doc.prototype.whenReady = function(fn) {
   }
 };
 
-Doc.prototype.whenNothingPending = function(fn) {
-  if (this.inflightData == null && !this.pendingData.length) {
-    fn();
-  } else {
-    this.on('nothing pending', fn);
-  }
+Doc.prototype.hasPending = function(fn) {
+  return this.inflightData != null || !!this.pendingData.length;
 };
 
 
