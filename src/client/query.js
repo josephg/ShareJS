@@ -132,7 +132,10 @@ Query.prototype._onMessage = function(msg) {
         this.ready = true;
         this.emit('change', this.results, previous);
       }
-      if (this.callback) this.callback(msg.error, this.results);
+      if (this.callback) {
+        this.callback(msg.error, this.results);
+        delete this.callback;
+      }
       break;
   }
 };

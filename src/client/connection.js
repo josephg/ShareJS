@@ -243,7 +243,8 @@ function hasKeys(object) {
 
 // **** Queries.
 
-Connection.prototype.createQuery = function(type, collection, q, options, callback) {
+// Helper for createFetchQuery and createSubscribeQuery, below.
+Connection.prototype._createQuery = function(type, collection, q, options, callback) {
   if (type !== 'fetch' && type !== 'sub')
     throw new Error('Invalid query type: ' + type);
 
@@ -259,11 +260,11 @@ Connection.prototype.createQuery = function(type, collection, q, options, callba
  * @optional source
  */
 Connection.prototype.createFetchQuery = function(collection, q, options, callback) {
-  return this.createQuery('fetch', collection, q, options, callback);
+  return this._createQuery('fetch', collection, q, options, callback);
 };
 
 Connection.prototype.createSubscribeQuery = function(collection, q, options, callback) {
-  return this.createQuery('sub', collection, q, options, callback);
+  return this._createQuery('sub', collection, q, options, callback);
 };
 
 Connection.prototype.destroyQuery = function(query) {
