@@ -89,7 +89,8 @@ var Connection = exports.Connection = function (socket) {
       case 'q':
       case 'qunsub':
         // Query message. Pass this to the appropriate query object.
-        _this.queries[msg.id]._onMessage(msg);
+        var query = _this.queries[msg.id];
+        if (query) query._onMessage(msg);
         break;
 
       default:
@@ -242,15 +243,27 @@ function hasKeys(object) {
 
 // **** Queries.
 
+Connection.prototype.createQuery = function(type, collection, q, options, callback) {
+  if (type !== 'fetch' && type !== 'sub')
+    throw new Error('Invalid query type: ' + type);
+
+  if (!options) options = {};
+  var id = this.nextQueryId++;
+  var query = new Query(type, this, id, collection, q, options, callback);
+  this.queries[id] = query;
+  return query;
+};
+
 /**
  *
  * @optional source
  */
-Connection.prototype.createQuery = function(collection, q, source) {
-  var id = this.nextQueryId++;
-  var query = new Query(this, id, collection, q);
-  this.queries[id] = query;
-  return query;
+Connection.prototype.createFetchQuery = function(collection, q, options, callback) {
+  return this.createQuery('fetch', collection, q, options, callback);
+};
+
+Connection.prototype.createSubscribeQuery = function(collection, q, options, callback) {
+  return this.createQuery('sub', collection, q, options, callback);
 };
 
 Connection.prototype.destroyQuery = function(query) {

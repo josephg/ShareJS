@@ -174,9 +174,7 @@ var select = function(doc) {
 };
 
 //q = sjs.query('users', {'data.x':5}, true, function(err, data) { console.log(err, data); });
-query = sjs.createQuery('users', {$query:{}});
-query.autoFetch = true;
-//query.poll = true;
+query = sjs.createSubscribeQuery('users', {$query:{}}, {autoFetch:true});
 
 var selected;
 var onAdd;
@@ -222,7 +220,7 @@ query.on('change', function() {
   }
 });
 
-query.subscribe();
+//query.subscribe();
 
 // ****** Set up search box.
 
@@ -246,9 +244,7 @@ queryBox.onsearch = function() {
     if (value === '') value = '{}';
     var q = JSON.parse(value);
 
-    query.unsubscribe(function() { console.log('unsub'); });
-    query.query = q;
-    query.subscribe(function() { console.log('sub'); });
+    query.setQuery(q);
 
   } catch (e) {}
 

@@ -7,14 +7,26 @@ if (typeof require !== 'undefined') {
 //
 // The server actively tells the client when there's new data that matches
 // a set of conditions.
-var Query = exports.Query = function(connection, id, collection, query) {
-  this.connection = connection;
+var Query = exports.Query = function(type, connection, id, collection, query, options, callback) {
+  // 'fetch' or 'sub'
+  this.type = type;
 
+  this.connection = connection;
   this.id = id;
   this.collection = collection;
 
   // The query itself. For mongo, this should look something like {"data.x":5}
   this.query = query;
+
+  // Do we ask the server to give us snapshots of the documents with the query
+  // results?
+  this.autoFetch = options.autoFetch || false;
+
+  // Do we repoll the entire query whenever anything changes? (As opposed to
+  // just polling the changed item). This needs to be enabled to be able to use
+  // ordered queries (sortby:) and paginated queries. Set to undefined, it will
+  // be enabled / disabled automatically based on the query's properties.
+  this.poll = options.poll;
 
   // A list of resulting documents. These are actual documents, complete with
   // data and all the rest. If autoFetch is false, these documents will not
@@ -23,125 +35,119 @@ var Query = exports.Query = function(connection, id, collection, query) {
   // Calling subscribe() might be a good idea anyway, as you won't be
   // subscribed to the documents by default.
   this.results = [];
-  
-  // Do we ask the server to give us snapshots of the documents with the query
-  // results?
-  this.autoFetch = false;
-
-  // Do we repoll the entire query whenever anything changes? (As opposed to
-  // just polling the changed item). This needs to be enabled to be able to use
-  // ordered queries (sortby:) and paginated queries. Set to undefined, it will
-  // be enabled / disabled automatically based on the query's properties.
-  this.poll = undefined;
-
-
-
-  // Should we automatically resubscribe on reconnect? This is set when you
-  // subscribe and unsubscribe. false, 'fetch' or true.
-  this.wantSubscribe = false;
-
-  // Have we requested a subscribe? false, 'fetch' or true.
-  this._subscribeRequested = false;
-  this._subscribeCallbacks = [];
 
   // Do we have some initial data?
   this.ready = false;
+
+  this.callback = callback;
+
+  this._sendSubFetch(this);
 };
+Query.prototype.action = 'qsub';
 
 // Helper for subscribe & fetch, since they share the same message format.
-Query.prototype._subFetch = function(action) {
-  var msg = {
-    a: action,
-    id: this.id,
-    c: this.collection,
-    o: {f:this.autoFetch},
-    q: this.query
-  };
+Query.prototype._sendSubFetch = function() {
+  if (this.connection.canSend) {
+    var msg = {
+      a: 'q' + this.type,
+      id: this.id,
+      c: this.collection,
+      o: {f:this.autoFetch},
+      q: this.query
+    };
 
-  if (this.poll !== undefined) msg.o.p = this.poll;
+    if (this.poll !== undefined) msg.o.p = this.poll;
 
-  this.connection.send(msg);
-};
-
-Query.prototype.flush = function() {
-  if (this.wantSubscribe !== this._subscribeRequested
-      && this.connection.canSend) {
-
-    if (this.wantSubscribe) {
-      this._subFetch(this.wantSubscribe === 'fetch' ? 'qfetch' : 'qsub');
-    } else {
-      // Unsubscribe.
-      this.connection.send({a:'qunsub', id:this.id});
-    }
-
-    this._subscribeRequested = this.wantSubscribe;
+    this.connection.send(msg);
   }
 };
 
-// Just copy the code in from the document class. Its fine.
-Query.prototype._setWantSubscribe = Doc.prototype._setWantSubscribe;
-
-Query.prototype.fetch = Doc.prototype.fetch;
-Query.prototype.subscribe = Doc.prototype.subscribe;
-Query.prototype.unsubscribe = Doc.prototype.unsubscribe;
-
-// Called when our subscribe, fetch or unsubscribe messages are acknowledged.
-Query.prototype._finishSub = Doc.prototype._finishSub;
+// Make a list of documents from the list of server-returned data objects
+Query.prototype._dataToDocs = function(data) {
+  var results = [];
+  for (var i = 0; i < data.length; i++) {
+    var docData = data[i];
+    results.push(this.connection.getOrCreate(this.collection, docData.docName, docData));
+  }
+  return results;
+};
 
 // Destroy the query object. Any subsequent messages for the query will be
 // ignored by the connection. You should unsubscribe from the query before
 // destroying it.
 Query.prototype.destroy = function() {
+  if (this.connection.canSend && this.type === 'sub') {
+    this.connection.send({a:'qunsub', id:this.id});
+  }
+
   this.connection.destroyQuery(this);
 };
 
 Query.prototype._onConnectionStateChanged = function(state, reason) {
-  if (this.connection.state === 'connecting' && this.wantSubscribe) {
-    this._subFetch('qsub');
-  } else if (this.connection.state === 'disconnected') {
-    this._subscribeRequested = false;
+  if (this.connection.state === 'connecting') {
+    this._sendSubFetch();
   }
 };
 
 // Internal method called from connection to pass server messages to the query.
 Query.prototype._onMessage = function(msg) {
-  if (msg.error) this.emit('error', msg.error);
-
-  if (msg.data) {
-    // This message replaces the entire result set with the set passed.
-    var previous = this.results.slice();
-
-    // Remove all current results.
-    this.results.length = 0;
-
-    // Then add everything in the new result set.
-    for (var i = 0; i < msg.data.length; i++) {
-      var docData = msg.data[i];
-      var doc = this.connection.getOrCreate(this.collection, docData.docName, docData);
-      this.results.push(doc);
-    }
-
-    this.ready = true;
-    this.emit('change', this.results, previous);
-  } else if (msg.add) {
-    // Just splice in one element to the list.
-    var data = msg.add;
-    var doc = this.connection.getOrCreate(this.collection, data.docName, data);
-    this.results.splice(msg.idx, 0, doc);
-    this.emit('insert', doc, msg.idx);
-
-  } else if (msg.rm) {
-    // Remove one.
-    var removed = this.results.splice(msg.idx, 1);
-    this.emit('remove', removed[0], msg.idx);
+  if ((msg.a === 'qfetch') !== (this.type === 'fetch')) {
+    if (console) console.warn('Invalid message sent to query', msg, this);
+    return;
   }
 
-  if (msg.a === 'qfetch') {
-    this._finishSub('fetch', msg.error);
-  } else if (msg.a === 'qsub') {
-    this._finishSub(true, msg.error);
-  } else if (msg.a === 'qunsub') {
-    this._finishSub(false, msg.error);
+  if (msg.error) this.emit('error', msg.error);
+
+  switch (msg.a) {
+    case 'qfetch':
+      var results = msg.data ? this._dataToDocs(msg.data) : undefined;
+      if (this.callback) this.callback(msg.error, this.results);
+      // Once a fetch query gets its data, it is destroyed.
+      this.connection.destroyQuery(this);
+      break;
+
+    case 'q':
+      // Query diff data (inserts and removes)
+      if (msg.add) {
+        // Just splice in one element to the list.
+        var data = msg.add;
+        var doc = this.connection.getOrCreate(this.collection, data.docName, data);
+        this.results.splice(msg.idx, 0, doc);
+        this.emit('insert', doc, msg.idx);
+
+      } else if (msg.rm) {
+        // Remove one.
+        var removed = this.results.splice(msg.idx, 1);
+        this.emit('remove', removed[0], msg.idx);
+      }
+      break;
+    case 'qsub':
+      // This message replaces the entire result set with the set passed.
+      if (!msg.error) {
+        var previous = this.results;
+
+        // Then add everything in the new result set.
+        this.results = this._dataToDocs(msg.data);
+
+        this.ready = true;
+        this.emit('change', this.results, previous);
+      }
+      if (this.callback) this.callback(msg.error, this.results);
+      break;
+  }
+};
+
+// Change the thing we're searching for. This isn't fully supported on the
+// backend (it destroys the old query and makes a new one) - but its
+// programatically useful and I might add backend support at some point.
+Query.prototype.setQuery = function(q) {
+  if (this.type !== 'sub') throw new Error('cannot change a fetch query');
+
+  this.query = q;
+  if (this.connection.canSend) {
+    // There's no 'change' message to send to the server. Just resubscribe.
+    this.connection.send({a:'qunsub', id:this.id});
+    this._sendSubFetch();
   }
 };
 
