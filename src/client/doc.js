@@ -189,8 +189,8 @@ Doc.prototype._onMessage = function(msg) {
     case 'fetch':
       // We're done fetching. This message has no other information.
       if (msg.data) this.injestData(msg.data);
-      if (this.wantSubscribe === 'fetch') this.wantSubscribe = false;
       this._finishSub('fetch', msg.error);
+      if (this.wantSubscribe === 'fetch') this.wantSubscribe = false;
       this._clearAction('fetch');
       break;
 
@@ -332,6 +332,9 @@ Doc.prototype.flush = function() {
   if (this.subscribed && !this.wantSubscribe) {
     this.action = 'unsubscribe';
     this._send({a:'unsub'});
+  } else if (!this.subscribed && this.wantSubscribe === 'fetch') {
+    this.action = 'fetch';
+    this._send(this.state === 'ready' ? {a:'fetch', v:this.version} : {a:'fetch'});
   } else if (!this.subscribed && this.wantSubscribe) {
     this.action = 'subscribe';
     this._send(this.state === 'ready' ? {a:'sub', v:this.version} : {a:'sub'});
@@ -345,9 +348,6 @@ Doc.prototype.flush = function() {
 
     // This also sets action to 'submit'.
     this._sendOpData();
-  } else if (this.wantFetch) {
-    this._send(this.state === 'ready' ? {a:'fetch', v:this.version} : {a:'fetch'});
-    this.action = 'fetch';
   }
 };
 
