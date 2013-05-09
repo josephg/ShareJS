@@ -91,7 +91,7 @@ class Connection
 
       # Send authentication message
       @send {
-        "auth": if authentication then authentication else null
+        auth: if authentication then authentication else null
       }
 
       @lastError = @lastReceivedDoc = @lastSentDoc = null

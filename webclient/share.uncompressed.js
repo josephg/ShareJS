@@ -1070,7 +1070,7 @@
       };
       this.socket.onopen = function() {
         _this.send({
-          "auth": authentication ? authentication : null
+          auth: authentication ? authentication : null
         });
         _this.lastError = _this.lastReceivedDoc = _this.lastSentDoc = null;
         return _this.setState('handshaking');
