@@ -32,7 +32,6 @@ AUTH_TIMEOUT = 10000
 # session should implement the following interface:
 #   headers
 #   address
-#   abort()
 #   stop()
 #   ready()
 #   send(msg)
@@ -56,6 +55,8 @@ exports.handler = (session, createAgent) ->
     # Map from docName -> {queue, listener if open}
     docState = {}
 
+    abort = ->
+      (session.stop ? session.close)()
 
     # We'll only handle one message from each client at a time.
     handleMessage = (query) ->
@@ -70,7 +71,7 @@ exports.handler = (session, createAgent) ->
 
       if error
         console.warn "Invalid query #{query} from #{agent.sessionId}: #{error}"
-        return session.abort()
+        return abort()
 
       # The agent can specify null as the docName to get a random doc name.
       if query.doc is null
@@ -81,7 +82,7 @@ exports.handler = (session, createAgent) ->
         unless lastReceivedDoc
           console.warn "msg.doc missing in query #{query} from #{agent.sessionId}"
         # The disconnect handler will be called when we do this, which will clean up the open docs.
-          return session.abort()
+          return abort()
 
         query.doc = lastReceivedDoc
 
@@ -108,7 +109,7 @@ exports.handler = (session, createAgent) ->
 
         else
           console.warn "Invalid query #{JSON.stringify query} from #{agent.sessionId}"
-          session.abort()
+          abort()
           callback()
 
       # ... And add the message to the queue.
