@@ -119,7 +119,11 @@ var Connection = exports.Connection = function (socket) {
   };
 
   socket.onerror = function(e) {
-    _this.emit('error', e);
+    // This isn't the same as a regular error, because it will happen normally
+    // from time to time. Your connection should probably automatically
+    // reconnect anyway, but that should be triggered off onclose not onerror.
+    // (onclose happens when onerror gets called anyway).
+    _this.emit('connection error', e);
   };
 
   socket.onclose = function(reason) {
