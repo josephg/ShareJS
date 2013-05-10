@@ -44,7 +44,9 @@ var Connection = exports.Connection = function (socket) {
 
   // Each query is created with an id that the server uses when it sends us
   // info about the query (updates, etc).
+  //this.nextQueryId = (Math.random() * 1000) |0;
   this.nextQueryId = 1;
+
   // Map from query ID -> query object.
   this.queries = {};
 
@@ -69,7 +71,7 @@ var Connection = exports.Connection = function (socket) {
 
   // Attach event handlers to the socket.
   socket.onmessage = function(msg) {
-    console.log('RECV', JSON.stringify(msg));
+    console.log('RECV', _this.id, JSON.stringify(msg));
 
     // Switch on the message action. Most messages are for documents and are
     // handled in the doc class.
@@ -171,20 +173,42 @@ Connection.prototype._setState = function(newState, data) {
   // & Emit the event to all documents & queries. It might make sense for
   // documents to just register for this stuff using events, but that couples
   // connections and documents a bit much. Its not a big deal either way.
+  this.opQueue = [];
   for (var c in this.collections) {
     var collection = this.collections[c];
     for (var docName in collection) {
       collection[docName]._onConnectionStateChanged(newState, data);
     }
   }
+
+  this.opQueue.sort(function(a, b) { return a.seq - b.seq; });
+  for (var i = 0; i < this.opQueue.length; i++) {
+    this.send(this.opQueue[i]);
+  }
+  this.opQueue = null;
+  
   for (var id in this.queries) {
     this.queries[id]._onConnectionStateChanged(newState, data);
   }
 };
 
+// So, there's an awful error case where the client sends two requests (which
+// fail), then reconnects. The documents could have _onConnectionStateChanged
+// called in the wrong order and the operations then get sent with reversed
+// sequence numbers. This causes the server to incorrectly reject the second
+// sent op. So we need to queue the operations while we're reconnecting and
+// resend them in the correct order.
+Connection.prototype.sendOp = function(data) {
+  if (this.opQueue) {
+    this.opQueue.push(data);
+  } else {
+    this.send(data);
+  }
+};
+
 // Send a message to the connection.
 Connection.prototype.send = function(data) {
-  console.log("SEND:", JSON.stringify(data));
+  console.log("SEND", this.id, JSON.stringify(data));
 
   if (data.doc) { // Not set for queries.
     var docName = data.doc;

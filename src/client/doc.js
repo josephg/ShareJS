@@ -585,8 +585,11 @@ Doc.prototype._sendOpData = function() {
   if (d.create) msg.create = d.create;
   if (d.del) msg.del = d.del;
 
-  this._send(msg);
-  
+  msg.c = this.collection;
+  msg.doc = this.name;
+
+  this.connection.sendOp(msg);
+   
   // The first time we send an op, its id and sequence number is implicit.
   if (!d.src) {
     d.src = this.connection.id;
