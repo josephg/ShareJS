@@ -4,7 +4,7 @@
 
 http = require 'http'
 url  = require 'url'
-nameregex = null
+nameregexes = {}
 
 send403 = (res, message = 'Forbidden\n') ->
   res.writeHead 403, {'Content-Type': 'text/plain'}
@@ -73,13 +73,13 @@ pump = (req, callback) ->
 #   > matchDocName '/hello_world'
 #   undefined
 matchDocName = (urlString, base) ->
-  if !nameregex?
+  if !nameregexes[base]?
     base ?= ""
     base = base[...-1] if base[base.length - 1] == "/"
-    nameregex = new RegExp("^#{base}\/doc\/(?:([^\/]+?))\/?$", "i")
+    nameregexes[base] = new RegExp("^#{base}\/doc\/(?:([^\/]+?))\/?$", "i")
 
   urlParts = url.parse urlString
-  parts = urlParts.pathname.match nameregex
+  parts = urlParts.pathname.match nameregexes[base]
   return parts[1] if parts
 
 # prepare data for createClient. If createClient success, then we pass client
