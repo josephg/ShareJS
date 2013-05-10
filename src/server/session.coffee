@@ -56,7 +56,10 @@ exports.handler = (session, createAgent) ->
     docState = {}
 
     abort = ->
-      (session.stop ? session.close)()
+      if session.stop
+        session.stop()
+      else
+        session.close()
 
     # We'll only handle one message from each client at a time.
     handleMessage = (query) ->
