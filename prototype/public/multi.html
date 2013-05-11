@@ -1,0 +1,40 @@
+<style>
+  .pad {
+    width: 95%;
+    height: 45%;
+    margin: 10px;
+    padding: 10px;
+    font-size: 20px;
+    font-family: monaco;
+    background-repeat: no-repeat;
+    border-radius: 10px;
+  }
+  body {
+    background-color: #ccc;
+  }
+</style>
+<textarea id='pad1' class="pad" autofocus>...</textarea>
+
+<textarea id='pad2' class="pad">...</textarea>
+<script src="channel/bcsocket.js"></script>
+<script src="text.js"></script>
+<script src="share.uncompressed.js"></script>
+<script>
+
+var s = new BCSocket(null, {reconnect: true});
+
+var sjs = new window.sharejs.Connection(s);
+
+var doc = sjs.getOrCreate('users', 'seph');
+console.log(doc);
+doc.subscribe();
+
+doc.whenReady(function () {
+  if (!doc.type) doc.create('text');
+
+  if (doc.type && doc.type.name === 'text')
+    doc.attachTextarea(pad1);
+    doc.attachTextarea(pad2);
+});
+
+</script>
