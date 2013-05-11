@@ -2,6 +2,8 @@
 p = -> #require('util').debug
 i = -> #require('util').inspect
 
+http = require 'http'
+
 # Cross-transform function. Transform server by client and client by server. Returns
 # [server, client].
 exports.transformX = transformX = (type, left, right) ->
@@ -70,3 +72,27 @@ exports.newDocName = do ->
   index = 1
   -> 'testing_doc_' + index++
 
+# Async fetch. Aggregates whole response and sends to callback.
+# Callback should be function(response, data) {...}
+exports.fetch = (method, port, path, postData, extraHeaders, callback) ->
+  if typeof extraHeaders == 'function'
+    callback = extraHeaders
+    extraHeaders = null
+
+  headers = extraHeaders || {'x-testing': 'booyah'}
+
+  request = http.request {method, path, host: 'localhost', port, headers}, (response) ->
+    data = ''
+    response.on 'data', (chunk) -> data += chunk
+    response.on 'end', ->
+      data = data.trim()
+      if response.headers['content-type'] == 'application/json'
+        data = JSON.parse(data)
+
+      callback response, data, response.headers
+
+  if postData?
+    postData = JSON.stringify(postData) if typeof(postData) == 'object'
+    request.write postData
+
+  request.end()

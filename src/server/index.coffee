@@ -44,7 +44,7 @@ create.attach = attach = (server, options, model = createModel(options)) ->
 
   # The client frontend doesn't get access to the model at all, to make sure security stuff is
   # done properly.
-  server.use rest(createAgent, options.rest) if options.rest != null
+  server.use rest(createAgent, options.rest or {}) if options.rest != null
 
   browserChannel.attach(server, createAgent, options.browserChannel or {}) if options.browserChannel != null
 

@@ -22,6 +22,7 @@ modules = [
   'useragent'
   'events'
   'rest'
+  'rest_base'
   'browserchannel'
   'sockjs'
   'websocket'
