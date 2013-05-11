@@ -11,11 +11,17 @@ npm_bin  = path.resolve(path.join('node_modules', '.bin'))
 path_sep = if os.platform() == 'win32' then ";" else ":"
 process.env.PATH = "#{npm_bin}#{path_sep}#{process.env.PATH}"
 
-task 'test', 'Run all tests', ->
-  # run directly to get all the delicious output
-  console.log 'Running tests... (is your webclient up-to-date?)'
-  config.silent = true
-  exec 'nodeunit tests.coffee'      
+option '', '--verbose', 'Show nodeunit-output for test-task'
+
+task 'test', 'Run all tests', (options) ->
+  console.log 'Running tests... (is your webclient up-to-date and nodeunit installed?)'
+
+  config.silent = true unless options['verbose']
+  exec 'nodeunit tests.coffee', (err, stdout, stderr) ->
+    if err == 0
+      console.log 'All tests succeeded!'
+    else
+      console.log "Some tests failed (error: #{err}). Try --verbose."
   config.silent = false
 
 # This is only needed to be able to refer to the line numbers of crashes
