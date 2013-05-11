@@ -19,10 +19,14 @@ applyToShareJS = (editorDoc, delta, doc) ->
      delta.to.ch == delta.from.ch # Then nothing was removed.
     doc.insert startPos, delta.text.join '\n'
   else
-    delLen = delta.to.ch - delta.from.ch
-    while i < delta.to.line
-      delLen += editorDoc.lineInfo(i).text.length + 1   # Add 1 for '\n'
-      i++
+    # delete.removed contains an array of removed lines as strings, so this adds
+    # all the lengths. Later delta.removed.length - 1 is added for the \n-chars
+    # (-1 because the linebreak on the last line won't get deleted)
+    delLen = 0
+    for rm in delta.removed
+      delLen += rm.length
+    delLen += delta.removed.length - 1
+
     doc.del startPos, delLen
     doc.insert startPos, delta.text.join '\n' if delta.text
 
