@@ -31,6 +31,7 @@ test:
 	node_modules/.bin/mocha
 
 webclient/share.uncompressed.js: $(BUNDLED_TYPES) $(CLIENT_SRCS)
+	-mkdir webclient
 	echo '(function(){' > $@
 	cat $(filter %.js,$^) >> $@
 	$(foreach SRC, $(filter %.coffee,$^), coffee -bpc $(SRC) >> $@;)
