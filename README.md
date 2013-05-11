@@ -56,9 +56,13 @@ Then:
     # npm install redis   # If you want redis support
     # npm link
 
-Run the tests:
+Run the tests: (you will need nodeunit for this!)
 
     # cake test
+
+The test output is suppressed by default, but can be enabled using the `--verbose` option:
+
+    # cake --verbose test
 
 Build the coffeescript into .js:
 
