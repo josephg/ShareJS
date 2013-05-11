@@ -33,7 +33,7 @@ applyToShareJS = (editorDoc, delta, doc) ->
 # the document's contents are nuked and replaced with the editor's).
 window.sharejs.extendDoc 'attach_cm', (editor, keepEditorContents) ->
   unless @provides.text
-    throw new Error 'Only text documents can be attached to CodeMirror2'
+    throw new Error 'Only text documents can be attached to CodeMirror 2 or 3'
 
   sharedoc = @
   check = ->
