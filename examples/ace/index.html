@@ -26,7 +26,7 @@
 		editor.setReadOnly(true);
 		document.title = docName;
 
-		sharejs.open(docName, function(error, newDoc) {
+		sharejs.open(docName, "text", function(error, newDoc) {
 			
 			if (doc != null) {
 				doc.close();
