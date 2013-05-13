@@ -40,10 +40,12 @@ webclient/share.uncompressed.js: $(BUNDLED_TYPES) $(CLIENT_SRCS)
 
 # Copy other types from ot-types.
 webclient/%.js: node_modules/ot-types/webclient/%.js
+	-mkdir webclient
 	cp $< $@
 
 # .. Or uglify the ones we already have.
 webclient/%.js: webclient/%.uncompressed.js
+	-mkdir webclient
 	$(UGLIFY) $< -c unsafe=true --lint -mo $@
 
 # Compile the types for a browser.
