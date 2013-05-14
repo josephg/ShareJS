@@ -13,8 +13,8 @@
   "homepage": "",
   "author": "Joseph Gentle <josephg@gmail.com>",
   "dependencies": {
-    "livedb": "git://github.com/josephg/livedb.git",
-    "ot-types": "git://github.com/josephg/ot-types.git",
+    "livedb": "git://github.com/share/livedb.git",
+    "ot-types": "git://github.com/share/ot-types.git",
     "coffee-script": "<=1.6",
     "hat": "*"
   },
