@@ -158,7 +158,7 @@ Connection.prototype._setState = function(newState, data) {
   // I made a state diagram. The only invalid transitions are getting to
   // 'connecting' from anywhere other than 'disconnected' and getting to
   // 'connected' from anywhere other than 'connecting'.
-  if ((newState === 'connecting' && this.state !== 'disconnected')
+  if ((newState === 'connecting' && (this.state !== 'disconnected' && this.state !== 'stopped'))
       || (newState === 'connected' && this.state !== 'connecting')) {
     throw new Error("Cannot transition directly from " + this.state + " to " + newState);
   }
