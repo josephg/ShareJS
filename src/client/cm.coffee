@@ -42,7 +42,7 @@ window.sharejs.extendDoc 'attach_cm', (editor, keepEditorContents) ->
   sharedoc = @
   check = ->
     window.setTimeout ->
-        editorText = editor.getValue()
+        editorText = editor.getValue('\n')
         otText = sharedoc.getText()
 
         if editorText != otText
@@ -54,7 +54,7 @@ window.sharejs.extendDoc 'attach_cm', (editor, keepEditorContents) ->
       , 0
 
   if keepEditorContents
-    @del 0, sharedoc.getText().length
+    @del 0, sharedoc.getText('\n').length
     @insert 0, editor.getValue()
   else
     editor.setValue sharedoc.getText()
