@@ -38,8 +38,8 @@ webclient/share.uncompressed.js: $(BUNDLED_TYPES) $(CLIENT_SRCS)
 	echo '})();' >> $@
 
 
-# Copy other types from ot-types.
-webclient/%.js: node_modules/ot-types/webclient/%.js
+# Copy other types from ottypes.
+webclient/%.js: node_modules/ottypes/webclient/%.js
 	-mkdir webclient
 	cp $< $@
 

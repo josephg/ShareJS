@@ -14,7 +14,7 @@
   "author": "Joseph Gentle <josephg@gmail.com>",
   "dependencies": {
     "livedb": "git://github.com/share/livedb.git",
-    "ot-types": "git://github.com/share/ot-types.git",
+    "ottypes": "git://github.com/share/ottypes.git",
     "coffee-script": "<=1.6",
     "hat": "*"
   },
