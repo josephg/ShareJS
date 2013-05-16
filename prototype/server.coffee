@@ -11,7 +11,8 @@ webserver = connect(
 )
 
 sharejs = require '../src'
-shareClient = sharejs.server.createClient db:sharejs.db.mongo 'localhost:27017/test?auto_reconnect', safe:false
+share = sharejs.server.createClient db:sharejs.db.mongo 'localhost:27017/test?auto_reconnect', safe:false
+
 
 opts = {webserver}
 webserver.use browserChannel opts, (client) ->
@@ -40,7 +41,7 @@ webserver.use browserChannel opts, (client) ->
     stream.end()
 
   # ... and give the stream to ShareJS.
-  shareClient.listen stream
+  share.listen stream
 
 port = argv.p or 7007
 webserver.listen port

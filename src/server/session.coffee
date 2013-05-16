@@ -32,11 +32,7 @@ hat = require 'hat'
 #   send(msg)
 #   removeListener()
 #   on(event, handler) - where event can be 'message' or 'closed'
-module.exports = (options, stream) ->
-  data =
-    headers: stream.headers
-    remoteAddress: stream.remoteAddress
-
+module.exports = (instance, stream) ->
   close = (err) ->
     # Close the stream for writing
     if err
@@ -240,8 +236,6 @@ module.exports = (options, stream) ->
       when 'qsub'
         agent.query collection, req.q, qopts, (err, emitter) ->
           return callback err if err
-          
-        
           return callback 'ID in use' if queries[qid]
 
           queries[qid] = emitter
@@ -276,7 +270,7 @@ module.exports = (options, stream) ->
         callback 'invalid or unknown message'
 
 
-  agent = createAgent options, stream
+  agent = createAgent instance, stream
   stream.write a:'init', protocol:0, id:agent.sessionId
 
   do pump = ->
