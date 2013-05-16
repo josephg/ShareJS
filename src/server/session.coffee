@@ -20,7 +20,7 @@
 # The wire protocol is documented here:
 # https://github.com/josephg/ShareJS/wiki/Wire-Protocol
 
-createAgent = require './agent'
+createAgent = require './useragent'
 hat = require 'hat'
 
 # stream should expose the following interface:
@@ -255,6 +255,8 @@ module.exports = (instance, stream) ->
             send a:'q', id:qid, add:data, idx:idx
           emitter.on 'remove', (data, idx) ->
             send a:'q', id:qid, rm:data.docName, idx:idx
+          emitter.on 'error', (err) ->
+            send a:'q', id:qid, error:err
 
       when 'qunsub'
         query = queries[qid]
