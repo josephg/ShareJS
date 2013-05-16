@@ -27,7 +27,7 @@
 
 var types, Doc;
 if (typeof require !== 'undefined') {
-  types = require('ot-types');
+  types = require('ottypes');
   Doc = require('./doc').Doc;
   Query = require('./query').Query;
 } else {

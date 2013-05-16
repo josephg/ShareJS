@@ -1,7 +1,7 @@
 var types, MicroEvent;
 
 if (typeof require !== "undefined") {
-  types = require('ot-types');
+  types = require('ottypes');
   MicroEvent = require('./microevent');
 } else {
   types = window.ottypes;
