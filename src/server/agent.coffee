@@ -6,8 +6,7 @@ module.exports = (options, stream) ->
   # stream should be exposed to auth function
   # this should return synchronously because the client/server wrapper can do its own auth check anyway.
   
-  db = options.db
-  backend = livedb.client db
+  backend = options.backend
 
   agent =
     sessionId: hat()
