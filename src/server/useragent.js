@@ -61,7 +61,6 @@ UserAgent.prototype.trigger = function(action, collection, docName, extraFields,
 
 UserAgent.prototype.fetch = function(collection, docName, callback) {
   var agent = this;
-  var action = actionForDoc();
 
   agent.trigger('fetch', collection, docName, function(err, action) {
     if (err) return callback(err);
