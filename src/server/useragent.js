@@ -185,7 +185,7 @@ UserAgent.prototype._filterQueryResults = function(collection, results) {
 UserAgent.prototype.queryFetch = function(collection, query, callback) {
   var agent = this;
   // Should we emit 'query' or 'query fetch' here?
-  agent.trigger('query', collection, query, {fetch:true}, function(err, action) {
+  agent.trigger('query', collection, null, {query:query, fetch:true}, function(err, action) {
     if (err) return callback(err);
 
     collection = action.collection;
