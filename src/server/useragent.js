@@ -215,6 +215,8 @@ UserAgent.prototype.query = function(collection, query, options, callback) {
       var wrapped = new EventEmitter();
       wrapped.data = emitter.data;
 
+      wrapped.destroy = function() { emitter.destroy(); };
+
       emitter.on('add', function(data, idx) {
         var err = agent.filterDoc(collection, data.docName, data);
         if (err)
