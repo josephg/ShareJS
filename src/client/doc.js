@@ -362,9 +362,12 @@ Doc.prototype._setWantSubscribe = function(value, callback) {
   }
   
   if (!this.wantSubscribe !== !value) {
-    // Error out all the current unsubscribe callbacks
+    // Call all the current subscribe/unsubscribe callbacks.
     for (var i = 0; i < this._subscribeCallbacks.length; i++) {
-      this._subscribeCallbacks[i]('Cancelled by request');
+      // Should I return an error here? What happened is the user unsubcribed
+      // with a callback then resubscribed straight after. Does that mean the
+      // unsubscribe failed?
+      this._subscribeCallbacks[i]();
     }
     this._subscribeCallbacks.length = 0;
   }
