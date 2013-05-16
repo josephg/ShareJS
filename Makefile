@@ -31,7 +31,7 @@ test:
 	node_modules/.bin/mocha
 
 webclient/share.uncompressed.js: $(BUNDLED_TYPES) $(CLIENT_SRCS)
-	-mkdir webclient
+	mkdir -p webclient
 	echo '(function(){' > $@
 	cat $(filter %.js,$^) >> $@
 	$(foreach SRC, $(filter %.coffee,$^), coffee -bpc $(SRC) >> $@;)
@@ -40,12 +40,12 @@ webclient/share.uncompressed.js: $(BUNDLED_TYPES) $(CLIENT_SRCS)
 
 # Copy other types from ottypes.
 webclient/%.js: node_modules/ottypes/webclient/%.js
-	-mkdir webclient
+	mkdir -p webclient
 	cp $< $@
 
 # .. Or uglify the ones we already have.
 webclient/%.js: webclient/%.uncompressed.js
-	-mkdir webclient
+	mkdir -p webclient
 	$(UGLIFY) $< -c unsafe=true --lint -mo $@
 
 # Compile the types for a browser.
