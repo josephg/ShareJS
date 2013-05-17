@@ -334,7 +334,7 @@ Doc.prototype.flush = function() {
   } else if (!this.subscribed && this.wantSubscribe) {
     this.action = 'subscribe';
     this._send(this.state === 'ready' ? {a:'sub', v:this.version} : {a:'sub'});
-  } else if (this.pendingData.length && this.connection.state === 'connected') {
+  } else if (!this.paused && this.pendingData.length && this.connection.state === 'connected') {
     // Try and send any pending ops. We can't send ops while in 
     this.inflightData = this.pendingData.shift();
 
@@ -701,6 +701,15 @@ Doc.prototype.del = function(context, callback) {
 };
 
 
+// Pausing stops the document from sending any operations to the server.
+Doc.prototype.pause = function() {
+  this.paused = true;
+};
+
+Doc.prototype.resume = function() {
+  this.paused = false;
+  this.flush();
+};
 
 
 // *** Receiving operations
