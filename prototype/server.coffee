@@ -3,6 +3,7 @@
 browserChannel = require('browserchannel').server
 connect = require 'connect'
 argv = require('optimist').argv
+livedb = require 'livedb'
 
 webserver = connect(
   #  connect.logger()

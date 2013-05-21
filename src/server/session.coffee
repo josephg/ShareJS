@@ -131,6 +131,7 @@ module.exports = (instance, stream) ->
       if req.o
         autoFetch = req.o.f
         qopts.poll = req.o.p
+        qopts.backend = req.o.b
     else
       # Document based query.
       if req.doc is null

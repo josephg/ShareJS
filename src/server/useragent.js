@@ -204,7 +204,7 @@ UserAgent.prototype.query = function(collection, query, options, callback) {
     collection = action.collection;
     query = action.query;
 
-    console.log('query', query);
+    //console.log('query', query, options);
     agent.backend.query(collection, query, options, function(err, emitter) {
       if (!err && emitter) err = agent._filterQueryResults(collection, emitter.data);
       if (err) return callback(err);

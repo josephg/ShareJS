@@ -28,6 +28,11 @@ var Query = exports.Query = function(type, connection, id, collection, query, op
   // be enabled / disabled automatically based on the query's properties.
   this.poll = options.poll;
 
+  // The backend we actually hit. If this isn't defined, it hits the snapshot
+  // database. Otherwise this can be used to hit another configured query
+  // index.
+  this.source = options.source;
+
   // A list of resulting documents. These are actual documents, complete with
   // data and all the rest. If autoFetch is false, these documents will not
   // have any data. You should manually call fetch() or subscribe() on them.
@@ -52,7 +57,7 @@ Query.prototype._sendSubFetch = function() {
       a: 'q' + this.type,
       id: this.id,
       c: this.collection,
-      o: {f:this.autoFetch},
+      o: {f:this.autoFetch, b:this.source},
       q: this.query
     };
 
@@ -67,7 +72,7 @@ Query.prototype._dataToDocs = function(data) {
   var results = [];
   for (var i = 0; i < data.length; i++) {
     var docData = data[i];
-    results.push(this.connection.getOrCreate(this.collection, docData.docName, docData));
+    results.push(this.connection.getOrCreate(docData.c || this.collection, docData.docName, docData));
   }
   return results;
 };
@@ -111,7 +116,7 @@ Query.prototype._onMessage = function(msg) {
       if (msg.add) {
         // Just splice in one element to the list.
         var data = msg.add;
-        var doc = this.connection.getOrCreate(this.collection, data.docName, data);
+        var doc = this.connection.getOrCreate(msg.c || this.collection, data.docName, data);
         this.results.splice(msg.idx, 0, doc);
         this.emit('insert', doc, msg.idx);
 
