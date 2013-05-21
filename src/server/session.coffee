@@ -247,14 +247,19 @@ module.exports = (instance, stream) ->
               data.snapshot = data.data
             delete data.data
 
-          callback null, id:qid, data:emitter.data
+          callback null, id:qid, data:emitter.data, extra:emitter.extra
+
+          emitter.on 'extra', (extra) ->
+            send a:'q', id:qid, extra:extra
 
           emitter.on 'add', (data, idx) ->
             data.snapshot = data.data if autoFetch
             delete data.data
+            # Consider stripping the collection out of the data we send here.
             send a:'q', id:qid, add:data, idx:idx
           emitter.on 'remove', (data, idx) ->
             send a:'q', id:qid, rm:data.docName, idx:idx
+
           emitter.on 'error', (err) ->
             send a:'q', id:qid, error:err
 

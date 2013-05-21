@@ -173,7 +173,6 @@ UserAgent.prototype.submit = function(collection, docName, opData, callback) {
 /** Helper to filter query result sets */
 UserAgent.prototype._filterQueryResults = function(collection, results) {
   for(var i = 0; i < results.length; i++) {
-    console.log(results[i]);
     var err = this.filterDoc(collection, results[i].docName, results[i]);
 
     // If there's an error, throw away all the results. You can't have 'em!
@@ -213,6 +212,7 @@ UserAgent.prototype.query = function(collection, query, options, callback) {
       // Wrap the query result event emitter
       var wrapped = new EventEmitter();
       wrapped.data = emitter.data;
+      wrapped.extra = emitter.extra; // Can't filter this data. BE CAREFUL!
 
       wrapped.destroy = function() { emitter.destroy(); };
 
@@ -226,6 +226,9 @@ UserAgent.prototype.query = function(collection, query, options, callback) {
       emitter.on('remove', function(data, idx) {
         // Don't need to filter out the remove.
         wrapped.emit('remove', data, idx);
+      });
+      emitter.on('extra', function(extra) {
+        wrapped.emit('extra', extra);
       });
 
       callback(null, wrapped);

@@ -119,6 +119,9 @@ Query.prototype._onMessage = function(msg) {
         // Remove one.
         var removed = this.results.splice(msg.idx, 1);
         this.emit('remove', removed[0], msg.idx);
+      } else if (msg.extra) {
+        this.extra = msg.extra;
+        this.emit('extra', this.extra);
       }
       break;
     case 'qsub':
@@ -128,6 +131,7 @@ Query.prototype._onMessage = function(msg) {
 
         // Then add everything in the new result set.
         this.results = this._dataToDocs(msg.data);
+        this.extra = msg.extra;
 
         this.ready = true;
         this.emit('change', this.results, previous);
