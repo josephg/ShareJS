@@ -12,8 +12,21 @@ webserver = connect(
 )
 
 sharejs = require '../src'
-share = sharejs.server.createClient db:sharejs.db.mongo 'localhost:27017/test?auto_reconnect', safe:false
 
+backend = livedb.client sharejs.db.mongo('localhost:27017/test?auto_reconnect', safe:false), undefined, {}
+#share = sharejs.server.createClient db:
+share = sharejs.server.createClient {backend}
+
+
+###
+share.use 'validate', (req, callback) ->
+  err = 'noooo' if req.snapshot.data?.match /x/
+  callback err
+
+share.use 'connect', (req, callback) ->
+  console.log req.agent
+  callback()
+###
 
 opts = {webserver}
 webserver.use browserChannel opts, (client) ->
