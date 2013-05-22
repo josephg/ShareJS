@@ -1,7 +1,19 @@
 // Text document API for the 'text' type.
 
-var _types = (typeof window === 'undefined') ?
-  require('ot-types') : window.ottypes;
+// The API implements the standard text API methods. In particular:
+//
+// - getLength() returns the length of the document in characters
+// - getText() returns a string of the document
+// - insert(pos, text, [callback]) inserts text at position pos in the document
+// - remove(pos, length, [callback]) removes length characters at position pos
+//
+// Events are implemented by just adding the appropriate methods to your
+// context object.
+// onInsert(pos, text): Called when text is inserted.
+// onRemove(pos, length): Called when text is removed.
+
+var _types = (typeof require !== 'undefined') ?
+  require('ottypes') : window.ottypes;
 
 _types['http://sharejs.org/types/textv1'].api = {
   provides: {text: true},
