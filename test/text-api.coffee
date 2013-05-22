@@ -1,4 +1,6 @@
-# Tests for the text types using the DSL interface
+# Tests for the text types using the DSL interface. This includes the standard
+# text type as well as text-tp2 (and any other text types we add). Rich text
+# should probably support this API too.
 assert = require 'assert'
 {randomInt, randomReal, randomWord} = require 'ottypes/randomizer'
 
@@ -13,7 +15,7 @@ require '../src/types'
 textTypes = {}
 textTypes[type.name] = type for name, type of types when type.api?.provides.text
 
-genTests = (type) -> describe "#{type.name} text api", ->
+genTests = (type) -> describe "text api for '#{type.name}'", ->
   beforeEach ->
     # This is a little copy of the context structure created in client/doc.
     # It would probably be better to copy the code, but whatever.
@@ -24,6 +26,11 @@ genTests = (type) -> describe "#{type.name} text api", ->
         op = type.normalize op
         @_snapshot = type.apply @_snapshot, op
         callback?()
+
+    @apply = (op) ->
+      @ctx._beforeOp? op
+      @ctx.submitOp op
+      @ctx._onOp op
 
     @ctx[k] = v for k, v of type.api
 
@@ -46,12 +53,17 @@ genTests = (type) -> describe "#{type.name} text api", ->
     assert.strictEqual @ctx.getLength(), 3
 
   it 'gets edited correctly', ->
+    # This is slow with text-tp2 because the snapshot gets filled with crap and
+    # basically cloned with every operation in apply(). It could be fixed at
+    # some point by making the document snapshot mutable (and make apply() not
+    # clone the snapshot).
+    #
+    # If you do this, you'll also have to fix text-tp2.api._onOp. It currently
+    # relies on being able to iterate through the previous document snapshot to
+    # figure out what was inserted & removed.
     content = ''
 
     for i in [1..1000]
-      assert.strictEqual @ctx.getText(), content
-      assert.strictEqual @ctx.getLength(), content.length
-
       if content.length == 0 || randomReal() > 0.5
         # Insert
         pos = randomInt(content.length + 1)
@@ -61,11 +73,12 @@ genTests = (type) -> describe "#{type.name} text api", ->
       else
         # Delete
         pos = randomInt content.length
-        length = Math.min(randomInt(4), content.length - pos)
-        #console.log "pos = #{pos} len = #{length} content = '#{content}'"
-        @ctx.remove pos, length
-        content = content[...pos] + content[(pos + length)..]
-        #console.log "-> content = '#{content}'"
+        len = Math.min(randomInt(4), content.length - pos)
+        @ctx.remove pos, len
+        content = content[...pos] + content[(pos + len)..]
+
+      assert.strictEqual @ctx.getText(), content
+      assert.strictEqual @ctx.getLength(), content.length
 
   it 'emits events correctly', ->
     contents = ''
@@ -78,9 +91,7 @@ genTests = (type) -> describe "#{type.name} text api", ->
     for i in [1..1000]
       [op, newDoc] = type.generateRandomOp @ctx._snapshot
 
-      @ctx.submitOp op
-      @ctx._onOp op
-
+      @apply op
       assert.strictEqual @ctx.getText(), contents
 
 genTests(type) for name, type of textTypes

@@ -3,6 +3,7 @@
 
 // The types register themselves on their respective types.
 require('./text-api');
+require('./text-tp2-api');
 
 // The JSON API is buggy!! Please submit a pull request fixing it if you want to use it.
 //require('./json-api');

@@ -515,6 +515,14 @@ Doc.prototype._otApply = function(opData, context) {
     var type = this.type;
 
     var op = opData.op;
+    
+    // The context needs to be told we're about to edit, just in case it needs
+    // to store any extra data. (text-tp2 has this constraint.)
+    for (var i = 0; i < this.editingContexts.length; i++) {
+      var c = this.editingContexts[i];
+      if (c != context && c._beforeOp) c._beforeOp(opData.op);
+    }
+
     this.emit('before op', op, context);
 
     // This exists so clients can pull any necessary data out of the snapshot
@@ -547,16 +555,14 @@ Doc.prototype._afterOtApply = function(opData, context) {
   this.emit('unlock');
   if (opData.op) {
     var contexts = this.editingContexts;
-    if (contexts) {
-      // Notify all the contexts about the op (well, all the contexts except
-      // the one which initiated the submit in the first place).
-      for (var i = 0; i < contexts.length; i++) {
-        var c = contexts[i];
-        if (context != c && c._onOp) c._onOp(opData.op);
-      }
-      for (var i = 0; i < contexts.length; i++) {
-        if (contexts.remove) contexts.splice(i--, 1);
-      }
+    // Notify all the contexts about the op (well, all the contexts except
+    // the one which initiated the submit in the first place).
+    for (var i = 0; i < contexts.length; i++) {
+      var c = contexts[i];
+      if (c != context && c._onOp) c._onOp(opData.op);
+    }
+    for (var i = 0; i < contexts.length; i++) {
+      if (contexts.remove) contexts.splice(i--, 1);
     }
 
     return this.emit('after op', opData.op, context);
@@ -862,10 +868,8 @@ Doc.prototype.createContext = function() {
 };
 
 Doc.prototype.removeContexts = function() {
-  if (this.editingContexts) {
-    for (var i = 0; i < this.editingContexts.length; i++) {
-      this.editingContexts[i].destroy();
-    }
+  for (var i = 0; i < this.editingContexts.length; i++) {
+    this.editingContexts[i].destroy();
   }
   this.editingContexts.length = 0;
 };
