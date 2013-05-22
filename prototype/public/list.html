@@ -176,7 +176,8 @@ var select = function(doc) {
 
 //q = sjs.query('users', {'data.x':5}, true, function(err, data) { console.log(err, data); });
 //query = sjs.createSubscribeQuery('users', {$query:{"data.x":5}}, {autoFetch:true});
-query = sjs.createSubscribeQuery('rooms', {$query:{}}, {autoFetch:true});
+query = sjs.createSubscribeQuery('users', {$query:{}}, {autoFetch:true});
+//query = sjs.createSubscribeQuery('users', {$query:{}}, {autoFetch:true, source:'clock'});
 
 var selected;
 var onAdd;
