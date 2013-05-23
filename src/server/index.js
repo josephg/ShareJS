@@ -1,5 +1,7 @@
 var session = require('./session');
+var useragent = require('./useragent');
 var livedb = require('livedb');
+
 
 /** This encapsulates the sharejs server state & exposes a few useful methods.
  *
@@ -51,6 +53,9 @@ ShareInstance.prototype.filterOps = function(fn) {
   this.opFilters.push(fn);
 };
 
+ShareInstance.prototype.createAgent = function(stream) {
+  return useragent(this, stream);
+};
 
 // Helper method to actually trigger the extension methods
 ShareInstance.prototype._trigger = function(request, callback) {

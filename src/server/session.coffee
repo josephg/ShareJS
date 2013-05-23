@@ -20,9 +20,6 @@
 # The wire protocol is documented here:
 # https://github.com/josephg/ShareJS/wiki/Wire-Protocol
 
-createAgent = require './useragent'
-hat = require 'hat'
-
 # stream should expose the following interface:
 #   headers
 #   address
@@ -278,7 +275,7 @@ module.exports = (instance, stream) ->
         callback 'invalid or unknown message'
 
 
-  agent = createAgent instance, stream
+  agent = instance.createAgent stream
   stream.write a:'init', protocol:0, id:agent.sessionId
 
   do pump = ->
