@@ -20,15 +20,7 @@
 # The wire protocol is documented here:
 # https://github.com/josephg/ShareJS/wiki/Wire-Protocol
 
-# stream should expose the following interface:
-#   headers
-#   address
-#   #abort()
-#   #stop()
-#   ready()
-#   send(msg)
-#   removeListener()
-#   on(event, handler) - where event can be 'message' or 'closed'
+# stream is a nodejs 0.10 stream object.
 module.exports = (instance, stream) ->
   close = (err) ->
     # Close the stream for writing
