@@ -196,14 +196,14 @@ Doc.prototype._onMessage = function(msg) {
         if (console) console.error("Could not subscribe: " + msg.error);
         this.emit('error', msg.error);
         // There's probably a reason we couldn't subscribe. Don't retry.
-        this.wantSubscribe = false;
+        this._setWantSubscribe(false, null, msg.error)
       } else {
         if (msg.data) this.injestData(msg.data);
         this.subscribed = true;
-        this.emit('subscribe', msg.error);
+        this.emit('subscribe');
+        this._finishSub(true);
       }
 
-      this._finishSub(true, msg.error);
       this._clearAction('subscribe');
       break;
 
@@ -354,10 +354,10 @@ Doc.prototype.flush = function() {
 // changes here.
 
 // Value is true, false or 'fetch'.
-Doc.prototype._setWantSubscribe = function(value, callback) {
+Doc.prototype._setWantSubscribe = function(value, callback, err) {
   if (this.subscribed === this.wantSubscribe &&
       (this.subscribed === value || value === 'fetch' && this.subscribed)) {
-    if (callback) callback();
+    if (callback) callback(err);
     return;
   }
   
@@ -367,7 +367,7 @@ Doc.prototype._setWantSubscribe = function(value, callback) {
       // Should I return an error here? What happened is the user unsubcribed
       // with a callback then resubscribed straight after. Does that mean the
       // unsubscribe failed?
-      this._subscribeCallbacks[i]();
+      this._subscribeCallbacks[i](err);
     }
     this._subscribeCallbacks.length = 0;
   }
@@ -399,6 +399,7 @@ Doc.prototype.fetch = function(callback) {
 
 // Called when our subscribe, fetch or unsubscribe messages are acknowledged.
 Doc.prototype._finishSub = function(value, error) {
+  console.log('xxx', error, value, this.wantSubscribe);
   if (value === this.wantSubscribe) {
     for (var i = 0; i < this._subscribeCallbacks.length; i++) {
       this._subscribeCallbacks[i](error);
