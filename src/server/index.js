@@ -16,7 +16,7 @@ var ShareInstance = function(options) {
   if (options.backend) {
     this.backend = options.backend;
   } else {
-    this.backend = livedb.client(options.db);
+    this.backend = livedb.client(options.db, options.redis);
   }
 
   // Map from event name (or '') to a list of middleware.
