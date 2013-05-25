@@ -14,7 +14,7 @@ webserver = connect(
 
 sharejs = require '../src'
 
-backend = livedb.client livedbMongo.mongo('localhost:27017/test?auto_reconnect', safe:false), undefined, {}
+backend = livedb.client livedbMongo('localhost:27017/test?auto_reconnect', safe:false), undefined, {}
 #share = sharejs.server.createClient db:
 share = sharejs.server.createClient {backend}
 

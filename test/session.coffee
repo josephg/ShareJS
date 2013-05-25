@@ -105,6 +105,11 @@ describe 'session', ->
 
           done()
 
+    describe 'null document', ->
+      it.skip 'lets you create', (done) ->
+        doc = @connection.getOrCreate 'users', 'seph'
+        doc.submitOp
+
 
 
 

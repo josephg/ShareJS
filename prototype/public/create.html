@@ -1,0 +1,47 @@
+<style>
+  #pad {
+    width: 100%;
+    height: 100%;
+    font-size: 20px;
+    font-family: monaco;
+    background: -webkit-canvas(cursors);
+    background-repeat: no-repeat;
+  }
+</style>
+<textarea id='pad' autofocus>Connecting...</textarea>
+<script src="channel/bcsocket.js"></script>
+<script src="text.js"></script>
+<script src="share.uncompressed.js"></script>
+<script>
+
+var elem = document.getElementById('pad');
+
+var s = new BCSocket(null, {reconnect: true});
+
+var sjs = new window.sharejs.Connection(s);
+
+var doc = sjs.getOrCreate('users', 'blah ' + Math.random());
+//var doc = sjs.getOrCreate('users', 'seph');
+doc.create('text', function(e) { if (e) console.error('x', e); });
+doc.createContext().insert('hi there');
+console.log(doc);
+
+/*
+setTimeout(function() {
+  var q = sjs.createSubscribeQuery('users', {"data.x":5}, {autoFetch:true});
+  setTimeout(function() {
+    q.destroy();
+  }, 0);
+
+
+}, 1000);
+*/
+
+/*
+doc.subscribe();
+
+doc.whenReady(function () {
+  doc.attachTextarea(elem);
+});*/
+
+</script>
