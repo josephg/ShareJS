@@ -20,7 +20,7 @@
   },
   "devDependencies": {
     "coffee-script": "<=1.6",
-    "express": "~ 3.x",
+    "connect": "~2",
     "optimist": ">= 0.2.4",
     "browserchannel": "*",
     "mocha": "*",
