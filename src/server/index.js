@@ -1,3 +1,6 @@
+// TODO: Remove once all code is in JavaScript
+require('coffee-script');
+
 var session = require('./session');
 var useragent = require('./useragent');
 var livedb = require('livedb');
@@ -13,7 +16,7 @@ var ShareInstance = function(options) {
   if (options.backend) {
     this.backend = options.backend;
   } else {
-    this.backend = livedb.client(options.db);
+    this.backend = livedb.client(options.db, options.redis);
   }
 
   // Map from event name (or '') to a list of middleware.
