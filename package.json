@@ -1,6 +1,6 @@
 {
   "name": "share",
-  "version": "0.7.0",
+  "version": "0.7.0alpha",
   "description": "A database for concurrent document editing",
   "keywords": [
     "operational transformation",
@@ -13,13 +13,12 @@
   "homepage": "",
   "author": "Joseph Gentle <josephg@gmail.com>",
   "dependencies": {
-    "livedb": "git://github.com/share/livedb.git",
-    "ottypes": "git://github.com/share/ottypes.git",
-    "coffee-script": "<=1.6",
+    "livedb": "~0.1",
+    "ottypes": "~0.6",
     "hat": "*"
   },
   "devDependencies": {
-    "shelljs": "*",
+    "coffee-script": "<=1.6",
     "express": "~ 3.x",
     "optimist": ">= 0.2.4",
     "browserchannel": "*",
