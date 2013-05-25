@@ -399,7 +399,6 @@ Doc.prototype.fetch = function(callback) {
 
 // Called when our subscribe, fetch or unsubscribe messages are acknowledged.
 Doc.prototype._finishSub = function(value, error) {
-  console.log('xxx', error, value, this.wantSubscribe);
   if (value === this.wantSubscribe) {
     for (var i = 0; i < this._subscribeCallbacks.length; i++) {
       this._subscribeCallbacks[i](error);
