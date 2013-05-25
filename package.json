@@ -14,6 +14,7 @@
   "author": "Joseph Gentle <josephg@gmail.com>",
   "dependencies": {
     "livedb": "~0.1",
+    "livedb-mongo": "~0.1",
     "ottypes": "~0.6",
     "hat": "*"
   },
