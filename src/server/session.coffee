@@ -115,7 +115,7 @@ module.exports = (instance, stream) ->
     if req.a in ['qfetch', 'qsub', 'qunsub']
       # Query based query.
       qid = req.id
-      collection = req.c
+      index = req.c
       qopts = {}
       if req.o
         autoFetch = req.o.f
@@ -213,7 +213,7 @@ module.exports = (instance, stream) ->
             callback null, {a:'ack'}
 
       when 'qfetch'
-        agent.queryFetch collection, req.q, (err, results) ->
+        agent.queryFetch index, req.q, (err, results) ->
           return callback err if err
 
           for r in results
@@ -224,7 +224,7 @@ module.exports = (instance, stream) ->
           callback null, id:qid, data:results
         
       when 'qsub'
-        agent.query collection, req.q, qopts, (err, emitter) ->
+        agent.query index, req.q, qopts, (err, emitter) ->
           return callback err if err
           return callback 'ID in use' if queries[qid]
 
@@ -242,13 +242,15 @@ module.exports = (instance, stream) ->
           emitter.on 'extra', (extra) ->
             send a:'q', id:qid, extra:extra
 
-          emitter.on 'add', (data, idx) ->
-            data.snapshot = data.data if autoFetch
-            delete data.data
-            # Consider stripping the collection out of the data we send here.
-            send a:'q', id:qid, add:data, idx:idx
-          emitter.on 'remove', (data, idx) ->
-            send a:'q', id:qid, rm:data.docName, idx:idx
+          emitter.on 'diff', (diff) ->
+            for d in diff
+              if d.type is 'insert'
+                # Consider stripping the collection out of the data we send
+                # here if it matches the query index.
+                for data in d.values
+                  data.snapshot = data.data if autoFetch
+                  delete data.data
+            send a:'q', id:qid, diff:diff
 
           emitter.on 'error', (err) ->
             send a:'q', id:qid, error:err

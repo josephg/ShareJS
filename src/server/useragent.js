@@ -171,9 +171,10 @@ UserAgent.prototype.submit = function(collection, docName, opData, callback) {
 };
 
 /** Helper to filter query result sets */
-UserAgent.prototype._filterQueryResults = function(collection, results) {
+UserAgent.prototype._filterQueryResults = function(results) {
   for(var i = 0; i < results.length; i++) {
-    var err = this.filterDoc(collection, results[i].docName, results[i]);
+    var data = results[i];
+    var err = this.filterDoc(data.c, data.docName, data);
 
     // If there's an error, throw away all the results. You can't have 'em!
     if (err) return err;
@@ -190,7 +191,7 @@ UserAgent.prototype.queryFetch = function(collection, query, callback) {
     query = action.query;
 
     agent.backend.queryFetch(collection, query, function(err, results) {
-      if (!err && results) err = agent._filterQueryResults(collection, results);
+      if (!err && results) err = agent._filterQueryResults(results);
       callback(err, err ? err : results);
     });
   });
@@ -206,7 +207,7 @@ UserAgent.prototype.query = function(collection, query, options, callback) {
 
     //console.log('query', query, options);
     agent.backend.query(collection, query, options, function(err, emitter) {
-      if (!err && emitter) err = agent._filterQueryResults(collection, emitter.data);
+      if (!err && emitter) err = agent._filterQueryResults(emitter.data);
       if (err) return callback(err);
 
       // Wrap the query result event emitter
@@ -216,16 +217,14 @@ UserAgent.prototype.query = function(collection, query, options, callback) {
 
       wrapped.destroy = function() { emitter.destroy(); };
 
-      emitter.on('add', function(data, idx) {
-        var err = agent.filterDoc(collection, data.docName, data);
-        if (err)
-          wrapped.emit('error', err);
-        else 
-          wrapped.emit('add', data, idx);
-      });
-      emitter.on('remove', function(data, idx) {
-        // Don't need to filter out the remove.
-        wrapped.emit('remove', data, idx);
+      emitter.on('diff', function(diff) {
+        for (var i = 0; i < diff.length; i++) {
+          if (diff[i].type === 'insert') {
+            agent._filterQueryResults(diff[i].values);
+          }
+        }
+
+        wrapped.emit('diff', diff);
       });
       emitter.on('extra', function(extra) {
         wrapped.emit('extra', extra);

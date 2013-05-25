@@ -113,20 +113,27 @@ Query.prototype._onMessage = function(msg) {
 
     case 'q':
       // Query diff data (inserts and removes)
-      if (msg.add) {
-        // Just splice in one element to the list.
-        var data = msg.add;
-        var doc = this.connection.getOrCreate(msg.c || this.collection, data.docName, data);
-        this.results.splice(msg.idx, 0, doc);
-        this.emit('insert', doc, msg.idx);
-
-      } else if (msg.rm) {
-        // Remove one.
-        var removed = this.results.splice(msg.idx, 1);
-        this.emit('remove', removed[0], msg.idx);
-      } else if (msg.extra) {
-        this.extra = msg.extra;
-        this.emit('extra', this.extra);
+      if (msg.diff) {
+        for (var i = 0; i < msg.diff.length; i++) {
+          var d = msg.diff[i];
+          switch (d.type) {
+            case 'insert':
+              var newDocs = this._dataToDocs(d.values);
+              this.results.splice(d.index, 0, newDocs);
+              this.emit('insert', newDocs, d.index);
+              break;
+            case 'remove':
+              var howMany = d.howMany || 1;
+              var removed = this.results.splice(d.index, howMany);
+              this.emit('remove', removed, d.index);
+              break;
+            case 'move':
+              var docs = this.results.splice(d.from, howMany);
+              this.results.splice(d.to, 0, docs);
+              this.emit('move', docs, d.from, d.to);
+              break;
+          }
+        }
       }
       break;
     case 'qsub':

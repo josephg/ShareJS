@@ -177,50 +177,63 @@ var select = function(doc) {
 //q = sjs.query('users', {'data.x':5}, true, function(err, data) { console.log(err, data); });
 //query = sjs.createSubscribeQuery('users', {$query:{"data.x":5}}, {autoFetch:true});
 query = sjs.createSubscribeQuery('users', {$query:{}}, {autoFetch:true});
+
+//query = sjs.createSubscribeQuery('players', {"$orderby":{"data.score":-1},"$limit":5}, {autoFetch:true});
 //query = sjs.createSubscribeQuery('users', {$query:{}}, {autoFetch:true, source:'clock'});
 
 var selected;
 var onAdd;
-query.on('insert', onAdd = function(doc, idx) {
-  console.log('add', doc);
+query.on('insert', onAdd = function(docs, idx) {
+  console.log('add', docs, idx);
 
-  if (!doc.elem) {
-    var item = document.createElement('div');
-    item.className = 'item';
-    item.textContent = doc.name + " (" + doc.type.name + ")";
-    item.onclick = function(e) {
-      if (selected) {
-        selected.className = 'item';
+  for (var i = 0; i < docs.length; i++) {
+    (function() {
+      var doc = docs[i];
+      if (!doc.elem) {
+        var item = document.createElement('div');
+        item.className = 'item';
+        item.textContent = doc.name + " (" + doc.type.name + ")";
+        item.onclick = function(e) {
+          if (selected) {
+            selected.className = 'item';
+          }
+          selected = item;
+          item.className = 'item selected';
+
+          select(doc);
+        };
+        item.onmousedown = function() { return false; };
+
+        doc.elem = item;
       }
-      selected = item;
-      item.className = 'item selected';
 
-      select(doc);
-    };
-    item.onmousedown = function() { return false; };
-
-
-    doc.elem = item;
-  }
-
-  listElem.insertBefore(doc.elem, listElem.children[idx]);
+      listElem.insertBefore(doc.elem, listElem.children[idx]);
+    })();
 //  listElem.appendChild(doc.elem);
+  }
 });
 
-query.on('remove', function(doc) {
-  console.log('removed', doc);
+query.on('remove', function(docs, idx) {
+  for (var i = 0; i < docs.length; i++) {
+    var doc = docs[i];
+    console.log('removed', doc);
+    listElem.removeChild(doc.elem);
+  }
+});
 
-  listElem.removeChild(doc.elem);
+query.on('move', function(docs, from, to) {
+  for (var i = 0; i < docs.length; i++) {
+    var doc = docs[i];
+    listElem.removeChild(doc.elem);
+    listElem.insertBefore(doc.elem, listElem.children[to + i]);
+  }
 });
 
 query.on('change', function() {
-  console.log('sub1');
   while(listElem.firstChild) {
     listElem.removeChild(listElem.firstChild);
   }
-  for (var i = 0; i < query.results.length; i++) {
-    onAdd(query.results[i], i);
-  }
+  onAdd(query.results, 0);
 });
 
 //query.subscribe();
