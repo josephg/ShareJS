@@ -1,6 +1,3 @@
-// TODO: Remove once all code is in JavaScript
-require('coffee-script');
-
 var session = require('./session');
 var useragent = require('./useragent');
 var livedb = require('livedb');
