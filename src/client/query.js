@@ -129,7 +129,7 @@ Query.prototype._onMessage = function(msg) {
               break;
             case 'move':
               var docs = this.results.splice(d.from, howMany);
-`             Array.prototype.splice.apply(this.results, [d.to, 0].concat(docs));
+              Array.prototype.splice.apply(this.results, [d.to, 0].concat(docs));
               this.emit('move', docs, d.from, d.to);
               break;
           }
