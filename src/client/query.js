@@ -119,7 +119,7 @@ Query.prototype._onMessage = function(msg) {
           switch (d.type) {
             case 'insert':
               var newDocs = this._dataToDocs(d.values);
-              this.results.splice(d.index, 0, newDocs);
+              Array.prototype.splice.apply(this.results, [d.index, 0].concat(newDocs));
               this.emit('insert', newDocs, d.index);
               break;
             case 'remove':
