@@ -219,7 +219,7 @@ module.exports = (instance, stream) ->
             callback null, {a:'ack'}
 
       when 'qfetch'
-        agent.queryFetch index, req.q, (err, results) ->
+        agent.queryFetch index, req.q, (err, results, extra) ->
           return callback err if err
 
           for r in results
@@ -227,7 +227,7 @@ module.exports = (instance, stream) ->
               r.snapshot = r.data
             delete r.data
 
-          callback null, id:qid, data:results
+          callback null, id:qid, data:results, extra:extra
         
       when 'qsub'
         agent.query index, req.q, qopts, (err, emitter) ->
