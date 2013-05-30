@@ -4,7 +4,7 @@ exports.client = require('./client');
 // Type wrappers
 exports.types = require('./types');
 
-exports.version = '0.7.0alpha';
+exports.version = '0.7.0alpha2';
 
 // Expose db.mongo, db.etc - whatever else is in livedb.
 exports.db = require('livedb');
