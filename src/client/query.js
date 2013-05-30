@@ -135,6 +135,10 @@ Query.prototype._onMessage = function(msg) {
           }
         }
       }
+
+      if (msg.extra) {
+        this.emit('extra', msg.extra);
+      }
       break;
     case 'qsub':
       // This message replaces the entire result set with the set passed.
