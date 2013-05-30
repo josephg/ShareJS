@@ -66,12 +66,13 @@ var Connection = exports.Connection = function (socket) {
   // Reset some more state variables.
   this.reset();
 
+  this.debug = false;
 
   var _this = this;
 
   // Attach event handlers to the socket.
   socket.onmessage = function(msg) {
-    //console.log('RECV', _this.id, JSON.stringify(msg));
+    if (this.debug) console.log('RECV', JSON.stringify(msg));
 
     // Switch on the message action. Most messages are for documents and are
     // handled in the doc class.
@@ -208,7 +209,7 @@ Connection.prototype.sendOp = function(data) {
 
 // Send a message to the connection.
 Connection.prototype.send = function(data) {
-  //console.log("SEND", this.id, JSON.stringify(data));
+  if (this.debug) console.log("SEND", JSON.stringify(data));
 
   if (data.doc) { // Not set for queries.
     var docName = data.doc;
