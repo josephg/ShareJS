@@ -44,6 +44,10 @@ module.exports = (instance, stream) ->
   lastReceivedCollection = null
   lastReceivedDoc = null
 
+  # Subscriptions care about the stream being destroyed. We end up with a
+  # listener per subscribed document for the client, which can be a lot.
+  stream.setMaxListeners 0
+
   seq = 1
 
   # We need to track which documents are subscribed by the client. This is a map of
