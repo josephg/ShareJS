@@ -5,8 +5,8 @@ assert = require 'assert'
 {Duplex, Readable} = require 'stream'
 ottypes = require 'ottypes'
 
-createSession = require '../src/server/session'
-{Connection} = require '../src/client'
+createSession = require '../lib/server/session'
+{Connection} = require '../lib/client'
 
 describe 'session', ->
   beforeEach ->

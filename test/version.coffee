@@ -1,5 +1,5 @@
 assert = require 'assert'
-node = require '../src'
+node = require '../lib'
 # Not testing the web stuff for now.
 #web = require './helpers/webclient'
 

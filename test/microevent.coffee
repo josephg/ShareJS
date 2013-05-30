@@ -2,7 +2,7 @@
 
 assert = require 'assert'
 
-MicroEvent = require '../src/client/microevent'
+MicroEvent = require '../lib/client/microevent'
 makePassPart = require('./helpers').makePassPart
 
 tests = ->

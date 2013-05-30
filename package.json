@@ -27,7 +27,7 @@
     "uglify-js": "~2"
   },
   "engine": "node >= 0.10",
-  "main": "src/index.js",
+  "main": "lib/index.js",
   "bin": {
     "sharejs": "bin/sharejs",
     "sharejs-exampleserver": "bin/exampleserver"

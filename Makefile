@@ -15,16 +15,16 @@ CLIENT = \
 
 BUNDLED_TYPES = \
 	webclient/text.js \
-	src/types/text-api.js \
-	webclient/json0.js \
-	src/types/json-api.coffee
+	lib/types/text-api.js \
+	webclient/json0.js
 
-CLIENT_SRCS = $(addprefix src/client/, $(CLIENT))
+# Disabled: lib/types/json-api.coffee
+
+CLIENT_SRCS = $(addprefix lib/client/, $(CLIENT))
 
 all: webclient
 
 clean:
-	rm -rf lib
 	rm -rf webclient/*
 
 test:
@@ -34,7 +34,6 @@ webclient/share.uncompressed.js: $(BUNDLED_TYPES) $(CLIENT_SRCS)
 	mkdir -p webclient
 	echo '(function(){' > $@
 	cat $(filter %.js,$^) >> $@
-	$(foreach SRC, $(filter %.coffee,$^), coffee -bpc $(SRC) >> $@;)
 	echo '})();' >> $@
 
 
