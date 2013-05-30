@@ -432,12 +432,12 @@ Session.prototype._handleMessage = function(req, callback) {
 
           // Consider stripping the collection out of the data we send here
           // if it matches the query's index.
-          send({a:'q', id:qid, diff:diff});
+          session._send({a:'q', id:qid, diff:diff});
         });
 
         emitter.on('error', function(err) {
           // Should we destroy the emitter here?
-          send({a:'q', id:qid, error:err});
+          session._send({a:'q', id:qid, error:err});
           delete session.queries[qid];
         });
       });
