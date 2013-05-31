@@ -1,6 +1,6 @@
 {
   "name": "share",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "description": "A database for concurrent document editing",
   "keywords": [
     "operational transformation",
@@ -16,7 +16,7 @@
     "sockjs": ">= 0.3.1",
     "socket.io": "~0.8",
     "socket.io-client": "~0.8",
-    "browserchannel": "*",
+    "browserchannel": "~1",
     "ws": "*",
     "connect": "<3.x",
     "request": ">= 2.1.1",

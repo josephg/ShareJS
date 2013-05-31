@@ -26,7 +26,7 @@ module.exports =
     sockjs: ">= 0.3.1"
     "socket.io": "~0.8"
     "socket.io-client": "~0.8"
-    browserchannel: "*"
+    browserchannel: "~1"
     ws: "*"
 
     # Server works with v1 or v2
