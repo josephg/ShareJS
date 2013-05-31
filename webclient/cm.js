@@ -3,7 +3,7 @@
   var applyToShareJS;
 
   applyToShareJS = function(editorDoc, delta, doc) {
-    var delLen, i, startPos;
+    var delLen, i, rm, startPos, _i, _len, _ref;
 
     startPos = 0;
     i = 0;
@@ -15,11 +15,13 @@
     if (delta.to.line === delta.from.line && delta.to.ch === delta.from.ch) {
       doc.insert(startPos, delta.text.join('\n'));
     } else {
-      delLen = delta.to.ch - delta.from.ch;
-      while (i < delta.to.line) {
-        delLen += editorDoc.lineInfo(i).text.length + 1;
-        i++;
+      delLen = 0;
+      _ref = delta.removed;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        rm = _ref[_i];
+        delLen += rm.length;
       }
+      delLen += delta.removed.length - 1;
       doc.del(startPos, delLen);
       if (delta.text) {
         doc.insert(startPos, delta.text.join('\n'));
@@ -34,14 +36,14 @@
     var check, editorListener, sharedoc, suppress;
 
     if (!this.provides.text) {
-      throw new Error('Only text documents can be attached to CodeMirror2');
+      throw new Error('Only text documents can be attached to CodeMirror 2 or 3');
     }
     sharedoc = this;
     check = function() {
       return window.setTimeout(function() {
         var editorText, otText;
 
-        editorText = editor.getValue();
+        editorText = editor.getValue('\n');
         otText = sharedoc.getText();
         if (editorText !== otText) {
           console.error("Text does not match!");
@@ -52,7 +54,7 @@
       }, 0);
     };
     if (keepEditorContents) {
-      this.del(0, sharedoc.getText().length);
+      this.del(0, sharedoc.getText('\n').length);
       this.insert(0, editor.getValue());
     } else {
       editor.setValue(sharedoc.getText());
