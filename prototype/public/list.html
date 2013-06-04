@@ -142,7 +142,7 @@ var select = function(doc) {
 
   if (editorElem) {
     contentArea.removeChild(editorElem);
-    ctx.destroy();
+    if (ctx) ctx.destroy();
 
     ctx = editorElem = null;
   }
@@ -153,18 +153,26 @@ var select = function(doc) {
       ctx = doc.attachTextarea(textEditor);
       editorElem = textEditor;
       textEditor.focus();
-    } else if (doc.provides.json) {
-      ctx = doc.createContext();
+    } else if (doc.type && doc.type.name === 'json0') {
+      //ctx = doc.createContext();
       editorElem = jsonEditor;
+      ctx = null;
 
       var editor = new jsoneditor.JSONEditor(editorElem, {change:function() {
           console.log('change', JSON.stringify(editor.get()));
-          ctx.set(editor.get());
-      }}, ctx.getSnapshot());
+          doc.submitOp([{p:[], od:doc.snapshot, oi:editor.get()}], true);
+      }}, doc.snapshot);
+      editor.expandAll();
 
-      ctx._onOp = function() {
-        editor.set(ctx.getSnapshot());
-      };
+      doc.on('op', function(op, local) {
+        if (!local) {
+          editor.set(doc.snapshot);
+          editor.expandAll();
+        }
+      });
+      //ctx._onOp = function() {
+      //  editor.set(ctx.getSnapshot());
+      //};
 
 
     } else {
@@ -176,7 +184,7 @@ var select = function(doc) {
 
 //q = sjs.query('users', {'data.x':5}, true, function(err, data) { console.log(err, data); });
 //query = sjs.createSubscribeQuery('users', {$query:{"data.x":5}}, {autoFetch:true});
-query = sjs.createSubscribeQuery('users', {$query:{}}, {autoFetch:true});
+query = sjs.createSubscribeQuery('stories', {$query:{}}, {autoFetch:true});
 
 //query = sjs.createSubscribeQuery('players', {"$orderby":{"data.score":-1},"$limit":5}, {autoFetch:true});
 //query = sjs.createSubscribeQuery('users', {$query:{}}, {autoFetch:true, source:'clock'});
