@@ -20,6 +20,7 @@ describe.skip 'subscribe unsubscribe and fetch', ->
 
     it 'calls all callbacks when fetch is called multiple times', ->
 
+  it 'hydrates the document if you call getOrCreate() with no data followed by getOrCreate() with data'
 
 describe.skip 'ops', ->
   it 'creates a document', ->
