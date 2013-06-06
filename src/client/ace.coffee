@@ -1,7 +1,6 @@
 # This is some utility code to connect an ace editor to a sharejs document.
-
-requireImpl = if ace.require? then ace.require else require
-Range = requireImpl("ace/range").Range
+errorCallback = null
+Range = ace.require("ace/range").Range
 
 # Convert an ace delta into an op understood by share.js
 applyToShareJS = (editorDoc, delta, doc) ->
@@ -22,19 +21,20 @@ applyToShareJS = (editorDoc, delta, doc) ->
 
     # Add the row number to include newlines.
     offset + range.start.row
-
   pos = getStartOffsetPosition(delta.range)
+  callback = (error) ->
+    error and errorCallback and errorCallback(error)
   switch delta.action
-    when 'insertText' then doc.insert pos, delta.text
-    when 'removeText' then doc.del pos, delta.text.length
+    when 'insertText' then doc.insert pos, delta.text, callback
+    when 'removeText' then doc.del pos, delta.text.length, callback
     
     when 'insertLines'
       text = delta.lines.join('\n') + '\n'
-      doc.insert pos, text
+      doc.insert pos, text, callback
       
     when 'removeLines'
       text = delta.lines.join('\n') + '\n'
-      doc.del pos, text.length
+      doc.del pos, text.length, callback
 
     else throw new Error "unknown action: #{delta.action}"
   
@@ -43,12 +43,12 @@ applyToShareJS = (editorDoc, delta, doc) ->
 # Attach an ace editor to the document. The editor's contents are replaced
 # with the document's contents unless keepEditorContents is true. (In which case the document's
 # contents are nuked and replaced with the editor's).
-window.sharejs.extendDoc 'attach_ace', (editor, keepEditorContents) ->
+window.sharejs.extendDoc 'attach_ace', (editor, keepEditorContents, errCallback) ->
   throw new Error 'Only text documents can be attached to ace' unless @provides['text']
-
+  errorCallback = errCallback	
   doc = this
   editorDoc = editor.getSession().getDocument()
-  editorDoc.setNewLineMode 'unix'
+  editorDoc.setNewLineMode 'auto'
 
   check = ->
     window.setTimeout ->
@@ -158,4 +158,3 @@ window.sharejs.extendDoc 'attach_ace', (editor, keepEditorContents) ->
     delete doc.detach_ace
 
   return
-
