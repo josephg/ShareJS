@@ -30,7 +30,7 @@ class Doc
     # Any of these can be null / undefined at this stage.
     openData ||= {}
     @version = openData.v
-    @snapshot = openData.snaphot
+    @snapshot = openData.snapshot
     @_setType openData.type if openData.type
 
     @state = 'closed'
