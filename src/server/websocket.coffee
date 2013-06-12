@@ -11,7 +11,13 @@ wrapSession = (conn) ->
   wrapper.send = (response) ->
     conn.send JSON.stringify response if wrapper.ready()
   wrapper.ready = -> conn.readyState is 1
-  conn.on 'message', (data) -> wrapper.emit 'message', JSON.parse data
+  conn.on 'message', (data) ->
+    try
+      parsed = JSON.parse data
+      wrapper.emit 'message', parsed
+    catch error
+      console.log "Received data parsing error #{error}"
+
   wrapper.headers = conn.upgradeReq.headers
   # TODO - I don't think this is the right way to get the address
   wrapper.address = conn._socket.server._connectionKey?
