@@ -147,3 +147,24 @@ module.exports = (options) ->
             , {rev: body._rev} # dbMeta
 
   close: ->
+
+  # checks if there are all required views already registered in the system
+  open: ->
+    expectedMapFnc = "function(doc) {\n  if (doc.docName!=null){\n\t  emit(null, doc.docName);\n  }\n}"
+    request "#{db}/_design/sharejs", (err, resp, body) ->
+        currentmap = body?.views?.operations?.map;
+
+        if currentmap isnt expectedMapFnc or body?language isnt "javascript"
+          operView =
+            _id:"_design/sharejs"
+            language: "javascript"
+            views:
+              operations:
+                  map: expectedMapFnc
+          operView._rev = body._rev  if body._rev?  # to avoid conflict we need to set the current doc version if available
+
+          request.put "#{db}/_design/sharejs", body:operView, (err, resp, body) ->
+            if body?.ok is true
+              console.log "Updated views successfuly."
+            else
+              console.log "Problem updating requested view occured. Please check your view settings."
