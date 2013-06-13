@@ -36,6 +36,8 @@ create.attach = attach = (server, options, model = createModel(options)) ->
   options.staticpath ?= '/share'
 
   server.model = model
+  model.openDb()
+
   server.on 'close', -> model.closeDb()
 
   server.use options.staticpath, connect.static("#{__dirname}/../../webclient") if options.staticpath != null

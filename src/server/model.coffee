@@ -607,6 +607,11 @@ module.exports = Model = (db, options) ->
     db?.close?()
     db = null
 
+  # Run all necessary preparatory operations. Indexes, views etc.
+  @openDb = ->
+    db?.open?()
+
+
   return
 
 # Model inherits from EventEmitter.
