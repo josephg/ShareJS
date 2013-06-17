@@ -5,3 +5,4 @@ test/*.js
 test/**/*.js
 node_modules
 .idea
+sharejs-codio
