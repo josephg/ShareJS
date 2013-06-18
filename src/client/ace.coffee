@@ -66,7 +66,6 @@ window.sharejs.extendDoc 'attach_ace', (editor, keepEditorContents, errCallback)
     doc.del 0, doc.getText().length
     doc.insert 0, editorDoc.getValue()
   else
-    console.log '____||____', editor
     editor.getSession().setValue doc.getText()
 
   check()
