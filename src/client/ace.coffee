@@ -10,7 +10,7 @@ applyToShareJS = (editorDoc, delta, doc) ->
     # lines array in the document. It would be nice if we could just
     # access them directly.
     lines = editorDoc.getLines 0, range.start.row
-      
+
     offset = 0
 
     for line, i in lines
@@ -27,17 +27,17 @@ applyToShareJS = (editorDoc, delta, doc) ->
   switch delta.action
     when 'insertText' then doc.insert pos, delta.text, callback
     when 'removeText' then doc.del pos, delta.text.length, callback
-    
+
     when 'insertLines'
       text = delta.lines.join('\n') + '\n'
       doc.insert pos, text, callback
-      
+
     when 'removeLines'
       text = delta.lines.join('\n') + '\n'
       doc.del pos, text.length, callback
 
     else throw new Error "unknown action: #{delta.action}"
-  
+
   return
 
 # Attach an ace editor to the document. The editor's contents are replaced
@@ -45,7 +45,7 @@ applyToShareJS = (editorDoc, delta, doc) ->
 # contents are nuked and replaced with the editor's).
 window.sharejs.extendDoc 'attach_ace', (editor, keepEditorContents, errCallback) ->
   throw new Error 'Only text documents can be attached to ace' unless @provides['text']
-  errorCallback = errCallback	
+  errorCallback = errCallback
   doc = this
   editorDoc = editor.getSession().getDocument()
   editorDoc.setNewLineMode 'auto'
@@ -66,14 +66,14 @@ window.sharejs.extendDoc 'attach_ace', (editor, keepEditorContents, errCallback)
     doc.del 0, doc.getText().length
     doc.insert 0, editorDoc.getValue()
   else
-    editorDoc.setValue doc.getText()
+    editor.getSession().setValue doc.getText()
 
   check()
 
   # When we apply ops from sharejs, ace emits edit events. We need to ignore those
   # to prevent an infinite typing loop.
   suppress = false
-  
+
   # Listen for edits in ace
   editorListener = (change) ->
     return if suppress
@@ -100,7 +100,7 @@ window.sharejs.extendDoc 'attach_ace', (editor, keepEditorContents, errCallback)
 
       return {
         tokens : doc.mergeTokens(docTokens, modeTokens.tokens)
-        state : 
+        state :
           modeState : modeTokens.state
           iter : doc.cloneIterator(cIter)
       }
