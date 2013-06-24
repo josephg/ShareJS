@@ -64,17 +64,19 @@ window.sharejs.extendDoc 'attach_ace', (editor, keepEditorContents, errCallback)
           # Should probably also replace the editor text with the doc snapshot.
       , 0
 
+  docText = (doc.getText() + '')
+
   if keepEditorContents
-    doc.del 0, doc.getText().length
+    doc.del 0, docText.length
     doc.insert 0, editorDoc.getValue()
   else
 
     # replace windows text to unix style
-    otText = (doc.getText() + '').replace(/\r\n/g, '\n')
-    doc.del 0, doc.getText().length
-    doc.insert 0, otText
+    replacedText = docText.replace(/\r\n/g, '\n')
+    doc.del 0, docText.length
+    doc.insert 0, replacedText
 
-    editor.getSession().setValue doc.getText()
+    editor.getSession().setValue replacedText
 
   check()
 
