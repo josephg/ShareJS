@@ -54,8 +54,8 @@ window.sharejs.extendDoc 'attach_ace', (editor, keepEditorContents, errCallback)
     window.setTimeout ->
 
         # replace windows text to unix style
-        editorText = (editorDoc.getValue() + '').replaceAll('\r\n', '\n')
-        otText = (doc.getText() + '').replaceAll('\r\n', '\n')
+        editorText = (editorDoc.getValue() + '').replace(/\r\n/g, '\n')
+        otText = (doc.getText() + '').replace(/\r\n/g, '\n')
 
         if editorText != otText
           console.error "Text does not match!"
@@ -70,7 +70,7 @@ window.sharejs.extendDoc 'attach_ace', (editor, keepEditorContents, errCallback)
   else
 
     # replace windows text to unix style
-    otText = (doc.getText() + '').replaceAll('\r\n', '\n')
+    otText = (doc.getText() + '').replace(/\r\n/g, '\n')
     doc.del 0, doc.getText().length
     doc.insert 0, otText
 
