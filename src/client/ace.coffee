@@ -48,12 +48,14 @@ window.sharejs.extendDoc 'attach_ace', (editor, keepEditorContents, errCallback)
   errorCallback = errCallback
   doc = this
   editorDoc = editor.getSession().getDocument()
-  editorDoc.setNewLineMode 'auto'
+  editorDoc.setNewLineMode 'unix'
 
   check = ->
     window.setTimeout ->
-        editorText = editorDoc.getValue()
-        otText = doc.getText()
+
+        # replace windows text to unix style
+        editorText = (editorDoc.getValue() + '').replace(/\r\n/g, '\n')
+        otText = (doc.getText() + '').replace(/\r\n/g, '\n')
 
         if editorText != otText
           console.error "Text does not match!"
@@ -62,11 +64,19 @@ window.sharejs.extendDoc 'attach_ace', (editor, keepEditorContents, errCallback)
           # Should probably also replace the editor text with the doc snapshot.
       , 0
 
+  docText = (doc.getText() + '')
+
   if keepEditorContents
-    doc.del 0, doc.getText().length
+    doc.del 0, docText.length
     doc.insert 0, editorDoc.getValue()
   else
-    editor.getSession().setValue doc.getText()
+
+    # replace windows text to unix style
+    replacedText = docText.replace(/\r\n/g, '\n')
+    doc.del 0, docText.length
+    doc.insert 0, replacedText
+
+    editor.getSession().setValue replacedText
 
   check()
 
