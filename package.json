@@ -16,6 +16,7 @@
     "livedb": "~0.1",
     "livedb-mongo": "~0.1",
     "ottypes": "~0.6",
+    "semver": "~2",
     "hat": "*"
   },
   "devDependencies": {
