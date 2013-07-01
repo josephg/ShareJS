@@ -74,7 +74,8 @@ window.sharejs.extendDoc 'attach_ace', (editor, keepEditorContents, errCallback)
     # replace windows text to unix style
     replacedText = docText.replace(/\r\n/g, '\n')
     doc.del 0, docText.length
-    doc.insert 0, replacedText
+    doc.insert 0, replacedText, ->
+      editor.moveCursorTo 0, 0
 
     editor.getSession().setValue replacedText
 
