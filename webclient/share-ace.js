@@ -4,7 +4,7 @@
 
   errorCallback = null;
 
-  Range = ace.require("ace/range").Range;
+  Range = require("ace/range").Range;
 
   applyToShareJS = function(editorDoc, delta, doc) {
     var callback, getStartOffsetPosition, pos, text;
@@ -43,14 +43,14 @@
   };
 
   window.sharejs.extendDoc('attach_ace', function(editor, keepEditorContents, errCallback) {
-    var check, deleteListener, doc, docListener, editorDoc, editorListener, insertListener, offsetToPos, refreshListener, replaceTokenizer, suppress;
+    var check, deleteListener, doc, docListener, docText, editorDoc, editorListener, insertListener, offsetToPos, refreshListener, replaceTokenizer, suppress;
     if (!this.provides['text']) {
       throw new Error('Only text documents can be attached to ace');
     }
     errorCallback = errCallback;
     doc = this;
     editorDoc = editor.getSession().getDocument();
-    editorDoc.setNewLineMode('auto');
+    editorDoc.setNewLineMode('unix');
     check = function() {
       return window.setTimeout(function() {
         var editorText, otText;
@@ -63,11 +63,12 @@
         }
       }, 0);
     };
+    docText = doc.getText() + '';
     if (keepEditorContents) {
-      doc.del(0, doc.getText().length);
+      doc.del(0, docText.length);
       doc.insert(0, editorDoc.getValue());
     } else {
-      editor.getSession().setValue(doc.getText());
+      editor.getSession().setValue(docText);
     }
     check();
     suppress = false;
