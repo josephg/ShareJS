@@ -115,8 +115,7 @@ describe 'session', ->
     describe 'query', ->
       beforeEach ->
 
-
-      it.only 'issues a query to the backend', (done) ->
+      it 'issues a query to the backend', (done) ->
         @userAgent.query = (index, query, opts, callback) ->
           assert.strictEqual index, 'index'
           assert.deepEqual query, {a:5, b:6}
@@ -140,7 +139,86 @@ describe 'session', ->
       describe 'queryfetch', ->
         it 'does not subscribe to the query result set'
 
-      it 'fetches query results if autoFetch option is passed'
+      it 'does not fetch query results when docMode is null', (done) ->
+        @userAgent.queryFetch = (index, query, opts, callback) ->
+          callback null, [{data:{x:10}, type:ottypes.text.uri, v:100, docName:'docname', c:'collection'}], 'oh hi'
+
+        @connection.createFetchQuery 'index', {a:5, b:6}, {}, (err, results, extra) ->
+          assert.ifError err
+          assert.strictEqual results.length, 1
+          assert.equal results[0].state, null
+          assert.equal results[0].version, null
+          assert.equal results[0].snapshot, null
+          done()
+
+      it 'fetches query results if docMode is fetch', (done) ->
+        @userAgent.queryFetch = (index, query, opts, callback) ->
+          callback null, [{data:{x:10}, type:ottypes.text.uri, v:100, docName:'docname', c:'collection'}], 'oh hi'
+
+        @connection.createFetchQuery 'index', {a:5, b:6}, {docMode:'fetch'}, (err, results, extra) ->
+          assert.ifError err
+          assert.strictEqual results.length, 1
+          assert.deepEqual results[0].snapshot, {x:10}
+          done()
+
+      it 'subscribes to documents if docMode is subscribe', (done) ->
+        @userAgent.queryFetch = (index, query, opts, callback) ->
+          callback null, [{data:'internet', type:ottypes.text.uri, v:100, docName:'docname', c:'collection'}], 'oh hi'
+
+        @userAgent.subscribe = (collection, doc, version, callback) =>
+          assert.strictEqual collection, 'collection'
+          assert.strictEqual doc, 'docname'
+          assert.strictEqual version, 100
+          @opStream = new Readable objectMode:yes
+          @opStream._read = ->
+          callback null, @opStream
+
+        @connection.createFetchQuery 'index', {a:5, b:6}, {docMode:'sub'}, (err, results, extra) =>
+          assert.ifError err
+          assert.strictEqual results.length, 1
+          doc = results[0]
+          assert.deepEqual doc.snapshot, 'internet'
+          assert.strictEqual doc.subscribed, true
+          assert.strictEqual doc.wantSubscribe, true # Probably shouldn't depend on this actually.
+
+          doc.on 'op', (op) ->
+            assert.equal doc.snapshot, 'internet are go!'
+            done()
+
+          # The document should get operations sent to the opstream.
+          @opStream.push {v:100, op:[8, ' are go!']}
+
+      it 'does not resend document snapshots when you reconnect' # ?? how do we test this at this level of abstraction?
+
+      it 'fetches operations if the client already has a document snapshot at an old version', (done) ->
+        @userAgent.fetch = (collection, doc, callback) ->
+          assert.strictEqual collection, 'collection'
+          assert.strictEqual doc, 'docname'
+          callback null, {v:98, type:ottypes.text.uri, data:'old data'}
+
+        doc = @connection.getOrCreate 'collection', 'docname'
+
+        doc.fetch (err) =>
+          @userAgent.getOps = (collection, doc, from, to, callback) ->
+            assert.strictEqual collection, 'collection'
+            assert.strictEqual doc, 'docname'
+            assert.equal from, 98
+            assert to is -1 or to is 100
+            callback null, [{v:98, op:[]},{v:99, op:[]}] # ops from 95 to 100
+
+          @userAgent.queryFetch = (index, query, opts, callback) ->
+            callback null, [{data:'internet', type:ottypes.text.uri, v:100, docName:'docname', c:'collection'}]
+
+          @connection.createFetchQuery 'index', {a:5, b:6}, {docMode:'fetch', results:[doc]}, (err, results, extra) =>
+            assert.ifError err
+
+          doc.on 'op', (op) ->
+            assert doc.version <= 100
+            done() if doc.version is 100
+       
+
+
+
       it 'does not fetch results which are subscribed by the client'
       it 'subscribes to documents if autosubscribe is true'
       it 'does not double subscribe to documents or anything wierd'
