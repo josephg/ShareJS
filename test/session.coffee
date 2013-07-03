@@ -3,6 +3,7 @@
 
 assert = require 'assert'
 {Duplex, Readable} = require 'stream'
+{EventEmitter} = require 'events'
 ottypes = require 'ottypes'
 
 createSession = require '../lib/server/session'
@@ -110,6 +111,40 @@ describe 'session', ->
       it.skip 'lets you create', (done) ->
         doc = @connection.getOrCreate 'users', 'seph'
         doc.submitOp
+
+    describe 'query', ->
+      beforeEach ->
+
+
+      it.only 'issues a query to the backend', (done) ->
+        @userAgent.query = (index, query, opts, callback) ->
+          assert.strictEqual index, 'index'
+          assert.deepEqual query, {a:5, b:6}
+          assert.deepEqual opts, {docMode:'fetch', poll:true, backend:'abc123', versions:{}}
+          emitter = new EventEmitter()
+          emitter.data = [{data:{x:10}, type:ottypes.text.uri, v:100, docName:'docname', c:'collection'}]
+          emitter.extra = 'oh hi'
+          callback null, emitter
+
+        @connection.createSubscribeQuery 'index', {a:5, b:6}, {docMode:'fetch', poll:true, source:'abc123'}, (err, results, extra) ->
+          assert.ifError err
+          # Results should contain the single document that the query returned.
+          assert.strictEqual results.length, 1
+          assert.strictEqual results[0].name, 'docname'
+          assert.strictEqual results[0].collection, 'collection'
+          assert.deepEqual results[0].snapshot, {x:10}
+          assert.strictEqual extra, 'oh hi'
+          done()
+
+
+      describe 'queryfetch', ->
+        it 'does not subscribe to the query result set'
+
+      it 'fetches query results if autoFetch option is passed'
+      it 'does not fetch results which are subscribed by the client'
+      it 'subscribes to documents if autosubscribe is true'
+      it 'does not double subscribe to documents or anything wierd'
+      it 'passes the right error message back if subscribe fails'
 
 
 
