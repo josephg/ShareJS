@@ -225,6 +225,9 @@ describe 'session', ->
       it 'passes the right error message back if subscribe fails'
 
 
+      it 'correctly handles concurrent subscribes & queries with subscribe set'
+      it 'handles diffs properly when in subscribe mode'
+      it 'sets all new documents to be subscribed before calling any callbacks in query diff handler'
 
 
 
