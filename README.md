@@ -1,6 +1,24 @@
 ShareJS
 =======
 
+---
+
+# You are looking at the 0.7 alpha branch of ShareJS.
+
+> *Welcome.* So you know, this code might spontaniously catch fire. Both the
+> API and the code are unstable and **will to change and crash on you**. Test
+> coverage has dropped from 90% in ShareJS 0.6 to around 30% and documentation
+> of the new APIs is almost nonexistant.
+> 
+> The documentation below is also full of lies. If you want to play with the
+> new version of ShareJS anyway, look at the examples in prototype/.
+> 
+> I understand that if you're using racer & derby, you will use this code
+> anyway despite my warnings. **YOU WILL RUN INTO BUGS.**
+
+---
+
+
 This is a little server (& client library) to allow concurrent editing of any kind of content. The server runs on NodeJS and the client works in NodeJS or a web browser.
 
 ShareJS currently supports operational transform on plain-text and arbitrary JSON data.
@@ -12,7 +30,7 @@ ShareJS currently supports operational transform on plain-text and arbitrary JSO
 **Check out the [live interactive demos](http://sharejs.org/).**
 
 > Note: CI sometimes breaks for random reasons even though the tests work locally. Don't stress!
-[![Build Status](https://secure.travis-ci.org/josephg/ShareJS.png)](http://travis-ci.org/josephg/ShareJS)
+[![Build Status](https://secure.travis-ci.org/share/ShareJS.png)](http://travis-ci.org/share/ShareJS)
 
 
 Browser support
