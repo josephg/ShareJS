@@ -229,5 +229,8 @@ describe 'session', ->
       it 'handles diffs properly when in subscribe mode'
       it 'sets all new documents to be subscribed before calling any callbacks in query diff handler'
 
+      # regression
+      it 'does not pass known documents to the change event handler'
+
 
 
