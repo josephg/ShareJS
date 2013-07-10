@@ -191,25 +191,25 @@ describe 'session', ->
       it 'does not resend document snapshots when you reconnect' # ?? how do we test this at this level of abstraction?
 
       it 'fetches operations if the client already has a document snapshot at an old version', (done) ->
-        @userAgent.fetch = (collection, doc, callback) ->
+        @userAgent.fetch = (collection, docName, callback) ->
           assert.strictEqual collection, 'collection'
-          assert.strictEqual doc, 'docname'
+          assert.strictEqual docName, 'docname'
           callback null, {v:98, type:ottypes.text.uri, data:'old data'}
 
         doc = @connection.getOrCreate 'collection', 'docname'
 
         doc.fetch (err) =>
-          @userAgent.getOps = (collection, doc, from, to, callback) ->
+          @userAgent.getOps = (collection, docName, from, to, callback) ->
             assert.strictEqual collection, 'collection'
-            assert.strictEqual doc, 'docname'
+            assert.strictEqual docName, 'docname'
             assert.equal from, 98
             assert to is -1 or to is 100
-            callback null, [{v:98, op:[]},{v:99, op:[]}] # ops from 95 to 100
+            callback null, [{v:98, op:[]},{v:99, op:[]}] # ops from 98 to 100
 
           @userAgent.queryFetch = (index, query, opts, callback) ->
             callback null, [{data:'internet', type:ottypes.text.uri, v:100, docName:'docname', c:'collection'}]
 
-          @connection.createFetchQuery 'index', {a:5, b:6}, {docMode:'fetch', results:[doc]}, (err, results, extra) =>
+          @connection.createFetchQuery 'index', {a:5, b:6}, {docMode:'fetch', knownDocs:[doc]}, (err, results, extra) =>
             assert.ifError err
 
           doc.on 'op', (op) ->
