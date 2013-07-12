@@ -233,4 +233,7 @@ describe 'session', ->
       it 'does not pass known documents to the change event handler'
 
 
+      # regression
+      it 'emits an error on the connection or document if an exception is thrown in an event handler'
+
 
