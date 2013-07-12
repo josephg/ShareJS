@@ -13,7 +13,6 @@ console.log(doc);
 doc.subscribe();
 
 doc.whenReady(function () {
-  console.log('fooo');
   console.log(doc);
   if (!doc.type) doc.create('json0');
   if (doc.type && doc.type.name === 'json0'){
@@ -31,6 +30,7 @@ function clientExample(doc){
     'https://github.com/share/ShareJS/wiki/JSON-Client-API');
 
   console.log('json client',doc);
+
   // Create some JSON object
   var myObject = { todo: [] };
 
@@ -66,17 +66,12 @@ function clientExample(doc){
 
   // Create event when something is inserted into the doc
   todo.on('insert', function (pos, item) {
-    // ...
+    console.log('inserted',pos,item);
   });
 
   todo.on('child op', function (path, op) {
     var item_idx = path[0]
     console.log("Item "+item_idx+" now reads "+todo.get()[item_idx])
-    if (op.si != undefined) {
-      // ...
-    } else if (op.sd != undefined) {
-      // ...
-    }
   })
 
   });
@@ -84,4 +79,4 @@ function clientExample(doc){
 
 </script>
 
-<p>JSON Client API example (check it out in the console)</p>
+<p>JSON Client API example (check it out in source, and on the wiki)</p>
