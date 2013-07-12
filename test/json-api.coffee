@@ -15,6 +15,7 @@ Doc = (data) ->
     @emit "change", op
     cb?()
 
+
   for k of json_api
     this[k] = json_api[k]
 
@@ -22,7 +23,16 @@ Doc = (data) ->
 
 MicroEvent.mixin Doc
 
+apply = (doc,op) ->
+    doc._beforeOp? op
+    doc.submitOp op
+    doc._onOp op
 
+waitBriefly = (done) ->
+  setTimeout ( ->
+      assert.ok true
+      done()
+    ), 10
 
 describe "JSON Client API", ->
   it "sanity check", ->
@@ -131,10 +141,10 @@ describe "JSON Client API", ->
       assert.equal pos, 0
       done()
 
-    doc.emit "remoteop", [
+    apply doc, [
       p: ["list", 0]
       li: 4
-    ], doc.get()
+    ]
 
   it "object replace listener", (done) ->
     doc = undefined
@@ -145,7 +155,7 @@ describe "JSON Client API", ->
       assert.equal pos, "foo"
       done()
 
-    doc.emit "remoteop", [
+    apply doc, [
       p: ["foo"]
       od: "bar"
       oi: "baz"
@@ -160,7 +170,7 @@ describe "JSON Client API", ->
       assert.equal pos, 0
       done()
 
-    doc.emit "remoteop", [
+    apply doc, [
       p: [0]
       ld: "bar"
       li: "baz"
@@ -175,7 +185,8 @@ describe "JSON Client API", ->
       done()
 
     doc.at().insert 0, "asdf"
-    doc.emit "remoteop", [
+
+    apply doc, [
       p: [1, 0]
       si: "foo"
     ]
@@ -189,7 +200,7 @@ describe "JSON Client API", ->
       done()
 
     doc.at(0).remove()
-    doc.emit "remoteop", [
+    apply doc, [
       p: [0, 0]
       si: "foo"
     ]
@@ -203,7 +214,7 @@ describe "JSON Client API", ->
       done()
 
     doc.at().move 0, 1
-    doc.emit "remoteop", [
+    apply doc, [
       p: [0, 0]
       si: "foo"
     ]
@@ -216,10 +227,12 @@ describe "JSON Client API", ->
       done()
 
     doc.at(0).set 3
-    doc.emit "remoteop", [
+    apply doc, [
       p: [0]
       na: 1
     ]
+    waitBriefly(done)
+    
 
   it "listener drops on od", (done) ->
     doc = undefined
@@ -229,10 +242,11 @@ describe "JSON Client API", ->
       done()
 
     doc.at("foo").set "baz"
-    doc.emit "remoteop", [
+    apply doc, [
       p: ["foo", 0]
       si: "asdf"
     ]
+    waitBriefly(done)
 
   it "child op one level", (done) ->
     doc = undefined
@@ -242,7 +256,7 @@ describe "JSON Client API", ->
       assert.equal op.si, "baz"
       done()
 
-    doc.emit "remoteop", [
+    apply doc, [
       p: ["foo", 0]
       si: "baz"
     ]
@@ -255,7 +269,7 @@ describe "JSON Client API", ->
       assert.deepEqual op.si, "baz"
       done()
 
-    doc.emit "remoteop", [
+    apply doc, [
       p: ["foo", 0, 3]
       si: "baz"
     ]
@@ -268,7 +282,7 @@ describe "JSON Client API", ->
       assert.deepEqual op.si, "baz"
       done()
 
-    doc.emit "remoteop", [
+    apply doc, [
       p: ["foo", 0, 3]
       si: "baz"
     ]
@@ -284,7 +298,7 @@ describe "JSON Client API", ->
     doc.at("components").on "child op", (p, op) ->
       done()
 
-    doc.emit "remoteop", [
+    apply doc, [
       p: ["name", 4]
       si: "X"
     ]
@@ -297,4 +311,5 @@ describe "JSON Client API", ->
       done()
 
     doc.at("baz").set "hi"
+    waitBriefly(done)
 
