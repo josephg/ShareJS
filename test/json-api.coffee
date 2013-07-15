@@ -343,3 +343,21 @@ describe "JSON Client API", ->
     cxt.at("baz").set "hi"
     waitBriefly(done)
 
+
+  it "continues to work after list move operation", (done) ->
+    doc = new Doc([
+      {top:{foo:'bar'}},
+      {bottom:'other'}
+    ]);
+    cxt = doc.createContext()
+    sub = cxt.at [0,'top']
+
+    assert.deepEqual(sub.get(),{foo:'bar'})
+
+    cxt.at().move 0, 1, ->
+      assert.deepEqual sub.get(),{foo:'bar'}
+      done()
+
+
+
+
