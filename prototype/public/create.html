@@ -20,8 +20,8 @@ var s = new BCSocket(null, {reconnect: true});
 
 var sjs = new window.sharejs.Connection(s);
 
-var doc = sjs.getOrCreate('users', 'blah ' + Math.random());
-//var doc = sjs.getOrCreate('users', 'seph');
+var doc = sjs.get('users', 'blah ' + Math.random());
+//var doc = sjs.get('users', 'seph');
 doc.create('text', function(e) { if (e) console.error('x', e); });
 doc.createContext().insert('hi there');
 console.log(doc);
