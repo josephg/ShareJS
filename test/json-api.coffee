@@ -1,6 +1,6 @@
 assert = require("assert")
 types = require("ottypes")
-json_api = require("../lib/types/json-api")
+require("../lib/types/json-api")
 json = types.json0
 MicroEvent = require("../lib/client/microevent")
 

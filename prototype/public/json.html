@@ -32,47 +32,50 @@ function clientExample(doc){
   console.log('json client',doc);
 
   // Create some JSON object
-  var myObject = { todo: [] };
+  var myObject = [{ todo: [] },{completed: []}];
 
   // Set the structure of the document to the JSON object
   doc.set( myObject, function(){
 
+    // Get the document's JSON object
+    docObject = doc.get(); // => {'todo':[]}
+    console.log('snapshot',docObject);
 
-  // Get the document's JSON object
-  docObject = doc.get(); // => {'todo':[]}
-  console.log('snapshot',docObject);
+    // Get the "todo" subdoc
+    todo = doc.at([0,'todo']);
+    console.log('todo',todo);
 
-  // Get the "todo" subdoc
-  todo = doc.at(['todo']);
-  console.log('todo',todo);
+    // print out the "todo" subdoc
+    console.log( todo.get() ); // => []
+    
+    // Create event when something is inserted into the doc
+    todo.on('insert', function (pos, item) {
+      console.log('inserted',pos,item);
+    });
 
-  // print out the "todo" subdoc
-  console.log( todo.get() ); // => []
+    todo.on('child op', function (path, op) {
+      var item_idx = path[0]
+      console.log("Item "+item_idx+" now reads "+todo.get()[item_idx])
+    });
 
-  // Push a value to the "todo" subdoc
-  todo.push('take out the garbage');
+    // Push a value to the "todo" subdoc
+    todo.push('take out the garbage');
 
-  // Print out the "todo" subdoc again
-  console.log( todo.get() ); // => ['take out the garbage']
+    // Print out the "todo" subdoc again
+    console.log( todo.get() ); // => ['take out the garbage']
 
-  // Set the "todo" subdoc to a completely different value
-  todo.set('some string value');
+    // subdoc's work even when their path changes
+    doc.at().move(0,1,function(){
+      // Set the "todo" subdoc to a completely different value
+      todo.set('some string value');
 
-  // Print out the "todo" subdoc again
-  console.log( todo.get() ); // => 'some string value'
+      // Print out the "todo" subdoc again
+      console.log( todo.get() ); // => 'some string value'
 
-  // Get the document JSON object again
-  doc.get(); // => {'todo':'some string value'}
+      // Get the document JSON object again
+      console.log(doc.get()); // => [{completed: []},{todo:'some string value'}]
+    })
 
-  // Create event when something is inserted into the doc
-  todo.on('insert', function (pos, item) {
-    console.log('inserted',pos,item);
-  });
-
-  todo.on('child op', function (path, op) {
-    var item_idx = path[0]
-    console.log("Item "+item_idx+" now reads "+todo.get()[item_idx])
-  })
 
   });
 }
