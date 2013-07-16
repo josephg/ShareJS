@@ -358,6 +358,14 @@ describe "JSON Client API", ->
       assert.deepEqual sub.get(),{foo:'bar'}
       done()
 
-
+  it "removes itself from the context on destroy", (done) ->
+    doc = new Doc({foo:'bar'});
+    cxt = doc.createContext()
+    sub = cxt.at 'foo'
+    
+    assert.equal(cxt._subdocs.length,1)
+    sub.destroy();
+    assert.equal(cxt._subdocs.length,0)
+    done()
 
 
