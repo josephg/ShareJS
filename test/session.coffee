@@ -71,7 +71,7 @@ describe 'session', ->
       beforeEach ->
 
       it 'subscribes to a document', (done) ->
-        doc = @connection.getOrCreate 'users', 'seph'
+        doc = @connection.get 'users', 'seph'
         assert.strictEqual doc.collection, 'users'
         assert.strictEqual doc.name, 'seph'
         assert.strictEqual doc.subscribed, false
@@ -94,7 +94,7 @@ describe 'session', ->
       it 'passes subscribe errors back to the client', (done) ->
         @subscribeError = 'You require more vespine gas'
 
-        doc = @connection.getOrCreate 'users', 'seph'
+        doc = @connection.get 'users', 'seph'
         doc.subscribe (err) =>
           assert.equal err, @subscribeError
 
@@ -109,7 +109,7 @@ describe 'session', ->
 
     describe 'null document', ->
       it.skip 'lets you create', (done) ->
-        doc = @connection.getOrCreate 'users', 'seph'
+        doc = @connection.get 'users', 'seph'
         doc.submitOp
 
     describe 'query', ->
@@ -196,7 +196,7 @@ describe 'session', ->
           assert.strictEqual docName, 'docname'
           callback null, {v:98, type:ottypes.text.uri, data:'old data'}
 
-        doc = @connection.getOrCreate 'collection', 'docname'
+        doc = @connection.get 'collection', 'docname'
 
         doc.fetch (err) =>
           @userAgent.getOps = (collection, docName, from, to, callback) ->
