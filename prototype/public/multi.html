@@ -25,7 +25,7 @@ var s = new BCSocket(null, {reconnect: true});
 
 var sjs = new window.sharejs.Connection(s);
 
-var doc = sjs.getOrCreate('users', 'seph');
+var doc = sjs.get('users', 'seph');
 console.log(doc);
 doc.subscribe();
 
