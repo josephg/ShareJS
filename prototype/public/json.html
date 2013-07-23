@@ -16,35 +16,34 @@ doc.whenReady(function () {
   console.log(doc);
   if (!doc.type) doc.create('json0');
   if (doc.type && doc.type.name === 'json0'){
-    context = doc.createContext();
-    subDoc = context.at([]);
-    clientExample(subDoc);
+    var context = doc.createContext();
+    clientExample(context);
   }
 });
 
 
-function clientExample(doc){
+function clientExample(context){
 
   console.log(
     'JSON Client API',
     'https://github.com/share/ShareJS/wiki/JSON-Client-API');
 
-  console.log('json client',doc);
+  console.log('json client',context);
 
   // Create some JSON object
   var myObject = [{ todo: [] },{completed: []}];
 
   // Set the structure of the document to the JSON object
-  doc.set( myObject, function(){
+  context.set( myObject, function(){
 
     // Get the document's JSON object
-    docObject = doc.get(); // => {'todo':[]}
+    docObject = context.get(); // => {'todo':[]}
     console.log('snapshot',docObject);
 
     // Get the "todo" subdoc
-    todo = doc.at([0,'todo']);
+    todo = context.createContextAt([0,'todo']);
     console.log('todo',todo);
-
+return;
     // print out the "todo" subdoc
     console.log( todo.get() ); // => []
     
@@ -65,7 +64,7 @@ function clientExample(doc){
     console.log( todo.get() ); // => ['take out the garbage']
 
     // subdoc's work even when their path changes
-    doc.at().move(0,1,function(){
+    context.at().move(0,1,function(){
       // Set the "todo" subdoc to a completely different value
       todo.set('some string value');
 

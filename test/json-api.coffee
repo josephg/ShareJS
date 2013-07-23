@@ -73,28 +73,28 @@ describe "JSON Client API", ->
     assert.equal cxt.get(), "hi"
     doc = new Doc(hello: "world")
     cxt = doc.createContext()
-    assert.equal cxt.getAt(["hello"]), "world"
+    assert.equal cxt.get(["hello"]), "world"
 
-  it "getAt", ->
+  it "get", ->
     doc = new Doc(hi: [1, 2, 3])
     cxt = doc.createContext()
-    assert.equal cxt.getAt(["hi", 2]), 3
+    assert.equal cxt.get(["hi", 2]), 3
 
   it "sub-cxt get", ->
     doc = new Doc(hi: [1, 2, 3])
     cxt = doc.createContext()
-    hi = cxt.at("hi")
+    hi = cxt.createContextAt("hi")
     assert.deepEqual hi.get(), [1, 2, 3]
-    assert.equal hi.at(2).get(), 3
+    assert.equal hi.createContextAt(2).get(), 3
 
   it "object set", ->
     doc = new Doc
     cxt = doc.createContext()
-    cxt.at().set hello: "world"
+    cxt.createContextAt().set hello: "world"
     assert.deepEqual cxt.get(),
       hello: "world"
 
-    cxt.at("hello").set "blah"
+    cxt.createContextAt("hello").set "blah"
     assert.deepEqual cxt.get(),
       hello: "blah"
 
@@ -102,14 +102,14 @@ describe "JSON Client API", ->
   it "list set", ->
     doc = new Doc([1, 2, 3])
     cxt = doc.createContext()
-    cxt.at(1).set 5
+    cxt.createContextAt(1).set 5
     assert.deepEqual cxt.get(), [1, 5, 3]
 
   it "remove", ->
     doc = new Doc(hi: [1, 2, 3])
     cxt = doc.createContext()
-    hi = cxt.at("hi")
-    hi.at(0).remove()
+    hi = cxt.createContextAt("hi")
+    hi.createContextAt(0).remove()
     assert.deepEqual cxt.get(),
       hi: [2, 3]
 
@@ -119,7 +119,7 @@ describe "JSON Client API", ->
   it "insert text", ->
     doc = new Doc(text: "Hello there!")
     cxt = doc.createContext()
-    cxt.at("text").insert 11, ", ShareJS"
+    cxt.createContextAt("text").insert 11, ", ShareJS"
     assert.deepEqual cxt.get(),
       text: "Hello there, ShareJS!"
 
@@ -127,7 +127,7 @@ describe "JSON Client API", ->
   it "delete text", ->
     doc = new Doc(text: "Sup, share?")
     cxt = doc.createContext()
-    cxt.at("text").del 3, 7
+    cxt.createContextAt("text").deleteText 3, 7
     assert.deepEqual cxt.get(),
       text: "Sup?"
 
@@ -135,7 +135,7 @@ describe "JSON Client API", ->
   it "list insert", ->
     doc = new Doc(nums: [1, 2])
     cxt = doc.createContext()
-    cxt.at("nums").insert 0, 4
+    cxt.createContextAt("nums").insert 0, 4
     assert.deepEqual cxt.get(),
       nums: [4, 1, 2]
 
@@ -143,7 +143,7 @@ describe "JSON Client API", ->
   it "list push", ->
     doc = new Doc(nums: [1, 2])
     cxt = doc.createContext()
-    cxt.at("nums").push 3
+    cxt.createContextAt("nums").push 3
     assert.deepEqual cxt.get(),
       nums: [1, 2, 3]
 
@@ -151,7 +151,7 @@ describe "JSON Client API", ->
   it "list move", ->
     doc = new Doc(list: [1, 2, 3, 4])
     cxt = doc.createContext()
-    list = cxt.at("list")
+    list = cxt.createContextAt("list")
     list.move 0, 3
     assert.deepEqual cxt.get(),
       list: [2, 3, 4, 1]
@@ -160,13 +160,13 @@ describe "JSON Client API", ->
   it "number add", ->
     doc = new Doc([1])
     cxt = doc.createContext()
-    cxt.at(0).add 4
+    cxt.createContextAt(0).add 4
     assert.deepEqual cxt.get(), [5]
 
   it "basic listeners", (done) ->
     doc = new Doc(list: [1])
     cxt = doc.createContext()
-    cxt.at("list").on "insert", (pos, num) ->
+    cxt.createContextAt("list").on "insert", (pos, num) ->
       assert.equal num, 4
       assert.equal pos, 0
       done()
@@ -179,7 +179,7 @@ describe "JSON Client API", ->
   it "object replace listener", (done) ->
     doc = new Doc(foo: "bar")
     cxt = doc.createContext()
-    cxt.at().on "replace", (pos, before, after) ->
+    cxt.createContextAt().on "replace", (pos, before, after) ->
       assert.equal before, "bar"
       assert.equal after, "baz"
       assert.equal pos, "foo"
@@ -194,7 +194,7 @@ describe "JSON Client API", ->
   it "list replace listener", (done) ->
     doc = new Doc(["bar"])
     cxt = doc.createContext()
-    cxt.at().on "replace", (pos, before, after) ->
+    cxt.createContextAt().on "replace", (pos, before, after) ->
       assert.equal before, "bar"
       assert.equal after, "baz"
       assert.equal pos, 0
@@ -209,12 +209,12 @@ describe "JSON Client API", ->
   it "listener moves on li", (done) ->
     doc = new Doc(["bar"])
     cxt = doc.createContext()
-    cxt.at(0).on "insert", (i, s) ->
+    cxt.createContextAt(0).on "insert", (i, s) ->
       assert.equal s, "foo"
       assert.equal i, 0
       done()
 
-    cxt.at().insert 0, "asdf"
+    cxt.createContextAt().insert 0, "asdf"
 
     apply cxt, [
       p: [1, 0]
@@ -224,12 +224,12 @@ describe "JSON Client API", ->
   it "listener moves on ld", (done) ->
     doc = new Doc(["asdf", "bar"])
     cxt = doc.createContext()
-    cxt.at(1).on "insert", (i, s) ->
+    cxt.createContextAt(1).on "insert", (i, s) ->
       assert.equal s, "foo"
       assert.equal i, 0
       done()
 
-    cxt.at(0).remove()
+    cxt.createContextAt(0).remove()
     apply cxt, [
       p: [0, 0]
       si: "foo"
@@ -238,12 +238,12 @@ describe "JSON Client API", ->
   it "listener moves on array lm", (done) ->
     doc = new Doc(["asdf", "bar"])
     cxt = doc.createContext()
-    cxt.at(1).on "insert", (i, s) ->
+    cxt.createContextAt(1).on "insert", (i, s) ->
       assert.equal s, "foo"
       assert.equal i, 0
       done()
 
-    cxt.at().move 0, 1
+    cxt.createContextAt().move 0, 1
     apply cxt, [
       p: [0, 0]
       si: "foo"
@@ -252,11 +252,11 @@ describe "JSON Client API", ->
   it "listener drops on ld", (done) ->
     doc = new Doc([1])
     cxt = doc.createContext()
-    cxt.at(0).on "add", (x) ->
+    cxt.createContextAt(0).on "add", (x) ->
       assert.ok false
       done()
 
-    cxt.at(0).set 3
+    cxt.createContextAt(0).set 3
     apply cxt, [
       p: [0]
       na: 1
@@ -267,11 +267,11 @@ describe "JSON Client API", ->
   it "listener drops on od", (done) ->
     doc = new Doc(foo: "bar")
     cxt = doc.createContext()
-    cxt.at("foo").on "text-insert", (text, pos) ->
+    cxt.createContextAt("foo").on "text-insert", (text, pos) ->
       assert.ok false
       done()
 
-    cxt.at("foo").set "baz"
+    cxt.createContextAt("foo").set "baz"
     apply cxt, [
       p: ["foo", 0]
       si: "asdf"
@@ -281,7 +281,7 @@ describe "JSON Client API", ->
   it "child op one level", (done) ->
     doc = new Doc(foo: "bar")
     cxt = doc.createContext()
-    cxt.at().on "child op", (p, op) ->
+    cxt.createContextAt().on "child op", (p, op) ->
       assert.deepEqual p, ["foo", 0]
       assert.equal op.si, "baz"
       done()
@@ -294,7 +294,7 @@ describe "JSON Client API", ->
   it "child op two levels", (done) ->
     doc = new Doc(foo: ["bar"])
     cxt = doc.createContext()
-    cxt.at().on "child op", (p, op) ->
+    cxt.createContextAt().on "child op", (p, op) ->
       assert.deepEqual p, ["foo", 0, 3]
       assert.deepEqual op.si, "baz"
       done()
@@ -307,7 +307,7 @@ describe "JSON Client API", ->
   it "child op path snipping", (done) ->
     doc = new Doc(foo: ["bar"])
     cxt = doc.createContext()
-    cxt.at("foo").on "child op", (p, op) ->
+    cxt.createContextAt("foo").on "child op", (p, op) ->
       assert.deepEqual p, [0, 3]
       assert.deepEqual op.si, "baz"
       done()
@@ -323,9 +323,9 @@ describe "JSON Client API", ->
       components: []
     )
     cxt = doc.createContext()
-    cxt.at("name").on "insert", (p, op) ->
+    cxt.createContextAt("name").on "insert", (p, op) ->
 
-    cxt.at("components").on "child op", (p, op) ->
+    cxt.createContextAt("components").on "child op", (p, op) ->
       done()
 
     apply cxt, [
@@ -336,11 +336,11 @@ describe "JSON Client API", ->
   it "child op not sent when op outside node", (done) ->
     doc = new Doc(foo: ["bar"])
     cxt = doc.createContext()
-    cxt.at("foo").on "child op", ->
+    cxt.createContextAt("foo").on "child op", ->
       assert.ok false
       done()
 
-    cxt.at("baz").set "hi"
+    cxt.createContextAt("baz").set "hi"
     waitBriefly(done)
 
 
@@ -350,18 +350,18 @@ describe "JSON Client API", ->
       {bottom:'other'}
     ]);
     cxt = doc.createContext()
-    sub = cxt.at [0,'top']
+    sub = cxt.createContextAt [0,'top']
 
     assert.deepEqual(sub.get(),{foo:'bar'})
 
-    cxt.at().move 0, 1, ->
+    cxt.createContextAt().move 0, 1, ->
       assert.deepEqual sub.get(),{foo:'bar'}
       done()
 
   it "removes itself from the context on destroy", (done) ->
     doc = new Doc({foo:'bar'});
     cxt = doc.createContext()
-    sub = cxt.at 'foo'
+    sub = cxt.createContextAt 'foo'
     
     assert.equal(cxt._subdocs.length,1)
     sub.destroy();
