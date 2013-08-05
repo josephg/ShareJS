@@ -183,7 +183,8 @@ var select = function(doc) {
 };
 
 //q = sjs.query('users', {'data.x':5}, true, function(err, data) { console.log(err, data); });
-query = sjs.createSubscribeQuery('users', {$query:{"data.x":5}}, {autoFetch:true});
+//query = sjs.createSubscribeQuery('users', {$query:{"data.x":5}}, {autoFetch:true});
+query = sjs.createSubscribeQuery('users', 'users', {docMode:'fetch'});
 //query = sjs.createSubscribeQuery('stories', {$query:{}}, {autoFetch:true});
 
 //query = sjs.createSubscribeQuery('players', {"$orderby":{"data.score":-1},"$limit":5}, {autoFetch:true});
