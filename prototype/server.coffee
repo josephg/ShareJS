@@ -4,6 +4,7 @@ browserChannel = require('browserchannel').server
 connect = require 'connect'
 argv = require('optimist').argv
 livedb = require 'livedb'
+livedbMongo = require 'livedb-mongo'
 
 webserver = connect(
   #  connect.logger()
@@ -13,7 +14,8 @@ webserver = connect(
 
 sharejs = require '../lib'
 
-backend = livedb.client livedb.memory()
+#backend = livedb.client livedb.memory()
+backend = livedb.client livedbMongo('localhost:27017/test?auto_reconnect', safe:false)
 share = sharejs.server.createClient {backend}
 
 
