@@ -40,7 +40,7 @@ ShareJS currently supports operational transform on plain-text and arbitrary JSO
 Browser support
 ---------------
 
-ShareJS **should** work with all of them ![logos of all of all the browsers](http://twitter.github.com/bootstrap/assets/img/browsers.png)
+ShareJS **should** work with all browsers, down to IE5.5 (although IE support hasn't been tested with the new version).
 
 That said, I only test regularly with FF, Safari and Chrome, and occasionally with IE8+. **File bug reports if you have issues**
 
