@@ -33,7 +33,6 @@ ShareJS currently supports operational transform on plain-text and arbitrary JSO
 
 **Check out the [live interactive demos](http://sharejs.org/).**
 
-> Note: CI sometimes breaks for random reasons even though the tests work locally. Don't stress!
 [![Build Status](https://secure.travis-ci.org/share/ShareJS.png)](http://travis-ci.org/share/ShareJS)
 
 
