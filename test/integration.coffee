@@ -190,7 +190,7 @@ describe 'integration', ->
 
 
       # regression
-      it.only 'subscribes from the version specified if the client has a document snapshot already', (done) ->
+      it 'subscribes from the version specified if the client has a document snapshot already', (done) ->
         @userAgent.fetch = (collection, docName, callback) ->
           assert.strictEqual collection, 'collection'
           assert.strictEqual docName, 'docname'
