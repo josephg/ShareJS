@@ -1,0 +1,103 @@
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.17/jquery-ui.min.js"></script>
+<script src="channel/bcsocket.js"></script>
+<script src="share.uncompressed.js"></script>
+<script>
+
+var s = new BCSocket(null, {reconnect: true});
+
+var sjs = new window.sharejs.Connection(s);
+
+var doc = sjs.getOrCreate('trains', 'train_test');
+
+console.log(doc);
+
+doc.subscribe();
+
+doc.whenReady(function () {
+  console.log(doc);
+  if (!doc.type) doc.create('json0');
+  if (doc.type && doc.type.name === 'json0'){
+    trainExample(doc);
+  }
+});
+
+// *** Draggable trains example
+function trainExample(doc) {
+  var context = doc.createContext();
+  var list = context.createContextAt();
+
+  console.log('initial list from server',list.get());
+
+  if (list.get() === null) {
+    console.log("list doesn't exist, creating it")
+    list.set([
+      "Thomas the Tank Engine",
+      "Edward the Blue Engine",
+      "Henry the Green Engine",
+      "Gordon the Big Engine",
+      "James the Red Engine",
+      "Percy the Small Engine",
+      "The Fat Controller"
+    ]);
+  }
+
+  // add trains to page
+  var trains = list.get();
+  $.each(trains, function(i, train) {
+    $('#trains').append($('<li>').text(trains[i])); //.attr('data-id', i)
+  });
+
+  var dragFrom = null;
+  
+  list.on('move', function(from, to) {
+    //console.log('move', from, to);
+    if (dragFrom === from) {
+      dragFrom = to;
+    } else {
+      //console.log('#trains :nth-child(' + (from + 1) + ')');
+      //console.log($('#trains :nth-child(' + 1 + ')'));
+      //console.log($('#trains :nth-child(' + 2 + ')'));
+
+      if (to === 0) {
+        $('#trains :nth-child(' + (from + 1) + ')')
+          .remove()
+          .insertBefore($('#trains :nth-child(' + (to + 1) + ')'));
+      } else {
+        $('#trains :nth-child(' + (from + 1) + ')')
+          .remove()
+          .insertAfter($('#trains :nth-child(' + to + ')'));
+      }
+    }
+  });  
+  
+  $("#trains").sortable({
+    helper: 'clone',
+    start: function(event, ui) {
+      dragFrom = ui.item.index();
+      ui.item.remove();
+    },
+    update: function(event, ui) {
+      //console.log('update', ui.item.index());
+      dragFrom = null;
+    },
+    change: function(event, ui) {
+      var newPos = ui.placeholder.index();
+      //console.log('sending move', dragFrom, newPos);
+      list.move(dragFrom, newPos);
+      dragFrom = newPos;
+    },
+    beforeStop: function(event, ui) {
+      //console.log(ui.item);
+      ui.placeholder.before(ui.item);
+    },
+    axis: 'y'
+  });
+  
+  $("#trains").disableSelection();
+}
+
+</script>
+
+<h1>Reorder the trains</h1>
+<ul id="trains"><ul>

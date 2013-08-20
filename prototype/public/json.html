@@ -1,0 +1,84 @@
+<script src="channel/bcsocket.js"></script>
+<script src="share.uncompressed.js"></script>
+<script>
+
+var s = new BCSocket(null, {reconnect: true});
+
+var sjs = new window.sharejs.Connection(s);
+
+var doc = sjs.getOrCreate('json_test', 'test_doc_1');
+
+console.log(doc);
+
+doc.subscribe();
+
+doc.whenReady(function () {
+  console.log(doc);
+  if (!doc.type) doc.create('json0');
+  if (doc.type && doc.type.name === 'json0'){
+    var context = doc.createContext();
+    clientExample(context);
+  }
+});
+
+
+function clientExample(context){
+
+  console.log(
+    'JSON Client API',
+    'https://github.com/share/ShareJS/wiki/JSON-Client-API');
+
+  console.log('json client',context);
+
+  // Create some JSON object
+  var myObject = [{ todo: [] },{completed: []}];
+
+  // Set the structure of the document to the JSON object
+  context.set( myObject, function(){
+
+    // Get the document's JSON object
+    docObject = context.get(); // => {'todo':[]}
+    console.log('snapshot',docObject);
+
+    // Get the "todo" subdoc
+    todo = context.createContextAt([0,'todo']);
+    console.log('todo',todo);
+return;
+    // print out the "todo" subdoc
+    console.log( todo.get() ); // => []
+    
+    // Create event when something is inserted into the doc
+    todo.on('insert', function (pos, item) {
+      console.log('inserted',pos,item);
+    });
+
+    todo.on('child op', function (path, op) {
+      var item_idx = path[0]
+      console.log("Item "+item_idx+" now reads "+todo.get()[item_idx])
+    });
+
+    // Push a value to the "todo" subdoc
+    todo.push('take out the garbage');
+
+    // Print out the "todo" subdoc again
+    console.log( todo.get() ); // => ['take out the garbage']
+
+    // subdoc's work even when their path changes
+    context.at().move(0,1,function(){
+      // Set the "todo" subdoc to a completely different value
+      todo.set('some string value');
+
+      // Print out the "todo" subdoc again
+      console.log( todo.get() ); // => 'some string value'
+
+      // Get the document JSON object again
+      console.log(doc.get()); // => [{completed: []},{todo:'some string value'}]
+    })
+
+
+  });
+}
+
+</script>
+
+<p>JSON Client API example (check it out in source, and on the wiki)</p>
