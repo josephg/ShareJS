@@ -3,7 +3,9 @@ ShareJS
 
 ---
 
-# You are looking at the 0.7 alpha branch of ShareJS.
+## You are looking at the 0.7 alpha branch of ShareJS.
+
+ShareJS 0.7 is a complete rewrite of ShareJS 0.6. *Most* APIs have changed, at least slightly. Motivation for the new design is discussed [in a blog post here](http://josephgentle.tumblr.com/post/45724165226/its-time-to-rewrite-sharejs) and [I demo the new features here](http://www.youtube.com/watch?v=uDzME15UxVM).
 
 For the stable 0.6 branch that you will get if you `npm install share`, look [here](https://github.com/share/ShareJS/tree/0.6).
 
