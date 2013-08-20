@@ -16,7 +16,8 @@ CLIENT = \
 BUNDLED_TYPES = \
 	webclient/text.js \
 	lib/types/text-api.js \
-	webclient/json0.js
+	webclient/json0.js \
+	lib/types/json-api.js 
 
 # Disabled: lib/types/json-api.coffee
 
