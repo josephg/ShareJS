@@ -5,21 +5,25 @@ ShareJS
 
 # You are looking at the 0.7 alpha branch of ShareJS.
 
-> *Welcome.* So you know, this code might spontaniously catch fire. Both the
-> API and the code are unstable and **will to change and crash on you**. Test
-> coverage has dropped from 90% in ShareJS 0.6 to around 30% and documentation
-> of the new APIs is almost nonexistant.
+For the stable 0.6 branch that you will get if you `npm install share`, look [here](https://github.com/share/ShareJS/tree/0.6).
+
+> *Welcome.* So you know, this code is [feature incomplete](https://github.com/share/ShareJS/wiki/0.7-Status).
+> The API and the code are unstable, and there are known bugs. Test
+> coverage has dropped from 90% in ShareJS 0.6 to around 50% and documentation
+> of the new APIs is largely nonexistant.
 > 
 > The documentation below is also full of lies. If you want to play with the
 > new version of ShareJS anyway, look at the examples in prototype/.
 > 
 > I understand that if you're using racer & derby, you will use this code
-> anyway despite my warnings. **YOU WILL RUN INTO BUGS.**
+> anyway despite my warnings. If you run into issues, please file issues so I can fix them.
 
 ---
 
 
-This is a little server (& client library) to allow concurrent editing of any kind of content. The server runs on NodeJS and the client works in NodeJS or a web browser.
+This is a little server (& client library) to allow concurrent editing of any
+kind of content. The server runs on NodeJS and the client works in NodeJS or a
+web browser.
 
 ShareJS currently supports operational transform on plain-text and arbitrary JSON data.
 
@@ -44,51 +48,29 @@ That said, I only test regularly with FF, Safari and Chrome, and occasionally wi
 Installing and running
 ----------------------
 
-    # npm install share
+    # npm install share@0.7
+
+> **The examples haven't been ported to the new API yet**
 
 Run the examples with:
 
     # sharejs-exampleserver
 
-If you want redis support, you'll need to install redis:
-
-    # brew install redis
-    # npm install -g redis
-
-### From source
-
-Install redis (optional)
-    
-* Mac:
-
-        # brew install redis
-
-* Linux:
-   
-        # sudo apt-get install redis
-
-Then:
-
-    # git clone git://github.com/josephg/ShareJS.git
-    # cd ShareJS
-    # npm install redis   # If you want redis support
-    # npm link
+ShareJS depends on [LiveDB](https://github.com/share/livedb) for its database
+backend, which currently requires redis. Your data doesn't actually have to
+live in redis - its just used as an operation cache, fast STM-style lock and
+pubsub system.
 
 Run the tests:
 
-    # cake test
+    # npm install
+    # mocha
 
-Build the coffeescript into .js:
-
-    # cake build
-    # cake webclient
-
-Run the example server:
-
-    # bin/exampleserver
 
 Running a server
 ----------------
+
+**This documentation is out of date!**
 
 There are two ways to run a sharejs server:
 
