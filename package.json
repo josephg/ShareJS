@@ -19,6 +19,7 @@
     "livedb": "~0.2",
     "ottypes": "~0.6",
     "semver": "~2",
+    "express": "~3",
     "hat": "*"
   },
   "devDependencies": {
