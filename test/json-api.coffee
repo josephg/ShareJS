@@ -116,6 +116,17 @@ describe "JSON Client API", ->
     hi.remove()
     assert.deepEqual cxt.get(), {}
 
+  it "remove multiple items", ->
+    doc = new Doc(hi: [1, 2, 3])
+    cxt = doc.createContext()
+    hi = cxt.createContextAt("hi")
+    hi.remove(0, 2)
+    assert.deepEqual cxt.get(),
+      hi: [3]
+
+    hi.remove()
+    assert.deepEqual cxt.get(), {}
+
   it "insert text", ->
     doc = new Doc(text: "Hello there!")
     cxt = doc.createContext()
@@ -127,7 +138,7 @@ describe "JSON Client API", ->
   it "delete text", ->
     doc = new Doc(text: "Sup, share?")
     cxt = doc.createContext()
-    cxt.createContextAt("text").deleteText 3, 7
+    cxt.createContextAt("text").remove 3, 7
     assert.deepEqual cxt.get(),
       text: "Sup?"
 
