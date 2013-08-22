@@ -423,12 +423,3 @@ describe "JSON Client API", ->
     sub.destroy()
     assert.equal(cxt._subdocs.length,0)
     done()
-
-  it "uses optional dot notation", ->
-    doc = new Doc({a: [1,2, [3,4, {b: "c", d: "e"}]]})
-    cxt = doc.createContext()
-    assert.deepEqual cxt.get("a.2.2.d"), "e"
-    cxt.set("a.2.2.f", "g")
-    assert.deepEqual cxt.get(["a", 2, 2, "f"]), "g"
-    a = cxt.createContextAt("a")
-    assert.deepEqual a.get(0), 1
