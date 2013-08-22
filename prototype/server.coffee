@@ -58,6 +58,8 @@ webserver.use browserChannel opts, (client) ->
   # ... and give the stream to ShareJS.
   share.listen stream
 
+webserver.use '/doc', share.rest()
+
 port = argv.p or 7007
 webserver.listen port
 console.log "Listening on http://localhost:#{port}/"
