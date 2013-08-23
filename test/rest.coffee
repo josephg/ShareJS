@@ -150,73 +150,64 @@ describe 'rest', ->
         assert.deepEqual data, []
         done()
 
+  describe 'POST', ->
+    it 'lets you submit', (done) ->
+      called = false
+      @userAgent.submit = (cName, docName, opData, options, callback) ->
+        assert.strictEqual cName, 'c'
+        assert.strictEqual docName, 'd'
+        assert.deepEqual opData, {v:5, op:[1,2,3]}
+        called = true
+        callback null, 5, []
+
+      fetch 'POST', @port, "/doc/c/d", {v:5, op:[1,2,3]}, (res, ops) =>
+        assert.strictEqual res.statusCode, 200
+        assert.deepEqual ops, []
+        assert called
+        done()
+
+    it 'POST a document with invalid JSON returns 400', (done) ->
+      fetch 'POST', @port, "/doc/c/d", 'invalid>{json', (res, data) ->
+        assert.strictEqual res.statusCode, 400
+        done()
+    
+  describe 'PUT', ->
+    it 'PUT a document creates it', (done) ->
+      called = false
+      @userAgent.submit = (cName, docName, opData, options, callback) ->
+        assert.strictEqual cName, 'c'
+        assert.strictEqual docName, 'd'
+        assert.deepEqual opData, {create:{type:'simple'}}
+        called = true
+        callback null, 5, []
+
+      fetch 'PUT', @port, "/doc/c/d", {type:'simple'}, (res, data, headers) =>
+        assert.strictEqual res.statusCode, 200
+        assert.strictEqual headers['x-ot-version'], '5'
+
+        assert called
+        done()
+
+  describe 'DELETE', ->
+    it 'deletes a document', (done) ->
+      called = false
+      @userAgent.submit = (cName, docName, opData, options, callback) ->
+        assert.strictEqual cName, 'c'
+        assert.strictEqual docName, 'd'
+        assert.deepEqual opData, {del:true}
+        called = true
+        callback null, 5, []
+
+      fetch 'DELETE', @port, "/doc/c/d", null, (res, data, headers) =>
+        assert.strictEqual res.statusCode, 200
+        assert.strictEqual headers['x-ot-version'], '5'
+        assert called
+        done()
+    
+
   # Tests past this line haven't been rewritten yet for the new API.
 
-  describe.skip 'PUT', ->
-    it 'PUT a document creates it', (done) ->
-      fetch 'PUT', @port, "/doc/c/d", {type:'simple'}, (res, data) =>
-        assert.strictEqual res.statusCode, 200
-
-        @model.getSnapshot @name, (error, doc) ->
-          meta = doc.meta
-          delete doc.meta
-          assert.deepEqual doc, {v:0, type:types.simple, snapshot:{str:''}}
-          test.ok meta
-          assert.strictEqual typeof(meta.ctime), 'number'
-          assert.strictEqual typeof(meta.mtime), 'number'
-          done()
-
-  'POST a document in the DB returns 200 OK': (test) ->
-    @model.create @name, 'simple', =>
-      fetch 'POST', @port, "/doc/#{@name}?v=0", {position: 0, text: 'Hi'}, (res, data) =>
-        assert.strictEqual res.statusCode, 200
-        assert.deepEqual data, {v:0}
-
-        @model.getSnapshot @name, (error, doc) ->
-          assert.deepEqual doc, {v:1, type:types.simple, snapshot:{str:'Hi'}, meta:{}}
-          done()
-  
-  'POST a document setting the version in an HTTP header works': (test) ->
-    @model.create @name, 'simple', =>
-      fetch 'POST', @port, "/doc/#{@name}", {position: 0, text: 'Hi'}, {'X-OT-Version': 0}, (res, data) =>
-        assert.strictEqual res.statusCode, 200
-        assert.deepEqual data, {v:0}
-
-        @model.getSnapshot @name, (error, doc) ->
-          assert.deepEqual doc, {v:1, type:types.simple, snapshot:{str:'Hi'}, meta:{}}
-          done()
-  
-  'POST a document with no version returns 400': (test) ->
-    fetch 'POST', @port, "/doc/#{@name}", {type:'simple'}, (res, data) ->
-      assert.strictEqual res.statusCode, 400
-      done()
-
-  'POST a document with invalid JSON returns 400': (test) ->
-    fetch 'POST', @port, "/doc/#{@name}?v=0", 'invalid>{json', (res, data) ->
-      assert.strictEqual res.statusCode, 400
-      done()
-  
-  "Can't POST an op to a nonexistant document": (test) ->
-    # This was found in the wild -
-    # https://github.com/josephg/ShareJS/issues/66
-    fetch 'POST', @port, "/doc/#{@name}?v=0", {foo:'bar'}, (res, data) ->
-      assert.strictEqual res.statusCode, 404
-      done()
-    
-  'DELETE deletes a document': (test) ->
-    @model.create @name, 'simple', =>
-      fetch 'DELETE', @port, "/doc/#{@name}", null, (res, data) =>
-        assert.strictEqual res.statusCode, 200
-
-        @model.getSnapshot @name, (error, doc) ->
-          test.equal doc, null
-          done()
-  
-  'DELETE returns a 404 message if you delete something that doesn\'t exist': (test) ->
-    fetch 'DELETE', @port, "/doc/#{@name}", null, (res, data) ->
-      assert.strictEqual res.statusCode, 404
-      done()
-
+###
   'Cannot do anything if the server doesnt allow client connections': (test) ->
     @auth = (agent, action) ->
       assert.strictEqual action.type, 'connect'
@@ -319,4 +310,4 @@ describe 'rest', ->
           test.ok doc
           done()
 
-
+###
