@@ -193,7 +193,7 @@ describe "JSON Client API", ->
       nums: [1, 2, 3]
 
 
-  xit "list move", (done) ->
+  it "list move", (done) ->
     doc = new Doc(list: [1, 2, 3, 4])
     cxt = doc.createContext()
     list = cxt.createContextAt("list")
@@ -203,7 +203,7 @@ describe "JSON Client API", ->
 
     doc = new Doc(list: [1, 2, 3, 4])
     cxt = doc.createContext()
-    cxt.move ["list"] 0, 3
+    cxt.move ["list"], 0, 3
     assert.deepEqual cxt.get(),
       list: [2, 3, 4, 1]
     done()
