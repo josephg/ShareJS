@@ -9,6 +9,7 @@ CLIENT = \
 	doc.js \
 	connection.js \
 	textarea.js \
+	codemirror.js \
 	query.js
 
 # not included:	index.coffee 
