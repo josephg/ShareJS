@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="bower_components/codemirror/lib/codemirror.css">
+<script src="bower_components/codemirror/lib/codemirror.js"></script>
+<script src="channel/bcsocket.js"></script>
+<script src="text.js"></script>
+<script src="share.uncompressed.js"></script>
+</head>
+<body>
+<textarea id='pad'>Connecting...</textarea>
+
+<script>
+var elem = document.getElementById('pad');
+var cm = CodeMirror.fromTextArea(elem, {
+  mode: "text/plain"
+});
+
+var s = new BCSocket(null, {reconnect: true});
+
+var sjs = new window.sharejs.Connection(s);
+
+var doc = sjs.get('users', 'sephx');
+console.log(doc);
+doc.subscribe();
+
+doc.whenReady(function () {
+  if (!doc.type) doc.create('text');
+  if (doc.type && doc.type.name === 'text')
+    doc.attachCodemirror(cm);
+});
+</script>
+</body>
+</html>
