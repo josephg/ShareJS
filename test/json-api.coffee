@@ -86,11 +86,12 @@ describe "JSON Client API", ->
     hi = cxt.createContextAt("hi")
     assert.deepEqual hi.get(), [1, 2, 3]
     assert.equal hi.createContextAt(2).get(), 3
+    assert.equal cxt.get(["hi", 2]), 3
 
   it "object set", ->
     doc = new Doc
     cxt = doc.createContext()
-    cxt.createContextAt().set hello: "world"
+    cxt.set hello: "world"
     assert.deepEqual cxt.get(),
       hello: "world"
 
@@ -98,11 +99,19 @@ describe "JSON Client API", ->
     assert.deepEqual cxt.get(),
       hello: "blah"
 
+    cxt.set ["hello"], "bleh"
+    assert.deepEqual cxt.get(),
+      hello: "bleh"
 
   it "list set", ->
     doc = new Doc([1, 2, 3])
     cxt = doc.createContext()
     cxt.createContextAt(1).set 5
+    assert.deepEqual cxt.get(), [1, 5, 3]
+
+    doc = new Doc([1, 2, 3])
+    cxt = doc.createContext()
+    cxt.set [1], 5
     assert.deepEqual cxt.get(), [1, 5, 3]
 
   it "remove", ->
@@ -112,6 +121,24 @@ describe "JSON Client API", ->
     hi.createContextAt(0).remove()
     assert.deepEqual cxt.get(),
       hi: [2, 3]
+
+    hi.remove()
+    assert.deepEqual cxt.get(), {}
+
+    doc = new Doc(hi: [1, 2, 3])
+    cxt = doc.createContext()
+    cxt.remove(["hi", 0])
+    assert.deepEqual cxt.get(),
+      hi: [2, 3]
+
+
+  it "remove multiple items", ->
+    doc = new Doc(hi: [1, 2, 3])
+    cxt = doc.createContext()
+    hi = cxt.createContextAt("hi")
+    hi.remove(0, 2)
+    assert.deepEqual cxt.get(),
+      hi: [3]
 
     hi.remove()
     assert.deepEqual cxt.get(), {}
@@ -127,7 +154,13 @@ describe "JSON Client API", ->
   it "delete text", ->
     doc = new Doc(text: "Sup, share?")
     cxt = doc.createContext()
-    cxt.createContextAt("text").deleteText 3, 7
+    cxt.createContextAt("text").remove 3, 7
+    assert.deepEqual cxt.get(),
+      text: "Sup?"
+
+    doc = new Doc(text: "Sup, share?")
+    cxt = doc.createContext()
+    cxt.remove ["text", 3], 7
     assert.deepEqual cxt.get(),
       text: "Sup?"
 
@@ -139,6 +172,12 @@ describe "JSON Client API", ->
     assert.deepEqual cxt.get(),
       nums: [4, 1, 2]
 
+    doc = new Doc(nums: [1, 2])
+    cxt = doc.createContext()
+    cxt.insert ["nums", 0], 4
+    assert.deepEqual cxt.get(),
+      nums: [4, 1, 2]
+
 
   it "list push", ->
     doc = new Doc(nums: [1, 2])
@@ -147,8 +186,14 @@ describe "JSON Client API", ->
     assert.deepEqual cxt.get(),
       nums: [1, 2, 3]
 
+    doc = new Doc(nums: [1, 2])
+    cxt = doc.createContext()
+    cxt.push ["nums"], 3
+    assert.deepEqual cxt.get(),
+      nums: [1, 2, 3]
 
-  it "list move", ->
+
+  it "list move", (done) ->
     doc = new Doc(list: [1, 2, 3, 4])
     cxt = doc.createContext()
     list = cxt.createContextAt("list")
@@ -156,11 +201,22 @@ describe "JSON Client API", ->
     assert.deepEqual cxt.get(),
       list: [2, 3, 4, 1]
 
+    doc = new Doc(list: [1, 2, 3, 4])
+    cxt = doc.createContext()
+    cxt.move ["list"], 0, 3
+    assert.deepEqual cxt.get(),
+      list: [2, 3, 4, 1]
+    done()
 
   it "number add", ->
     doc = new Doc([1])
     cxt = doc.createContext()
     cxt.createContextAt(0).add 4
+    assert.deepEqual cxt.get(), [5]
+
+    doc = new Doc([1])
+    cxt = doc.createContext()
+    cxt.add [0], 4
     assert.deepEqual cxt.get(), [5]
 
   it "basic listeners", (done) ->
@@ -348,7 +404,7 @@ describe "JSON Client API", ->
     doc = new Doc([
       {top:{foo:'bar'}},
       {bottom:'other'}
-    ]);
+    ])
     cxt = doc.createContext()
     sub = cxt.createContextAt [0,'top']
 
@@ -359,13 +415,11 @@ describe "JSON Client API", ->
       done()
 
   it "removes itself from the context on destroy", (done) ->
-    doc = new Doc({foo:'bar'});
+    doc = new Doc({foo:'bar'})
     cxt = doc.createContext()
     sub = cxt.createContextAt 'foo'
     
     assert.equal(cxt._subdocs.length,1)
-    sub.destroy();
+    sub.destroy()
     assert.equal(cxt._subdocs.length,0)
     done()
-
-
