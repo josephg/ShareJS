@@ -6,13 +6,13 @@ argv = require('optimist').argv
 livedb = require 'livedb'
 livedbMongo = require 'livedb-mongo'
 
+sharejs = require '../lib'
+
 webserver = connect(
   #  connect.logger()
   connect.static "#{__dirname}/public"
-  connect.static "#{__dirname}/../webclient"
+  connect.static sharejs.scriptsDir
 )
-
-sharejs = require '../lib'
 
 #backend = livedb.client livedb.memory()
 backend = livedb.client livedbMongo('localhost:27017/test?auto_reconnect', safe:false)
@@ -29,8 +29,7 @@ share.use 'connect', (req, callback) ->
   callback()
 ###
 
-opts = {webserver}
-webserver.use browserChannel opts, (client) ->
+webserver.use browserChannel {webserver}, (client) ->
   stream = new Duplex objectMode:yes
   stream._write = (chunk, encoding, callback) ->
     console.log 's->c ', chunk
