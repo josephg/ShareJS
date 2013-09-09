@@ -70,7 +70,7 @@ exports.testTransformCursor = (test) ->
   op = [10, 'oh hi', 10, {d:20}] # The previous ops composed together
 
   tc = (op, isOwn, cursor, expected) ->
-    test.strictEqual expected, text.transformCursor cursor, op, isOwn
+    test.deepEqual [expected, expected], text.transformCursor [cursor, cursor], op, isOwn
  
   # A cursor at the start of the inserted text shouldn't move.
   tc op, false, 10, 10

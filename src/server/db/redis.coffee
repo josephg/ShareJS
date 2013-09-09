@@ -16,6 +16,10 @@ defaultOptions = {
   redisOptions: null
   auth: null
 
+  # Can be used to pass in a client if you need control over how to connect to redis
+  # This is useful for e.g. Heroku, which uses https://github.com/ddollar/redis-url for auth
+  client: null
+
   # If this is set to true, the client will select db 15 and wipe all data in
   # this database.
   testing: false
@@ -31,12 +35,15 @@ module.exports = RedisDb = (options) ->
   keyForOps = (docName) -> "#{options.prefix}ops:#{docName}"
   keyForDoc = (docName) -> "#{options.prefix}doc:#{docName}"
 
-  client = redis.createClient options.port, options.hostname, options.redisOptions
+  if options.client
+    client = options.client
+  else
+    client = redis.createClient options.port, options.hostname, options.redisOptions
 
   if options.auth and typeof options.auth == "string"
-    client.auth(if ":" in options.auth then options.auth.split(":").pop() else options.auth)
+    client.auth options.auth
 
-  client.select 15 if options.testing
+    client.select 15 if options.testing
 
   # Creates a new document.
   # data = {snapshot, type:typename, [meta]}

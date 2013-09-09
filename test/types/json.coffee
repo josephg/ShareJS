@@ -246,6 +246,10 @@ genTests = (type) ->
       test.deepEqual type.transform([{p:['k', 5], sd:'a'}], [{p:['k', 5], sd:'a'}], 'left'), []
       test.done()
 
+    'blank inserts do not throw error': (test) ->
+      test.deepEqual type.transform([{p: ['k', 5], si:''}], [{p: ['k', 3], si: 'a'}], 'left'), []
+      test.done()
+
   list:
     'Apply inserts': (test) ->
       test.deepEqual ['a', 'b', 'c'], type.apply ['b', 'c'], [{p:[0], li:'a'}]
@@ -302,11 +306,9 @@ genTests = (type) ->
       test.deepEqual [{p:[0], li:'hi'}], type.transform [{p:[0], li:'hi'}], [{p:[0], ld:'x', li:'y'}], 'left'
       test.done()
 
-    ###
     'Deleted data is changed to reflect edits': (test) ->
       test.deepEqual [{p:[1], ld:'abc'}], type.transform [{p:[1], ld:'a'}], [{p:[1, 1], si:'bc'}], 'left'
       test.done()
-    ###
     
     'Inserting then deleting an element composes into a no-op': (test) ->
       test.deepEqual [], type.compose [{p:[1], li:'abc'}], [{p:[1], ld:'abc'}]
@@ -487,7 +489,6 @@ genTests = (type) ->
       test.deepEqual [], type.transform [{p:[1, 0], si:'hi'}], [{p:[1], od:'x', oi:'y'}], 'left'
       test.done()
 
-    ###
     'Deleted data is changed to reflect edits': (test) ->
       test.deepEqual [{p:[1], od:'abc'}], type.transform [{p:[1], od:'a'}], [{p:[1, 1], si:'bc'}], 'left'
       test.deepEqual [{p:[],od:25,oi:[]}], type.transform [{p:[],od:22,oi:[]}], [{p:[],na:3}], 'left'
@@ -498,7 +499,6 @@ genTests = (type) ->
       test.deepEqual [{p:['He'],od:[]}], type.transform [{p:["He"],od:[]}], [{p:["The"],na:-3}], 'right'
       test.deepEqual [], type.transform [{p:["He"],oi:{}}], [{p:[],od:{},oi:"the"}], 'left'
       test.done()
-    ###
     
     'If two inserts are simultaneous, the lefts insert will win': (test) ->
       test.deepEqual [{p:[1], oi:'a', od:'b'}], type.transform [{p:[1], oi:'a'}], [{p:[1], oi:'b'}], 'left'

@@ -201,6 +201,11 @@ module.exports = Model = (db, options) ->
 
     if error
       callback error for callback in callbacks if callbacks
+    else if docs[docName]
+      # The doc may have been created by another agent since we last checked for its
+      # existence in docs. If it was, don't create it again.
+      doc = docs[docName]
+      callback 'Document already exists' for callback in callbacks if callbacks
     else
       doc = docs[docName] =
         snapshot: data.snapshot
@@ -222,6 +227,7 @@ module.exports = Model = (db, options) ->
         snapshotWriteLock: false
         dbMeta: dbMeta
 
+      doc.eventEmitter.setMaxListeners 0
       doc.opQueue = makeOpQueue docName, doc
       
       refreshReapingTimeout docName
@@ -570,8 +576,9 @@ module.exports = Model = (db, options) ->
   # This is synchronous.
   @removeListener = (docName, listener) ->
     # The document should already be loaded.
-    doc = docs[docName]
-    throw new Error 'removeListener called but document not loaded' unless doc
+    # If it's not we probably hit a race condition where the browser closes
+    # before the document opened. In that case, ignore.
+    return unless doc = docs[docName]
 
     doc.eventEmitter.removeListener 'op', listener
     refreshReapingTimeout docName

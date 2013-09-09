@@ -14,8 +14,13 @@
 if WEB?
   hasBCSocket = window.BCSocket isnt undefined
   hasSockJS = window.SockJS isnt undefined
-  throw new Error 'Must load socks or browserchannel before this library' unless hasBCSocket or hasSockJS
-  useSockJS = true if hasSockJS and !hasBCSocket
+  if hasBCSocket
+    socketImpl = 'channel'
+  else
+    if hasSockJS
+      socketImpl = 'sockjs'
+    else
+      socketImpl = 'websocket'
 else
   Connection = require('./connection').Connection
 
@@ -29,11 +34,10 @@ exports.open = do ->
   connections = {}
 
   getConnection = (origin, authentication) ->
-    if WEB?
+    if WEB? and !origin?
       location = window.location
-      # default to browserchannel
-      path = if useSockJS then 'sockjs' else 'channel'
-      origin ?= "#{location.protocol}//#{location.host}/#{path}"
+      protocol = if socketImpl == 'websocket' then 'ws:' else location.protocol
+      origin = "#{protocol}//#{location.host}/#{socketImpl}"
 
     unless connections[origin]
       c = new Connection origin, authentication
@@ -69,7 +73,6 @@ exports.open = do ->
     authentication = options.authentication
 
     c = getConnection origin, authentication
-    c.numDocs++
     c.open docName, type, (error, doc) ->
       if error
         callback error

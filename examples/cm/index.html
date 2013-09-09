@@ -5,7 +5,7 @@
 
 <div id="header">
   <div id="htext">
-    <b>Editing</b> <input type="text" value="cm" id='namefield'>
+    <b>Editing</b> <input type="text" id='namefield'>
   </div>
 </div>
 
@@ -19,12 +19,15 @@
 var doc = null, editor = null;
 
 function setDoc(docName) {
-  document.title = docName;
+  document.title = "ShareJS+CodeMirror: " + docName;
+  // don't set the standard one or we'll create two entries in the users history
+  if(docName != "cm")
+    location.hash = docName;
 
   sharejs.open(docName, 'text', function(error, newDoc) {
       if (doc !== null) {
           doc.close();
-          doc.detach_ace();
+          doc.detach_cm();
       }
 
       doc = newDoc;
@@ -38,21 +41,24 @@ function setDoc(docName) {
 };
 
 window.onload = function() {
-  //var ed = document.getElementById('editor');
   editor = CodeMirror(document.body, { mode: "coffeescript", tabSize: 2 });
-
-  setDoc('cm');  // Hooking ShareJS and CodeMirror for the first time.
-
   var namefield = document.getElementById('namefield');
-  function fn() {
+
+  var docName = location.hash.substr(1);
+  if(docName.length < 1)
+    docName = 'cm';
+  setDoc(docName);  // Hooking ShareJS and CodeMirror for the first time.
+  namefield.value = docName;
+
+  function namefieldChanged() {
       var docName = namefield.value;
       if (docName) setDoc(docName);
   }
 
   if (namefield.addEventListener) {
-      namefield.addEventListener('input', fn, false);
+      namefield.addEventListener('input', namefieldChanged, false);
   } else {
-      namefield.attachEvent('oninput', fn);
+      namefield.attachEvent('oninput', namefieldChanged);
   }
 };
 </script>

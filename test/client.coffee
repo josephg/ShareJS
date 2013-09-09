@@ -433,9 +433,10 @@ genTests = (client) -> testCase
       test.strictEqual action.responded, false
       action.accept()
       test.strictEqual action.responded, true
-      test.done()
-
+      
     client.open @name, 'text', "http://localhost:#{@port}/sjs", (error, doc) =>
+      doc.close()
+      test.done()
 
   'Text API is advertised': (test) ->
     @c.open @name, 'text', (error, doc) ->
@@ -494,6 +495,19 @@ genTests = (client) -> testCase
         client.open name + '1', 'text', "http://localhost:#{port}/sjs", (error, doc2) ->
           test.ifError error
           test.ok doc2
+          doc2.close ->
+            test.done()
+
+  'Opening a closed document reopens the document': (test) ->
+    @c.open @name, (error, doc1) =>
+      test.ifError error
+      test.ok doc1
+      test.equal doc1.state, 'open'
+      doc1.close =>
+        @c.open @name, 'text', (error, doc2) ->
+          test.ifError error
+          test.ok doc2
+          test.equal doc2.state, 'open'
           doc2.close ->
             test.done()
 

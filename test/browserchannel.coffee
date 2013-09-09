@@ -60,7 +60,7 @@ module.exports = testCase
 
         @socket.onerror = (e) -> console.warn 'eeee', e
         
-        @socket.send({auth:null});
+        @socket.send auth:null
 
         @expect = (data, callback) =>
           expectData @socket, data, callback
@@ -427,6 +427,8 @@ module.exports = testCase
     socket.send {auth:{a:1234}}
 
   'Socket timeout if no auth message is sent': (test) ->
+    console.log 'Waiting for a timeout... this usually takes about 10 seconds'
+    # This test should be rewritten to use timerstub.
     socket = new BCSocket "http://localhost:#{@server.address().port}/channel"
     socket.onmessage = (data) ->
       test.strictEqual data.auth, null

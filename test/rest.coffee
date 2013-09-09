@@ -1,6 +1,4 @@
 # Tests for the REST-ful interface
-
-http = require 'http'
 testCase = require('nodeunit').testCase
 
 util = require 'util'
@@ -8,32 +6,7 @@ util = require 'util'
 server = require '../src/server'
 types = require '../src/types'
 
-{makePassPart, newDocName} = require './helpers'
-
-# Async fetch. Aggregates whole response and sends to callback.
-# Callback should be function(response, data) {...}
-fetch = (method, port, path, postData, extraHeaders, callback) ->
-  if typeof extraHeaders == 'function'
-    callback = extraHeaders
-    extraHeaders = null
-
-  headers = extraHeaders || {'x-testing': 'booyah'}
-
-  request = http.request {method, path, host: 'localhost', port, headers}, (response) ->
-    data = ''
-    response.on 'data', (chunk) -> data += chunk
-    response.on 'end', ->
-      data = data.trim()
-      if response.headers['content-type'] == 'application/json'
-        data = JSON.parse(data)
-
-      callback response, data, response.headers
-
-  if postData?
-    postData = JSON.stringify(postData) if typeof(postData) == 'object'
-    request.write postData
-
-  request.end()
+{makePassPart, newDocName, fetch} = require './helpers'
 
 # Frontend tests
 module.exports = testCase

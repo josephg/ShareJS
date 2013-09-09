@@ -231,11 +231,31 @@ text2.compose = (op1, op2) ->
 
   trim result
 
+transformPosition = (cursor, op) ->
+  pos = 0
+  for c in op
+    break if cursor <= pos
+  
+    # I could actually use the op_iter stuff above - but I think its simpler like this.
+    switch typeof c
+      when 'number'
+        if cursor <= pos + c
+          return cursor
+        pos += c
+      when 'string'
+        pos += c.length
+        cursor += c.length
+      when 'object'
+        cursor -= Math.min c.d, cursor - pos
+  cursor
+ 
 text2.transformCursor = (cursor, op, isOwnOp) ->
   pos = 0
 
   if isOwnOp
     # Just track the position. We'll teleport the cursor to the end anyway.
+    # This works because text2 ops don't have any trailing skips at the end - so the last
+    # component is the last thing.
     for c in op
       switch typeof c
         when 'number'
@@ -244,23 +264,9 @@ text2.transformCursor = (cursor, op, isOwnOp) ->
           pos += c.length
         # Just eat deletes.
 
-    pos
+    [pos, pos]
   else
-    # I could actually use the op_iter stuff above - but I think its simpler like this.
-    for c in op
-      break if cursor <= pos
-    
-      switch typeof c
-        when 'number'
-          if cursor <= pos + c
-            return cursor
-          pos += c
-        when 'string'
-          pos += c.length
-          cursor += c.length
-        when 'object'
-          cursor -= Math.min c.d, cursor - pos
-    cursor
+    [(transformPosition cursor[0], op), (transformPosition cursor[1], op)]
   
 if WEB?
   exports.types.text2 = text2

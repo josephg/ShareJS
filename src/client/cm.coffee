@@ -19,10 +19,14 @@ applyToShareJS = (editorDoc, delta, doc) ->
      delta.to.ch == delta.from.ch # Then nothing was removed.
     doc.insert startPos, delta.text.join '\n'
   else
-    delLen = delta.to.ch - delta.from.ch
-    while i < delta.to.line
-      delLen += editorDoc.lineInfo(i).text.length + 1   # Add 1 for '\n'
-      i++
+    # delete.removed contains an array of removed lines as strings, so this adds
+    # all the lengths. Later delta.removed.length - 1 is added for the \n-chars
+    # (-1 because the linebreak on the last line won't get deleted)
+    delLen = 0
+    for rm in delta.removed
+      delLen += rm.length
+    delLen += delta.removed.length - 1
+
     doc.del startPos, delLen
     doc.insert startPos, delta.text.join '\n' if delta.text
 
@@ -33,12 +37,12 @@ applyToShareJS = (editorDoc, delta, doc) ->
 # the document's contents are nuked and replaced with the editor's).
 window.sharejs.extendDoc 'attach_cm', (editor, keepEditorContents) ->
   unless @provides.text
-    throw new Error 'Only text documents can be attached to CodeMirror2'
+    throw new Error 'Only text documents can be attached to CodeMirror 2 or 3'
 
   sharedoc = @
   check = ->
     window.setTimeout ->
-        editorText = editor.getValue()
+        editorText = editor.getValue('\n')
         otText = sharedoc.getText()
 
         if editorText != otText
@@ -50,7 +54,7 @@ window.sharejs.extendDoc 'attach_cm', (editor, keepEditorContents) ->
       , 0
 
   if keepEditorContents
-    @del 0, sharedoc.getText().length
+    @del 0, sharedoc.getText('\n').length
     @insert 0, editor.getValue()
   else
     editor.setValue sharedoc.getText()
@@ -68,7 +72,7 @@ window.sharejs.extendDoc 'attach_cm', (editor, keepEditorContents) ->
 
     check()
 
-  editor.setOption 'onChange',  editorListener
+  editor.on 'change', editorListener
 
   @on 'insert', (pos, text) ->
     suppress = true
@@ -87,7 +91,7 @@ window.sharejs.extendDoc 'attach_cm', (editor, keepEditorContents) ->
 
   @detach_cm = ->
     # TODO: can we remove the insert and delete event callbacks?
-    editor.setOption 'onChange', null
+    editor.off 'change', editorListener
     delete @detach_cm
 
   return
