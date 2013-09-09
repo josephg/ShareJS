@@ -107,6 +107,18 @@ describe 'rest', ->
         assert.deepEqual data, {str:'Hi'}
         done()
 
+    it 'document returns the entire document structure when envelope=true', (done) ->
+      @docs.c = {}
+      @docs.c.d = {v:1, type:ottypes.simple.uri, data:{str:'Hi'}}
+
+      fetch 'GET', @port, "/doc/c/d?envelope=true", null, (res, data, headers) ->
+        assert.strictEqual res.statusCode, 200
+        assert.strictEqual headers['x-ot-version'], '1'
+        assert.strictEqual headers['x-ot-type'], ottypes.simple.uri
+        assert.strictEqual headers['content-type'], 'application/json'
+        assert.deepEqual data, {v:1, type:ottypes.simple.uri, data:{str:'Hi'}}
+        done()
+
     it 'a plaintext document is returned as a string', (done) ->
       @docs.c = {}
       @docs.c.d = {v:1, type:ottypes.text.uri, data:'hi'}
