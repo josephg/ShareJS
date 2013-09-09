@@ -1,6 +1,6 @@
 {
   "name": "share",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "dependencies": {
     "sockjs": {
       "version": "0.3.5",
@@ -37,58 +37,6 @@
           "version": "1.2.2"
         }
       }
-    },
-    "connect": {
-      "version": "1.9.2",
-      "dependencies": {
-        "qs": {
-          "version": "0.5.3"
-        },
-        "mime": {
-          "version": "1.2.7"
-        },
-        "formidable": {
-          "version": "1.0.11"
-        }
-      }
-    },
-    "optimist": {
-      "version": "0.3.5",
-      "dependencies": {
-        "wordwrap": {
-          "version": "0.0.2"
-        }
-      }
-    },
-    "uglify-js": {
-      "version": "1.3.4"
-    },
-    "request": {
-      "version": "2.12.0",
-      "dependencies": {
-        "form-data": {
-          "version": "0.0.3",
-          "dependencies": {
-            "combined-stream": {
-              "version": "0.0.3",
-              "dependencies": {
-                "delayed-stream": {
-                  "version": "0.0.5"
-                }
-              }
-            },
-            "async": {
-              "version": "0.1.9"
-            }
-          }
-        },
-        "mime": {
-          "version": "1.2.7"
-        }
-      }
-    },
-    "coffee-script": {
-      "version": "1.4.0"
     },
     "browserchannel": {
       "version": "1.0.0",
@@ -146,11 +94,80 @@
         }
       }
     },
+    "ws": {
+      "version": "0.4.30",
+      "dependencies": {
+        "commander": {
+          "version": "0.6.1"
+        },
+        "nan": {
+          "version": "0.3.2"
+        },
+        "tinycolor": {
+          "version": "0.0.1"
+        },
+        "options": {
+          "version": "0.0.5"
+        }
+      }
+    },
+    "connect": {
+      "version": "1.9.2",
+      "dependencies": {
+        "qs": {
+          "version": "0.5.3"
+        },
+        "mime": {
+          "version": "1.2.7"
+        },
+        "formidable": {
+          "version": "1.0.11"
+        }
+      }
+    },
+    "request": {
+      "version": "2.12.0",
+      "dependencies": {
+        "form-data": {
+          "version": "0.0.3",
+          "dependencies": {
+            "combined-stream": {
+              "version": "0.0.3",
+              "dependencies": {
+                "delayed-stream": {
+                  "version": "0.0.5"
+                }
+              }
+            },
+            "async": {
+              "version": "0.1.9"
+            }
+          }
+        },
+        "mime": {
+          "version": "1.2.7"
+        }
+      }
+    },
+    "coffee-script": {
+      "version": "1.4.0"
+    },
     "hat": {
       "version": "0.0.3"
     },
     "redis": {
       "version": "0.8.2"
+    },
+    "uglify-js": {
+      "version": "1.3.4"
+    },
+    "optimist": {
+      "version": "0.3.5",
+      "dependencies": {
+        "wordwrap": {
+          "version": "0.0.2"
+        }
+      }
     }
   }
 }
