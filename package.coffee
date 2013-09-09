@@ -6,7 +6,7 @@ module.exports =
   name: "share"
 
   # Change version with "cake [-V newversion] bump"
-  version: "0.6.3"
+  version: "1.1.0"
   description: "A database for concurrent document editing"
   keywords: [
   	"operational transformation"
@@ -40,6 +40,9 @@ module.exports =
 
     # Useragent hashing
     hat: "*"
+
+    # Require redis since this is the backend we use.
+    redis: '*'
 
   # Developer dependencies
   devDependencies:
