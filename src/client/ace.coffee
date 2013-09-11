@@ -1,6 +1,7 @@
 # This is some utility code to connect an ace editor to a sharejs document.
 
-Range = require("ace/range").Range
+requireImpl = if ace.require? then ace.require else require
+Range = requireImpl("ace/range").Range
 
 # Convert an ace delta into an op understood by share.js
 applyToShareJS = (editorDoc, delta, doc) ->
@@ -23,7 +24,6 @@ applyToShareJS = (editorDoc, delta, doc) ->
     offset + range.start.row
 
   pos = getStartOffsetPosition(delta.range)
-
   switch delta.action
     when 'insertText' then doc.insert pos, delta.text
     when 'removeText' then doc.del pos, delta.text.length
@@ -81,6 +81,32 @@ window.sharejs.extendDoc 'attach_ace', (editor, keepEditorContents) ->
 
     check()
 
+  replaceTokenizer = () ->
+    oldTokenizer = editor.getSession().getMode().getTokenizer();
+    oldGetLineTokens = oldTokenizer.getLineTokens;
+    oldTokenizer.getLineTokens = (line, state) ->
+      if not state? or typeof state == "string" # first line
+        cIter = doc.createIterator(0)
+        state =
+          modeState : state
+      else
+        cIter = doc.cloneIterator(state.iter)
+        doc.consumeIterator(cIter, 1) # consume the \n from previous line
+
+      modeTokens = oldGetLineTokens.apply(oldTokenizer, [line, state.modeState]);
+      docTokens = doc.consumeIterator(cIter, line.length);
+      if (docTokens.text != line)
+        return modeTokens;
+
+      return {
+        tokens : doc.mergeTokens(docTokens, modeTokens.tokens)
+        state : 
+          modeState : modeTokens.state
+          iter : doc.cloneIterator(cIter)
+      }
+
+  replaceTokenizer() if doc.getAttributes?
+
   editorDoc.on 'change', editorListener
 
   # Listen for remote ops on the sharejs document
@@ -106,21 +132,28 @@ window.sharejs.extendDoc 'attach_ace', (editor, keepEditorContents) ->
 
     row:row, column:offset
 
-  doc.on 'insert', (pos, text) ->
+  doc.on 'insert', insertListener = (pos, text) ->
     suppress = true
     editorDoc.insert offsetToPos(pos), text
     suppress = false
     check()
 
-  doc.on 'delete', (pos, text) ->
+  doc.on 'delete', deleteListener = (pos, text) ->
     suppress = true
     range = Range.fromPoints offsetToPos(pos), offsetToPos(pos + text.length)
     editorDoc.remove range
     suppress = false
     check()
 
+  doc.on 'refresh', refreshListener = (startoffset, length) ->
+    range = Range.fromPoints offsetToPos(startoffset), offsetToPos(startoffset + length)
+    editor.getSession().bgTokenizer.start(range.start.row)
+
   doc.detach_ace = ->
+    doc.removeListener 'insert', insertListener
+    doc.removeListener 'delete', deleteListener
     doc.removeListener 'remoteop', docListener
+    doc.removeListener 'refresh', refreshListener
     editorDoc.removeListener 'change', editorListener
     delete doc.detach_ace
 

@@ -7,10 +7,10 @@
 nextTick = if WEB? then (fn) -> setTimeout fn, 0 else process['nextTick']
 
 class MicroEvent
-  on: (event, fct) ->
+  on: (event, f) ->
     @_events ||= {}
     @_events[event] ||= []
-    @_events[event].push(fct)
+    @_events[event].push(f)
     this
 
   removeListener: (event, fct) ->
@@ -32,14 +32,19 @@ class MicroEvent
     fn.apply this, args for fn in @_events[event] when fn
     this
 
+  once: (event, f) ->
+    @on event, listener = (args...) =>
+      @removeListener event, listener
+      f.apply this, args
+
 # mixin will delegate all MicroEvent.js function in the destination object
 MicroEvent.mixin = (obj) ->
-  proto = obj.prototype || obj
+  proto = obj:: || obj
 
-  # Damn closure compiler :/
-  proto.on = MicroEvent.prototype.on
-  proto.removeListener = MicroEvent.prototype.removeListener
-  proto.emit = MicroEvent.prototype.emit
+  proto.on = MicroEvent::on
+  proto.removeListener = MicroEvent::removeListener
+  proto.emit = MicroEvent::emit
+  proto.once = MicroEvent::once
   obj
 
 module.exports = MicroEvent unless WEB?

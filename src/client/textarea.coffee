@@ -30,7 +30,7 @@ window.sharejs.extendDoc 'attach_textarea', (elem) ->
     scrollTop = elem.scrollTop
     elem.value = newText
     elem.scrollTop = scrollTop if elem.scrollTop != scrollTop
-    [elem.selectionStart, elem.selectionEnd] = newSelection
+    [elem.selectionStart, elem.selectionEnd] = newSelection if window.document.activeElement is elem
 
   @on 'insert', insert_listener = (pos, text) ->
     transformCursor = (cursor) ->

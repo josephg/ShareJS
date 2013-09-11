@@ -33,7 +33,7 @@ window.onload = function() {
   // sharejs.open('{{{docName}}}', function(doc, error) {
   //   ...
 
-  var connection = new sharejs.Connection('http://' + window.location.hostname + ':' + 8000 + '/channel');
+  var connection = new sharejs.Connection('/channel');
 
   connection.open('{{{docName}}}', function(error, doc) {
     if (error) {
@@ -55,5 +55,5 @@ window.onload = function() {
 };
     </script>
   </body>
-</html>  
+</html>
 

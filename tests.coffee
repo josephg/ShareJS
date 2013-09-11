@@ -10,6 +10,7 @@ modules = [
 
   'types/count'
   'types/text'
+  'types/etherpad-api'
   'types/text-composable'
   'types/text-tp2'
   'types/text-api'
@@ -21,9 +22,10 @@ modules = [
   'useragent'
   'events'
   'rest'
-#  'socketio'
+  'rest_base'
   'browserchannel'
   'sockjs'
+  'websocket'
 
   'microevent'
 

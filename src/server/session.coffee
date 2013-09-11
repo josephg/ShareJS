@@ -32,7 +32,6 @@ AUTH_TIMEOUT = 10000
 # session should implement the following interface:
 #   headers
 #   address
-#   abort()
 #   stop()
 #   ready()
 #   send(msg)
@@ -56,6 +55,11 @@ exports.handler = (session, createAgent) ->
     # Map from docName -> {queue, listener if open}
     docState = {}
 
+    abort = ->
+      if session.stop
+        session.stop()
+      else
+        session.close()
 
     # We'll only handle one message from each client at a time.
     handleMessage = (query) ->
@@ -70,7 +74,7 @@ exports.handler = (session, createAgent) ->
 
       if error
         console.warn "Invalid query #{query} from #{agent.sessionId}: #{error}"
-        return session.abort()
+        return abort()
 
       # The agent can specify null as the docName to get a random doc name.
       if query.doc is null
@@ -81,13 +85,13 @@ exports.handler = (session, createAgent) ->
         unless lastReceivedDoc
           console.warn "msg.doc missing in query #{query} from #{agent.sessionId}"
         # The disconnect handler will be called when we do this, which will clean up the open docs.
-          return session.abort()
+          return abort()
 
         query.doc = lastReceivedDoc
 
       docState[query.doc] or= queue: syncQueue (query, callback) ->
-                                                   # When the session is closed, we'll nuke docState. When that happens, no more messages
-                                                   # should be handled.
+        # When the session is closed, we'll nuke docState. When that happens, no more messages
+        # should be handled.
         return callback() unless docState
 
         # Close messages are {open:false}
@@ -108,7 +112,7 @@ exports.handler = (session, createAgent) ->
 
         else
           console.warn "Invalid query #{JSON.stringify query} from #{agent.sessionId}"
-          session.abort()
+          abort()
           callback()
 
       # ... And add the message to the queue.
@@ -139,6 +143,8 @@ exports.handler = (session, createAgent) ->
       #p "Registering listener on #{docName} by #{socket.id} at #{version}"
 
       docState[docName].listener = listener = (opData) ->
+        # Listener can be called after close
+        return unless docState?[docName]
         throw new Error 'Consistency violation - doc listener invalid' unless docState[docName].listener == listener
 
         #p "listener doc:#{docName} opdata:#{i opData} v:#{version}"
@@ -156,7 +162,7 @@ exports.handler = (session, createAgent) ->
 
       # Tell the socket the doc is open at the requested version
       agent.listen docName, version, listener, (error, v) ->
-        delete docState[docName].listener if error
+        delete docState[docName].listener if error and docState
         callback error, v
 
     # Close the named document.
@@ -307,10 +313,10 @@ exports.handler = (session, createAgent) ->
 
     # Authentication process has failed, send error and stop session
     failAuthentication = (error) ->
-      session.send {
-        auth: null, 
+      session.send
+        auth: null
         error: error
-      }
+      
       session.stop()
 
     # Wait for client to send an auth message, but don't wait forever
@@ -321,7 +327,7 @@ exports.handler = (session, createAgent) ->
     # We don't process any messages from the agent until they've authorized. Instead,
     # they are stored in this buffer.
     buffer = []
-    session.on 'message', bufferMsg = (msg) -> 
+    session.on 'message', bufferMsg = (msg) ->
       if typeof msg.auth != 'undefined'
         clearTimeout timeout
         data.authentication = msg.auth
