@@ -92,6 +92,7 @@ describe 'rest', ->
         assert.strictEqual res.statusCode, 200
         assert.strictEqual headers['x-ot-version'], '1'
         assert.strictEqual headers['x-ot-type'], ottypes.text.uri
+        assert.ok headers['etag']
         assert.strictEqual data, ''
         done()
             
@@ -103,6 +104,7 @@ describe 'rest', ->
         assert.strictEqual res.statusCode, 200
         assert.strictEqual headers['x-ot-version'], '1'
         assert.strictEqual headers['x-ot-type'], ottypes.simple.uri
+        assert.ok headers['etag']
         assert.strictEqual headers['content-type'], 'application/json'
         assert.deepEqual data, {str:'Hi'}
         done()
@@ -115,9 +117,34 @@ describe 'rest', ->
         assert.strictEqual res.statusCode, 200
         assert.strictEqual headers['x-ot-version'], '1'
         assert.strictEqual headers['x-ot-type'], ottypes.text.uri
+        assert.ok headers['etag']
         assert.strictEqual headers['content-type'], 'text/plain'
         assert.deepEqual data, 'hi'
         done()
+
+    it 'ETag is the same between responses', (done) ->
+      @docs.c = {}
+      @docs.c.d = {v:1, type:ottypes.text.uri, data:'hi'}
+
+      fetch 'GET', @port, "/doc/c/d", null, (res, data, headers) =>
+        tag = headers['etag']
+
+        # I don't care what the etag is, but if I fetch it again it should be the same.
+        fetch 'GET', @port, "/doc/c/d", null, (res, data, headers) ->
+          assert.strictEqual headers['etag'], tag
+          done()
+
+    it 'ETag changes when version changes', (done) ->
+      @docs.c = {}
+      @docs.c.d = {v:1, type:ottypes.text.uri, data:'hi'}
+
+      fetch 'GET', @port, "/doc/c/d", null, (res, data, headers) =>
+        tag = headers['etag']
+        @docs.c.d.v = 2
+        fetch 'GET', @port, "/doc/c/d", null, (res, data, headers) =>
+          assert.notStrictEqual headers['etag'], tag
+          done()
+
 
   describe 'GET /ops', ->
     it 'returns ops', (done) ->
