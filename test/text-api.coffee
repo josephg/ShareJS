@@ -36,20 +36,20 @@ genTests = (type) -> describe "text api for '#{type.name}'", ->
 
 
   it 'has no length when empty', ->
-    assert.strictEqual @ctx.getText(), ''
+    assert.strictEqual @ctx.get(), ''
     assert.strictEqual @ctx.getLength(), 0
 
   it 'works with simple inserts and removes', ->
     @ctx.insert 0, 'hi'
-    assert.strictEqual @ctx.getText(), 'hi'
+    assert.strictEqual @ctx.get(), 'hi'
     assert.strictEqual @ctx.getLength(), 2
 
     @ctx.insert 2, ' mum'
-    assert.strictEqual @ctx.getText(), 'hi mum'
+    assert.strictEqual @ctx.get(), 'hi mum'
     assert.strictEqual @ctx.getLength(), 6
 
     @ctx.remove 0, 3
-    assert.strictEqual @ctx.getText(), 'mum'
+    assert.strictEqual @ctx.get(), 'mum'
     assert.strictEqual @ctx.getLength(), 3
 
   it 'gets edited correctly', ->
@@ -77,7 +77,7 @@ genTests = (type) -> describe "text api for '#{type.name}'", ->
         @ctx.remove pos, len
         content = content[...pos] + content[(pos + len)..]
 
-      assert.strictEqual @ctx.getText(), content
+      assert.strictEqual @ctx.get(), content
       assert.strictEqual @ctx.getLength(), content.length
 
   it 'emits events correctly', ->
@@ -92,7 +92,7 @@ genTests = (type) -> describe "text api for '#{type.name}'", ->
       [op, newDoc] = type.generateRandomOp @ctx._snapshot
 
       @apply op
-      assert.strictEqual @ctx.getText(), contents
+      assert.strictEqual @ctx.get(), contents
 
 genTests(type) for name, type of textTypes
 
