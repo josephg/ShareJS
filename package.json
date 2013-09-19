@@ -33,8 +33,7 @@
   "engine": "node >= 0.10",
   "main": "lib/index.js",
   "bin": {
-    "sharejs": "bin/sharejs",
-    "sharejs-exampleserver": "bin/exampleserver"
+    "sharejs": "bin/sharejs"
   },
   "scripts": {
     "build": "make",
