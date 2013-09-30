@@ -28,6 +28,7 @@
     "optimist": ">= 0.2.4",
     "browserchannel": "*",
     "mocha": "*",
+    "chai": "*",
     "uglify-js": "~2"
   },
   "engine": "node >= 0.10",
