@@ -19,7 +19,7 @@ wrapSession = (conn, options) ->
 
       if options.shareJSLog?
         now = new Date()
-        options.shareJSLog.write("\n#{dateutil.format(now, 'Y-m-d H:i:s')}: Received: #{parsed}")
+        options.shareJSLog.write("\n#{dateutil.format(now, 'Y-m-d H:i:s')}: Received: #{data}")
 
     catch error
       console.log "Received data parsing error #{error}"
