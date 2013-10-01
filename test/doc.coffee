@@ -8,6 +8,7 @@ describe 'Doc', ->
   textType = ottypes['http://sharejs.org/types/textv1']
   numberType = require('./support/ot_number')
 
+  # TODO Use the real Connection class and stub things out on demand
   connection =
     state: 'connected'
     sent: []
@@ -17,6 +18,10 @@ describe 'Doc', ->
       msg.src = @id
       msg.seq = @seq
       @send(msg)
+    sendSubscribe: (collection, name, version)->
+      msg =  c:collection, d:name, src: @id, seq: @seq, a:'sub'
+      msg.v = version if version
+      @send msg
     id: '42'
     seq: 0
 
@@ -47,7 +52,9 @@ describe 'Doc', ->
 
     it 'sends subscription message', ->
       @doc.subscribe()
-      expect(connection.sent[0]).to.deep.equal {c: 'notes', d: 'music', a: 'sub'}
+      expect(connection.sent[0].c).to.equal 'notes'
+      expect(connection.sent[0].d).to.equal 'music'
+      expect(connection.sent[0].a).to.equal 'sub'
 
     it 'retrives snapshot', ->
       @doc.subscribe()
