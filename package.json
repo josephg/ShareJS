@@ -16,11 +16,12 @@
     "email": "josephg@gmail.com"
   },
   "dependencies": {
-    "livedb": "~0.2",
+    "livedb": ">=0.2.3",
     "ottypes": "~0.6",
     "semver": "~2",
     "express": "~3",
-    "hat": "*"
+    "hat": "*",
+    "async": "~0.2"
   },
   "devDependencies": {
     "coffee-script": "<=1.6",
