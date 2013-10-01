@@ -26,6 +26,12 @@ describe 'Doc', ->
     seq: 0
 
 
+  # Call this in a group to work with a created document
+  beforeEachCreateDocument = ->
+    beforeEach ->
+      @doc.create(numberType, 1)
+      @doc.flush()
+      sendMessage connection.sent.pop()
 
   sendMessage = (msg)->
     connection.receiver._onMessage(msg)
@@ -127,7 +133,11 @@ describe 'Doc', ->
       @doc.flush()
       expect(connection.sent[0]).to.have.property('create')
 
-    it 'applies changes on success', ->
+    it 'immediately injests data locally', ->
+      @doc.create(textType, 'a note on music')
+      expect(@doc.snapshot).to.equal 'a note on music'
+
+    it 'injests data on success', ->
       @doc.create(textType, 'a note on music')
       @doc.flush()
       sendMessage connection.sent[0]
@@ -140,9 +150,31 @@ describe 'Doc', ->
       sendMessage connection.sent[0]
       expect(@doc.state).to.equal 'ready'
 
-    it 'applies changes locally', ->
-      @doc.create(textType, 'a note on music')
-      expect(@doc.snapshot).to.equal 'a note on music'
+    it 'emits create after snapshot created', (done)->
+      @doc.once 'create', =>
+        expect(@doc.snapshot).to.equal 'Love The Police'
+        done()
+      @doc.create(textType, 'Love The Police')
+
+
+  describe '#del', ->
+
+    beforeEachCreateDocument()
+
+    it 'sends del message', ->
+      @doc.del()
+      @doc.flush()
+      expect(connection.sent[0]).to.have.property('del')
+
+    it 'unsets type', ->
+      @doc.del()
+      expect(@doc.type).to.be.null
+
+    it 'emits del after unsetting type', (done)->
+      @doc.once 'del', =>
+        expect(@doc.type).to.be.null
+        done()
+      @doc.del()
 
 
   describe 'subscribe unsubscribe and fetch', ->
@@ -198,12 +230,10 @@ describe 'Doc', ->
 
     describe 'operation', ->
 
-      beforeEach ->
-        @doc.create(numberType, 1)
-        @doc.flush()
-        sendMessage connection.sent.pop()
-        @context = @doc.createContext()
+      beforeEachCreateDocument()
 
+      beforeEach ->
+        @context = @doc.createContext()
       afterEach ->
         @doc.removeContexts()
 
@@ -221,6 +251,51 @@ describe 'Doc', ->
 
     it 'ends up in the right state if we create() then subscribe() synchronously'
     it "abandons the document state if we can't recover from the rejected op", ->
+
+  describe 'after op event', ->
+
+    beforeEachCreateDocument()
+
+    it 'is triggered when submitting operation', (done)->
+      @doc.on('after op', -> done())
+      @doc.submitOp(-2)
+
+    it 'is triggered after applying operation', (done)->
+      expect(@doc.snapshot).to.equal 1
+      @doc.on 'after op', =>
+        expect(@doc.snapshot).to.equal 0
+        done()
+      @doc.submitOp(-1)
+
+    it 'sends operations in correct order', (done)->
+      @doc.once 'after op', =>
+        @doc.submitOp(1)
+        @doc.flush()
+        expect(connection.sent[0].op).to.equal -1
+        done()
+      @doc.submitOp(-1)
+
+  describe 'after op event', ->
+
+    beforeEachCreateDocument()
+
+    it 'is triggered when submitting operation', (done)->
+      @doc.on('before op', -> done())
+      @doc.submitOp(-2)
+
+    it 'is triggered before applying operation', (done)->
+      expect(@doc.snapshot).to.equal 1
+      @doc.on 'before op', =>
+        expect(@doc.snapshot).to.equal 1
+        done()
+      @doc.submitOp(-1)
+
+    it 'is triggered when document is locked', (done)->
+      @doc.once 'before op', =>
+        expect(@doc.locked).to.be.true
+        done()
+      @doc.submitOp(-1)
+
 
   describe 'ops', ->
     it 'sends an op to the server', ->
