@@ -4,7 +4,7 @@ WebSocketServer = require('ws').Server
 
 sessionHandler = require('./session').handler
 
-wrapSession = (conn) ->
+wrapSession = (conn, options) ->
   wrapper = new EventEmitter
   wrapper.abort = -> conn.close()
   wrapper.stop = -> conn.close()
@@ -15,6 +15,11 @@ wrapSession = (conn) ->
     try
       parsed = JSON.parse data
       wrapper.emit 'message', parsed
+
+      if options.shareJSLog?
+        now = new Date()
+        options.shareJSLog.write("\n#{dateutil.format(now, 'Y-m-d H:i:s')}: Received: #{parsed}")
+
     catch error
       console.log "Received data parsing error #{error}"
 
@@ -26,4 +31,4 @@ wrapSession = (conn) ->
 exports.attach = (server, createAgent, options) ->
   options.prefix or= '/websocket'
   wss = new WebSocketServer {server: server, path: options.prefix}
-  wss.on 'connection', (conn) -> sessionHandler wrapSession(conn), createAgent
+  wss.on 'connection', (conn) -> sessionHandler wrapSession(conn, options), createAgent

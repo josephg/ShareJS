@@ -41,6 +41,9 @@ module.exports =
     # Useragent hashing
     hat: "*"
 
+    # for logging
+    dateutil: "*"
+
   # Developer dependencies
   devDependencies:
     # Example server
