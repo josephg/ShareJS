@@ -1,6 +1,7 @@
 # This implements the WebSocket network API for ShareJS.
 EventEmitter = require('events').EventEmitter
 WebSocketServer = require('ws').Server
+dateutil    = require 'dateutil'
 
 sessionHandler = require('./session').handler
 
