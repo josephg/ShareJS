@@ -24,7 +24,9 @@
 
 hat = require 'hat'
 
-syncQueue = require './syncqueue'
+syncQueue   = require './syncqueue'
+winston     = require('winston')
+sharejslog  = winston.loggers.get('sharejslog')
 
 # Time (in ms) that the server will wait for an auth message from the client before closing the connection
 AUTH_TIMEOUT = 10000
@@ -134,6 +136,7 @@ exports.handler = (session, createAgent) ->
       # session has closed.
       if session.ready()
         session.send response
+        sharejslog.debug  response, {response:true}
 
     # Open the given document name, at the requested version.
     # callback(error, version)

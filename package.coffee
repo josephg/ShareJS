@@ -42,7 +42,7 @@ module.exports =
     hat: "*"
 
     # for logging
-    dateutil: "*"
+    winston: "*"
 
   # Developer dependencies
   devDependencies:

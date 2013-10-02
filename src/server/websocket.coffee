@@ -1,7 +1,8 @@
 # This implements the WebSocket network API for ShareJS.
 EventEmitter = require('events').EventEmitter
 WebSocketServer = require('ws').Server
-dateutil    = require 'dateutil'
+winston     = require('winston')
+sharejslog = winston.loggers.get('sharejslog')
 
 sessionHandler = require('./session').handler
 
@@ -17,10 +18,7 @@ wrapSession = (conn, options) ->
       parsed = JSON.parse data
       wrapper.emit 'message', parsed
 
-      if options.shareJSLog?
-        now = new Date()
-        options.shareJSLog.write("\n#{dateutil.format(now, 'Y-m-d H:i:s')}: Received: #{data}")
-
+      sharejslog.debug parsed, {request:true}
     catch error
       console.log "Received data parsing error #{error}"
 
