@@ -136,7 +136,7 @@ exports.handler = (session, createAgent) ->
       # session has closed.
       if session.ready()
         session.send response
-        sharejslog.debug  response, {response:true}
+        sharejslog.debug  JSON.stringify(response), {response:true}
 
     # Open the given document name, at the requested version.
     # callback(error, version)
