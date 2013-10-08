@@ -214,11 +214,10 @@ describe 'UserAgent', ->
 
     it 'fires emit', (done)->
       @userAgent.query 'flowers', {}, {}, (error, emitter)=>
-        diffListener = sinon.spy()
-        emitter.on 'diff', diffListener
+        emitter.on 'diff', (diffs)->
+          assert.equal diffs, 'This changed'
+          done()
         @queryEmitter.emit('diff', 'This changed')
-        sinon.assert.calledWith diffListener, 'This changed'
-        done()
 
     it 'filters records inserted into query results', (done)->
       shareInstance.docFilters.push (collection, docName, data, next)->
