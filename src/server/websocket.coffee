@@ -18,7 +18,7 @@ wrapSession = (conn, options) ->
       parsed = JSON.parse data
       wrapper.emit 'message', parsed
 
-      sharejslog.debug data, {request:true}
+      sharejslog.debug data.toString(), {request:true}
     catch error
       console.log "Received data parsing error #{error}"
 
