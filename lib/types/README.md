@@ -7,5 +7,5 @@ the nice APIs so if you want to invent your own wacky type, you can still use al
 For example, the three text types defined here (text, text-composable and text-tp2) all provide the text API, supplying
 `.insert()`, `.del()`, `.getLength` and `.getText` methods.
 
-See text-api.coffee for an example.
+See text-api.js for an example.
 
