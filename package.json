@@ -21,6 +21,7 @@
     "semver": "~2",
     "express": "~3",
     "hat": "*",
+    "sinon": "~1.7.3",
     "async": "~0.2"
   },
   "devDependencies": {
