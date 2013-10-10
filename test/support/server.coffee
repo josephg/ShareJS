@@ -11,9 +11,12 @@ createInstance = ->
   livedbLib = require 'livedb'
   memorydb  = livedbLib.memory()
   livedb    = livedbLib.client(db: memorydb, redis: redis)
+  livedb.redis = redis
+  livedb.db = memorydb
 
   shareServer = require '../../lib/server'
   shareServer.createClient(backend: livedb)
+
 
 # Converts a socket to a Duplex stream
 socketToStream = (socket)->
@@ -23,11 +26,13 @@ socketToStream = (socket)->
     console.log data
     stream.push(data)
   stream._read = ->
-  stream._write = (data)->
+  stream._write = (data, enc, callback)->
     console.log ">>> server send"
     console.log data
     socket.send(data)
+    callback()
   stream
+
 
 
 # Exports an express app that handles sharejs and tests
@@ -39,9 +44,19 @@ module.exports = ->
   shareChannel = require('browserchannel').server (socket)->
     share.listen socketToStream(socket)
 
+  # Enables client to reset the database
+  fixturesChannel = require('browserchannel').server base: '/fixtures', (socket)->
+    socket.on 'message', (data)->
+      share.backend.redis.flushdb()
+      share.backend.db.collections = {}
+      share.backend.db.ops = {}
+      console.log '*** reset'
+      socket.send 'ok'
+
 
   express()
   .use(shareChannel)
+  .use(fixturesChannel)
   .use(connect.logger('dev'))
   .use(connect.static('test/client'))
 
@@ -53,7 +68,6 @@ module.exports = ->
     .add('./test/client')
     .require('browserchannel/dist/bcsocket', expose: 'bcsocket')
     .require('./lib/client', expose: 'share')
-    .require('assert')
     .bundle (error, source)->
       if error
         console.error error

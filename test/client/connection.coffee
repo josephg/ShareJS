@@ -11,13 +11,17 @@ describe 'Connection', ->
       socket = new BCSocket
       socket.close()
       connection = new Connection(socket)
-      connection.on 'connecting', -> done()
+      connection.on 'connecting', ->
+        socket.close()
+        done()
       socket.open()
 
     it 'connects to sharejs', (done)->
       socket = new BCSocket
       connection = new Connection(socket)
-      connection.on 'connected', -> done()
+      connection.on 'connected', ->
+        socket.close()
+        done()
     
 
   describe '#get', ->
@@ -25,6 +29,10 @@ describe 'Connection', ->
     before ->
       socket = new BCSocket
       @connection = new Connection(socket)
+
+    after ->
+      @connection.socket.close()
+      delete @connection
 
     it 'returns a document', ->
       Doc = require('share').Doc
