@@ -58,14 +58,14 @@ module.exports = ->
   .use(shareChannel)
   .use(fixturesChannel)
   .use(connect.logger('dev'))
-  .use(connect.static('test/client'))
+  .use(connect.static('test/browser'))
 
   # Compile all client tests
   .get '/tests.js', (req, res)->
     res.type('js')
     browserify(extensions: ['.coffee'])
     .transform('coffeeify')
-    .add('./test/client')
+    .add('./test/browser')
     .require('browserchannel/dist/bcsocket', expose: 'bcsocket')
     .require('./lib/client', expose: 'share')
     .bundle (error, source)->
