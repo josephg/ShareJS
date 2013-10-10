@@ -31,6 +31,7 @@
     "browserify": "*",
     "optimist": ">= 0.2.4",
     "browserchannel": "*",
+    "grunt": "~0.4",
     "mocha": "*",
     "chai": "*",
     "sinon": "1.7.3",
