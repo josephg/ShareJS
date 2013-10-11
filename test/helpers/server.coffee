@@ -59,6 +59,8 @@ module.exports = ->
   .use(fixturesChannel)
   .use(connect.logger('dev'))
   .use(connect.static('test/browser'))
+  # Serve compiled mocha.js and mocha.css
+  .use(connect.static('node_modules/mocha'))
 
   # Compile all client tests
   .get '/tests.js', (req, res)->
