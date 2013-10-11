@@ -1,8 +1,10 @@
 var connect = require('connect');
 
-
 module.exports = function(grunt) {
-  grunt.registerTask('testserver', 'Start a server to test clients', function(){
+
+  grunt.loadTasks('tasks')
+
+  grunt.registerTask('test:server', 'Start a server to test clients', function(){
     var done = this.async();
     server = require('./test/helpers/server')();
     server.listen(3000)
