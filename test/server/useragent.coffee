@@ -6,7 +6,8 @@ assert = require 'assert'
 
 describe 'UserAgent', ->
 
-  backend = {}
+  backend =
+    bulkSubscribe: ->
 
   shareInstance =
     docFilters: []
@@ -14,6 +15,8 @@ describe 'UserAgent', ->
     backend: backend
     _trigger: (request, callback)->
       callback(null, request)
+
+  shareInstance = require('../lib/server').createClient(backend: backend)
 
   beforeEach ->
     @userAgent = new UserAgent shareInstance
@@ -261,17 +264,9 @@ describe 'UserAgent', ->
         done()
       @userAgent.trigger 'smell', 'flowers', 'lily', deep: true
 
-    it 'passes modified request to callback', (done)->
-      @instance.use 'smell', (request, next)->
-        request.eyesClosed = true
-        next()
-      @userAgent.trigger 'smell', 'flowers', 'lily', (error, request)->
-        assert.ok request.eyesClosed
-        done()
-
     it 'passes errors to callback', (done)->
-      @instance.use 'smell', (request, next)->
-        next('Argh!')
+      @instance.use 'smell', (request, next, respond)->
+        respond('Argh!')
       @userAgent.trigger 'smell', 'flowers', 'lily', (error, request)->
         assert.equal error, 'Argh!'
         done()
