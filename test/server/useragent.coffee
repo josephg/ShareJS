@@ -9,13 +9,6 @@ describe 'UserAgent', ->
   backend =
     bulkSubscribe: ->
 
-  shareInstance =
-    docFilters: []
-    opFilters: []
-    backend: backend
-    _trigger: (request, callback)->
-      callback(null, request)
-
   shareInstance = require('../lib/server').createClient(backend: backend)
 
   beforeEach ->
