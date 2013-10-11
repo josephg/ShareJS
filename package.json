@@ -36,7 +36,6 @@
     "chai": "*",
     "sinon": "1.7.3",
     "phantom-proxy": "~0.1.792",
-    "grunt-simple-mocha": "~0.4.0",
     "redis": "~0.8.6",
     "uglify-js": "~2"
   },

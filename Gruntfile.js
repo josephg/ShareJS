@@ -1,22 +1,14 @@
 module.exports = function(grunt) {
-  grunt.initConfig({
-    simplemocha: {
-      options: {
-        ignoreLeaks: true,
-        ui: 'bdd',
-        reporter: 'spec'
-      },
-      all: [
-        'test/**/*_spec.coffee',
-        'test/**/*_spec.js'
-      ]
-    }
-  });
-
   grunt.loadTasks('tasks');
-  grunt.loadNpmTasks('grunt-simple-mocha');
 
-  grunt.registerTask('test', ['simplemocha']);
+  grunt.registerTask('test:specs', function() {
+    grunt.util.spawn({
+      cmd: 'node_modules/.bin/mocha',
+      opts: { stdio: 'inherit' }
+    }, this.async());
+  })
+
+  grunt.registerTask('test', ['test:specs']);
 
   grunt.registerTask('test:server', 'Start a server to test clients', function(){
     var done = this.async();
