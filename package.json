@@ -25,10 +25,10 @@
     "async": "~0.2"
   },
   "devDependencies": {
-    "coffee-script": "*",
+    "coffee-script": "~1.6.3",
     "connect": "~2",
     "coffeeify": "*",
-    "browserify": "*",
+    "browserify": "~2.34",
     "optimist": ">= 0.2.4",
     "browserchannel": "*",
     "grunt": "~0.4",
