@@ -110,8 +110,9 @@ describe 'ShareInstance#process', ->
     assert.equal change.msg, 'say what'
     assert.equal after.msg,  'gruezi'
 
-  it 'returns error if no middlware responds', (done)->
+  it 'returns request if no middlware responds', (done)->
     @instance.use 'q', (request, next)-> next()
-    @instance.process 'q', {}, (error)->
-      assert.equal error, 'No middleware responded to your request'
+    @instance.process 'q', {}, (error, data)->
+      assert.equal error, null
+      assert.deepEqual data, {action: 'q'}
       done()
