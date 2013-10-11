@@ -1,5 +1,3 @@
-var connect = require('connect');
-
 module.exports = function(grunt) {
   grunt.initConfig({
     simplemocha: {

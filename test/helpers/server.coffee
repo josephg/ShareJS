@@ -19,16 +19,18 @@ createInstance = ->
 
 
 # Converts a socket to a Duplex stream
-socketToStream = (socket)->
+socketToStream = (socket, log = true)->
   stream = new Duplex objectMode: yes
   socket.on 'message', (data)->
-    console.log "<<< client receive"
-    console.log data
+    if log
+      console.log "<<< client receive"
+      console.log data
     stream.push(data)
   stream._read = ->
   stream._write = (data, enc, callback)->
-    console.log ">>> server send"
-    console.log data
+    if log
+      console.log ">>> server send"
+      console.log data
     socket.send(data)
     callback()
   stream
@@ -36,13 +38,19 @@ socketToStream = (socket)->
 
 
 # Exports an express app that handles sharejs and tests
-module.exports = ->
+#
+# @param options.log  enables logging of wire protocol and server requests,
+#   defaults to true
+module.exports = (options = {})->
+
+  log = true
+  log = options.log if options.log?
 
   share = createInstance()
 
   # BrowserChannel middleware that creates sharejs sessions
   shareChannel = require('browserchannel').server (socket)->
-    share.listen socketToStream(socket)
+    share.listen socketToStream(socket, log)
 
   # Enables client to reset the database
   fixturesChannel = require('browserchannel').server base: '/fixtures', (socket)->
@@ -50,15 +58,17 @@ module.exports = ->
       share.backend.redis.flushdb()
       share.backend.db.collections = {}
       share.backend.db.ops = {}
-      console.log '*** reset'
+      console.log '*** reset' if log
       socket.send 'ok'
 
 
-  express()
+  app = express()
   .use(shareChannel)
   .use(fixturesChannel)
-  .use(connect.logger('dev'))
-  .use(connect.static('test/browser'))
+
+  app.use(connect.logger('dev')) if log
+
+  app.use(connect.static('test/browser'))
   # Serve compiled mocha.js and mocha.css
   .use(connect.static('node_modules/mocha'))
 

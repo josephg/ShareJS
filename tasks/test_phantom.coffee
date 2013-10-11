@@ -4,10 +4,14 @@ module.exports = (grunt)->
 
   grunt.registerTask 'test:phantom', 'Run browser tests in phantom', ->
 
+    server = require('../test/helpers/server')(log: false)
+      .disable('log')
+      .listen(3456)
+
     done = this.async()
 
     phantomProxy = require('phantom-proxy')
-    url = 'http://127.0.0.1:3000'
+    url = 'http://127.0.0.1:3456'
     phantomProxy.create (proxy)->
 
       fail = (msg)->
@@ -18,7 +22,7 @@ module.exports = (grunt)->
       page = proxy.page
       page.open url, (status)->
         if status != true
-          fail "Could not connect to #{url}\nStart test server with `grunt test:server`"
+          fail "Could not connect to #{url}"
 
       page.on 'error', (error, trace)->
         if trace && trace.length
