@@ -199,3 +199,16 @@ client.open('hello', 'text', 'http://localhost:8000/sjs', function(error, doc) {
 See [`the wiki`](https://github.com/josephg/ShareJS/wiki) for API documentation, and `examples/node*` for some more example apps.
 
 
+Testing
+-------
+
+Server-side and client unit tests are run with `grunt test`. For in-browser
+tests fire up `grunt test:server` and go to `http://localhost:3000`. You can
+also run the browser tests in [PhantomJS](http://phantomjs.org/) by using `grunt
+test:phantom`. You can run single tests using
+[mocha](http://visionmedia.github.io/mocha/).
+
+All tests are located under the `test` directory. Server-side tests are required
+to end in `_spec.(coffee|js)`. Browser tests are contained in `test/browser`. If
+you add browser tests, you also have to add them to the script
+`test/browser/index.coffee` that runs the tests in the browser.

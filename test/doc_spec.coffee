@@ -6,7 +6,7 @@ require '../lib/types/text-api'
 describe 'Doc', ->
 
   textType = ottypes['http://sharejs.org/types/textv1']
-  numberType = require('./support/ot_number')
+  numberType = require('./helpers/ot_number')
 
   # TODO Use the real Connection class and stub things out on demand
   connection =
