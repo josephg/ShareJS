@@ -1,4 +1,0 @@
-test/**/*_spec.coffee
---compilers coffee:coffee-script
---reporter spec
---check-leaks

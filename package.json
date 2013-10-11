@@ -36,6 +36,7 @@
     "chai": "*",
     "sinon": "1.7.3",
     "phantom-proxy": "~0.1.792",
+    "grunt-simple-mocha": "~0.4.0",
     "uglify-js": "~2"
   },
   "engine": "node >= 0.10",
@@ -45,7 +46,7 @@
   },
   "scripts": {
     "build": "make",
-    "test": "mocha",
+    "test": "grunt test",
     "prepublish": "make webclient"
   },
   "licenses": [
