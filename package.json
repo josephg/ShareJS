@@ -31,6 +31,7 @@
     "browserchannel": "*",
     "mocha": "*",
     "chai": "*",
+    "sinon": "1.7.3",
     "uglify-js": "~2"
   },
   "engine": "node >= 0.10",
