@@ -7,7 +7,8 @@ describe 'Doc', ->
   {Connection} = require('share')
   {BCSocket} = require('bcsocket')
 
-  fixtures = new BCSocket 'fixtures'
+  console.log require '../helpers/fixtures'
+  fixtures = require('../helpers/fixtures')()
 
   before ->
     @connection = @alice = new Connection(new BCSocket)
@@ -25,13 +26,9 @@ describe 'Doc', ->
 
   # Reset documents
   beforeEach (done)->
-    fixtures.onmessage = ->
-      fixtures.onmessage = undefined
-      done()
-    fixtures.send('reset')
-
     @alice.collections = {}
     @bob.collections = {}
+    fixtures.reset(done)
 
 
   describe '#create', ->
