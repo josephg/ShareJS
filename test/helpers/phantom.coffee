@@ -11,15 +11,8 @@ if window && window.callPhantom
     else
       (args...)-> window.callPhantom [type].concat(args)
 
-  console.log   = phantom('console')
-  console.error = phantom('console')
-  Mocha.process.stdout.write = phantom('write')
-
-  mocha.reporter('spec')
-
   module.exports = phantom
   module.exports.available = true
-
 else
   module.exports = ->
   module.exports.available = false
