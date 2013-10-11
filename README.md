@@ -208,7 +208,6 @@ also run the browser tests in [PhantomJS](http://phantomjs.org/) by using `grunt
 test:phantom`. You can run single tests using
 [mocha](http://visionmedia.github.io/mocha/).
 
-All tests are located under the `test` directory. Server-side tests are required
-to end in `_spec.(coffee|js)`. Browser tests are contained in `test/browser`. If
-you add browser tests, you also have to add them to the script
-`test/browser/index.coffee` that runs the tests in the browser.
+All tests are located under the `test` directory. Browser tests are contained in
+`test/browser`. If you add browser tests, you also have to add them to the
+script `test/browser/index.coffee` that runs the tests in the browser.
