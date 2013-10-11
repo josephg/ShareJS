@@ -1,4 +1,6 @@
-before_script: "npm install"
+before_script:
+  - "npm install"
+  - "npm install -g grunt-cli"
 language: node_js
 node_js:
   - 0.10
