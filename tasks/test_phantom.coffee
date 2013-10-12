@@ -4,7 +4,7 @@ module.exports = (grunt)->
 
   grunt.registerTask 'test:phantom', 'Run browser tests in phantom', ->
 
-    server = require('../test/helpers/server')(log: false)
+    server = require('../test/helpers/server')(log: !!grunt.cli.options.debug)
       .disable('log')
       .listen(3456)
 

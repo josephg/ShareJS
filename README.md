@@ -204,8 +204,9 @@ Testing
 
 Server-side and client unit tests are run with `grunt test`. For in-browser
 tests fire up `grunt test:server` and go to `http://localhost:3000`. You can
-also run the browser tests in [PhantomJS](http://phantomjs.org/) by using `grunt
-test:phantom`. You can run single tests using
+also run the browser tests in [PhantomJS](http://phantomjs.org/) using `grunt
+test:phantom`. Passing the debug option (`-d`) to the phantom tests shows
+the communication between client and server. You can run single tests using
 [mocha](http://visionmedia.github.io/mocha/).
 
 All tests are located under the `test` directory. Browser tests are contained in
