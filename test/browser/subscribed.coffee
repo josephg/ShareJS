@@ -5,9 +5,11 @@ ottypes = require('ottypes')
 
 describe 'Subscribed Document', ->
 
-  connections =
-    alice: new Connection(new BCSocket)
-    bob:   new Connection(new BCSocket)
+  connections = {}
+
+  before ->
+    connections.alice = new Connection(new BCSocket)
+    connections.bob =   new Connection(new BCSocket)
 
   after ->
     for name, connection of connections
