@@ -20,8 +20,9 @@ describe 'UserAgent', ->
 
   describe '#fetch', ->
 
-    backend.fetch = (collection, document, callback)->
-      callback(null, color: 'yellow')
+    before ->
+      backend.fetch = (collection, document, callback)->
+        callback(null, color: 'yellow')
 
     it 'calls fetch on backend', (done)->
       sinon.spy backend, 'fetch'
@@ -71,10 +72,11 @@ describe 'UserAgent', ->
     operationStream._read = ->
     beforeEach -> operationStream.unpipe()
 
-    backend.subscribe = (args..., callback)->
-      callback(null, operationStream)
+    before ->
+      backend.subscribe = (args..., callback)->
+        callback(null, operationStream)
 
-    it 'calls fetch on backend', (done)->
+    it 'calls subscribe on backend', (done)->
       sinon.spy backend, 'subscribe'
       @userAgent.subscribe 'flowers', 'lily', 10, ->
         sinon.assert.calledWith backend.subscribe, 'flowers', 'lily', 10
@@ -130,10 +132,43 @@ describe 'UserAgent', ->
           operationStream.push {op: 'first operation'}
 
 
+  describe '#fetchAndSubscribe', ->
+
+    operationStream = new Readable objectMode: yes
+    operationStream._read = ->
+    beforeEach -> operationStream.unpipe()
+
+    before ->
+      backend.fetch = (collection, document, callback)->
+        callback(null, color: 'yellow')
+
+      backend.subscribe = (args..., callback)->
+        callback(null, operationStream)
+
+    it 'calls fetchAndSubscribe on backend', (done)->
+      sinon.spy backend, 'fetch'
+      @userAgent.fetchAndSubscribe 'flowers', 'lily', ->
+        sinon.assert.calledWith backend.fetch, 'flowers', 'lily'
+        backend.fetch.reset()
+        done()
+
+    it 'returns document data', (done)->
+      @userAgent.fetchAndSubscribe 'flowers', 'lily', (error, document)->
+        assert.deepEqual document, color: 'yellow'
+        done()
+
+    it 'can read operationStream', (done)->
+      @userAgent.fetchAndSubscribe 'flowers', 'lily', (error, document, subscriptionStream)->
+        subscriptionStream.on 'readable', (data)->
+          assert.equal subscriptionStream.read(), 'first operation'
+          done()
+        operationStream.push 'first operation'
+
   describe '#submit', ->
 
-    backend.submit = (collection, document, opData, options, callback)->
-      callback(null, 41, ['operation'], 'a document')
+    before ->
+      backend.submit = (collection, document, opData, options, callback)->
+        callback(null, 41, ['operation'], 'a document')
 
     it 'calls submit on backend', (done)->
       sinon.spy backend, 'submit'
@@ -157,11 +192,12 @@ describe 'UserAgent', ->
 
   describe '#queryFetch', ->
 
-    backend.queryFetch = (collection, query, options, callback)->
-      callback null, [
-        {docName: 'rose', color: 'white'},
-        {docName: 'lily', color: 'yellow'}]
-      , 'all'
+    before ->
+      backend.queryFetch = (collection, query, options, callback)->
+        callback null, [
+          {docName: 'rose', color: 'white'},
+          {docName: 'lily', color: 'yellow'}]
+        , 'all'
 
     it 'calls queryFetch on backend', (done)->
       sinon.spy backend, 'queryFetch'
