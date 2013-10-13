@@ -199,6 +199,17 @@ client.open('hello', 'text', 'http://localhost:8000/sjs', function(error, doc) {
 See [`the wiki`](https://github.com/josephg/ShareJS/wiki) for API documentation, and `examples/node*` for some more example apps.
 
 
+Examples
+--------
+
+Run examples with `grunt example:<name>` and have a look at the code under
+`examples/name`. Be sure to run `grunt dist` first. Currently available examples are
+
+* **Text.** Share a simple textarea.
+
+
+
+
 Testing
 -------
 
