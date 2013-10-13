@@ -10,6 +10,7 @@ describe 'UserAgent', ->
     bulkSubscribe: ->
 
   shareInstance = require('../lib/server').createClient(backend: backend)
+  shareInstance.useDocFilterMiddleware()
 
   beforeEach ->
     @userAgent = new UserAgent shareInstance
@@ -40,27 +41,21 @@ describe 'UserAgent', ->
 
       it 'calls filter', (done)->
         filter = sinon.spy (args..., next)-> next()
-        shareInstance.docFilters.push filter
+        shareInstance.docFilter filter
         @userAgent.fetch 'flowers', 'lily', (error, document)=>
           sinon.assert.calledWith filter, 'flowers', 'lily', color: 'yellow'
           done()
 
       it 'manipulates document', (done)->
-        shareInstance.docFilters.push (collection, docName, data, next)->
+        shareInstance.docFilter (collection, docName, data, next)->
           data.color = 'red'
           next()
         @userAgent.fetch 'flowers', 'lily', (error, document)=>
           assert.equal document.color, 'red'
           done()
 
-      it 'passes exceptions as error', (done)->
-        shareInstance.docFilters.push -> throw Error 'oops'
-        @userAgent.fetch 'flowers', 'lily', (error, document)=>
-          assert.equal error, 'oops'
-          done()
-
       it 'passes errors', (done)->
-        shareInstance.docFilters.push (args..., next)-> next('oops')
+        shareInstance.docFilter (args..., next)-> next('oops')
         @userAgent.fetch 'flowers', 'lily', (error, document)=>
           assert.equal error, 'oops'
           done()
