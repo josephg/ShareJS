@@ -44,7 +44,8 @@
     "grunt": "~0.4.1",
     "grunt-karma": "~0.6.2",
     "grunt-contrib-watch": "~0.5.3",
-    "grunt-simple-mocha": "~0.4.0"
+    "grunt-simple-mocha": "~0.4.0",
+    "grunt-contrib-uglify": "*"
   },
   "engine": "node >= 0.10",
   "main": "lib/index.js",
