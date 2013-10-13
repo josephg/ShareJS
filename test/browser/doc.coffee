@@ -7,7 +7,6 @@ describe 'Doc', ->
   {Connection} = require('share')
   {BCSocket} = require('bcsocket')
 
-  console.log require '../helpers/fixtures'
   fixtures = require('../helpers/fixtures')()
 
   before ->
@@ -30,14 +29,13 @@ describe 'Doc', ->
     @bob.collections = {}
     fixtures.reset(done)
 
-
   describe '#create', ->
 
     it 'creates a document', (done)->
       doc = @connection.get('garage', 'porsche')
       doc.create 'json0', {color: 'black'}, done
 
-    it 'creates a document with data', (done)->
+    it 'creates a document remotely data', (done)->
       doc = @alice.get('garage', 'porsche')
       doc.create 'json0', {color: 'red'}, =>
         doc2 = @bob.get('garage', 'porsche')

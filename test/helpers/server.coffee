@@ -26,6 +26,11 @@ socketToStream = (socket, log = true)->
       console.log "<<< client receive"
       console.log data
     stream.push(data)
+  socket.on 'close', ->
+    stream.end()
+    stream.emit('close')
+    stream.emit('end')
+
   stream._read = ->
   stream._write = (data, enc, callback)->
     if log
