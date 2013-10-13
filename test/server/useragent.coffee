@@ -11,6 +11,7 @@ describe 'UserAgent', ->
 
   shareInstance = require('../lib/server').createClient(backend: backend)
   shareInstance.useDocFilterMiddleware()
+  shareInstance.useOpFilterMiddleware()
 
   beforeEach ->
     @userAgent = new UserAgent shareInstance
@@ -60,6 +61,43 @@ describe 'UserAgent', ->
           assert.equal error, 'oops'
           done()
 
+  describe '#getOps', ->
+
+    before ->
+      backend.getOps = (args..., callback)->
+        callback(null, [{bloom: yes}])
+
+    it 'calls getOps on backend', (done)->
+      sinon.spy backend, 'getOps'
+      @userAgent.getOps 'flowers', 'lily', 10, 12, ->
+        sinon.assert.calledWith backend.getOps, 'flowers', 'lily', 10, 12
+        backend.getOps.reset()
+        done()
+
+    it 'returns backend result', (done)->
+      @userAgent.getOps 'flowers', 'lily', 1, 3, (error, operations)->
+        assert.deepEqual operations[0], bloom: yes
+        done()
+
+
+    describe 'with op filters', ->
+
+      it 'calls the filter', (done)->
+        filter = sinon.spy (args..., next)-> next()
+        shareInstance.filterOps filter
+        @userAgent.getOps 'flowers', 'lily', 0, 1, ->
+          sinon.assert.calledWith filter, 'flowers', 'lily', {bloom: yes}
+          done()
+
+      it 'manipulates operation', (done)->
+        shareInstance.filterOps (collection, docName, operation, next)->
+          operation.op = 'gotcha!'
+          next()
+
+        @userAgent.getOps 'flowers', 'lily', 1,2, (error, operations)->
+          assert.deepEqual operations[0], {op: 'gotcha!', bloom: yes}
+          done()
+
 
   describe '#subscribe', ->
 
@@ -96,15 +134,6 @@ describe 'UserAgent', ->
             sinon.assert.calledWith filter, 'flowers', 'lily', 'an op'
             done()
           operationStream.push 'an op'
-
-      it 'passes exceptions as errors to operationStream', (done)->
-        shareInstance.opFilters.push -> throw Error 'oops'
-
-        @userAgent.subscribe 'flowers', 'lily', 10, (error, subscriptionStream)->
-          subscriptionStream.on 'readable', (data)->
-            assert.deepEqual subscriptionStream.read(), {error: 'oops'}
-            done()
-          operationStream.push {op: 'first operation'}
 
       it 'passes errors to operationStream', (done)->
         shareInstance.opFilters.push (args..., next)-> next('oops')
@@ -284,7 +313,6 @@ describe 'UserAgent', ->
         assert.equal request.collection, 'flowers'
         assert.equal request.docName, 'lily'
         assert.equal request.deep, true
-        assert.deepEqual request.backend, backend
         done()
       @userAgent.trigger 'smell', 'flowers', 'lily', deep: true
 
