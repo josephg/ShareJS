@@ -85,6 +85,7 @@ module.exports = (options = {})->
     .add('./test/browser')
     .require('browserchannel/dist/bcsocket', expose: 'bcsocket')
     .require('./lib/client', expose: 'share')
+    .add('./lib/types')
     .bundle (error, source)->
       if error
         console.error error

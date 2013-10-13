@@ -3,6 +3,7 @@ mocha.setup('bdd')
 phantom = require '../helpers/phantom'
 
 require './connection'
+require './subscribed'
 require './doc'
 
 if phantom.available
