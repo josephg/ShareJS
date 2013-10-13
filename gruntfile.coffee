@@ -39,6 +39,9 @@ module.exports = (grunt) ->
       dist:
         files: {'dist/share.min.js': 'dist/share.js'}
 
+    example:
+      text: 'examples/text/server.coffee'
+
 
   # Load NPM Tasks
   grunt.loadNpmTasks 'grunt-karma'
@@ -79,6 +82,15 @@ module.exports = (grunt) ->
         return grunt.fail.fatal(error) if error
         fs.mkdirSync('dist') if !fs.existsSync('dist')
         fs.writeFile('dist/share.js', source, done)
+
+
+  # Register Example Task
+  grunt.registerMultiTask 'example', ->
+    grunt.util.spawn({
+      cmd: 'node_modules/.bin/coffee',
+      args: [this.data],
+      opts: { stdio: 'inherit' }
+    }, this.async())
 
   # Default Task
   grunt.registerTask 'default', ['server', 'karma:dev:start', 'watch']
