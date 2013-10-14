@@ -1,6 +1,5 @@
 express = require 'express'
 connect = require 'connect'
-browserify = require 'browserify'
 {Duplex} = require 'stream'
 
 # Creates a sharejs instance with a livedb backend
@@ -73,23 +72,4 @@ module.exports = (options = {})->
 
   app.use(connect.logger('dev')) if log
 
-  app.use(connect.static('test/browser'))
-  # Serve compiled mocha.js and mocha.css
-  .use(connect.static('node_modules/mocha'))
-
-  # Compile all client tests
-  .get '/tests.js', (req, res)->
-    res.type('js')
-    browserify(extensions: ['.coffee'])
-    .transform('coffeeify')
-    .add('./test/browser')
-    .require('browserchannel/dist/bcsocket', expose: 'bcsocket')
-    .require('./lib/client', expose: 'share')
-    .add('./lib/types')
-    .bundle (error, source)->
-      if error
-        console.error error
-        res.status 500
-        res.end "console.error(#{JSON.stringify(error)}}"
-      else
-        res.end(source)
+  app

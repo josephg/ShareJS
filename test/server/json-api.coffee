@@ -1,8 +1,8 @@
 assert = require("assert")
 types = require("ottypes")
-require("../lib/types/json-api")
+require("../../lib/types/json-api")
 json = types.json0
-MicroEvent = require("../lib/client/microevent")
+MicroEvent = require("../../lib/client/microevent")
 
 # in the future, it would be less brittle to use the real Doc object instead of this fake one
 Doc = (data) ->

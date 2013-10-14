@@ -4,10 +4,10 @@ sinon = require 'sinon'
 
 describe 'Doc', ->
 
-  {Connection} = require('share')
-  {BCSocket} = require('bcsocket')
+  {Connection} = require('../../lib/client')
+  {BCSocket} = require('browserchannel/dist/bcsocket')
 
-  fixtures = require('../helpers/fixtures')()
+  fixtures = require('../helpers/fixtures.coffee')()
 
   before ->
     @connection = @alice = new Connection(new BCSocket)

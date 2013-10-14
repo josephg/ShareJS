@@ -1,9 +1,11 @@
 assert = require 'assert'
 
+
 describe 'Connection', ->
 
-  {Connection} = require('share')
-  {BCSocket} = require('bcsocket')
+  share = require('../../lib/client')
+  Connection = share.Connection
+  {BCSocket} = require('browserchannel/dist/bcsocket')
 
   describe 'connecting', ->
 
@@ -22,7 +24,7 @@ describe 'Connection', ->
       connection.on 'connected', ->
         socket.close()
         done()
-    
+
 
   describe '#get', ->
 
@@ -35,8 +37,9 @@ describe 'Connection', ->
       delete @connection
 
     it 'returns a document', ->
-      Doc = require('share').Doc
+      Doc = share.Doc
       doc = @connection.get('cars', 'porsche')
+      console.log doc
       assert.equal doc.constructor, Doc
 
     it 'always returns the same document', ->

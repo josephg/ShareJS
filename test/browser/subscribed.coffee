@@ -1,6 +1,6 @@
 assert = require 'assert'
-{Connection} = require('share')
-{BCSocket} = require('bcsocket')
+{Connection} = require('../../lib/client')
+{BCSocket} = require('browserchannel/dist/bcsocket')
 ottypes = require('ottypes')
 
 describe 'Subscribed Document', ->
@@ -16,7 +16,7 @@ describe 'Subscribed Document', ->
       connection.socket.close()
       delete connections[name]
 
-  fixtures = require('../helpers/fixtures')()
+  fixtures = require('../helpers/fixtures.coffee')()
 
   beforeEach (done)->
     fixtures.reset(done)
