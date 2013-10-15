@@ -21,7 +21,6 @@
     "semver": "~2",
     "express": "~3",
     "hat": "*",
-    "sinon": "~1.7.3",
     "async": "~0.2"
   },
   "devDependencies": {
@@ -34,7 +33,7 @@
     "grunt": "~0.4.1",
     "mocha": "~1.13.0",
     "chai": "*",
-    "sinon": "~1.7.3",
+    "sinon": "1.7.1",
     "phantom-proxy": "~0.1.792",
     "redis": "~0.8.6",
     "uglify-js": "~2",
