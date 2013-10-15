@@ -1,6 +1,11 @@
-before_script:
-  - "npm install"
-  - "npm install -g grunt-cli"
 language: node_js
 node_js:
   - 0.10
+
+before_script:
+  - export DISPLAY=:99.0
+  - sh -e /etc/init.d/xvfb start
+  - npm install -g grunt-cli
+
+script:
+  - grunt
