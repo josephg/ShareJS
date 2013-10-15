@@ -53,11 +53,13 @@ module.exports = (options = {})->
   share = createInstance()
 
   # BrowserChannel middleware that creates sharejs sessions
-  shareChannel = require('browserchannel').server (socket)->
+  shareChannel = require('browserchannel')
+  .server cors: '*', (socket)->
     share.listen socketToStream(socket, log)
 
   # Enables client to reset the database
-  fixturesChannel = require('browserchannel').server base: '/fixtures', (socket)->
+  fixturesChannel = require('browserchannel')
+  .server base: '/fixtures', cors: '*', (socket)->
     socket.on 'message', (data)->
       share.backend.redis.flushdb()
       share.backend.db.collections = {}

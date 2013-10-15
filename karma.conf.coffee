@@ -29,9 +29,3 @@ module.exports = (config) ->
 
     # Browsers
     browsers: if process.env.TRAVIS then ['Firefox'] else ['Chrome']
-
-    # Configure Proxies
-    proxies:
-      '/channel': 'http://localhost:3000/channel'
-      '/fixtures': 'http://localhost:3000/fixtures'
-

@@ -1,19 +1,19 @@
 assert = require 'assert'
 ottypes = require 'ottypes'
 sinon = require 'sinon'
+createSocket = require '../helpers/socket.coffee'
 
 describe 'Doc', ->
   # Disable Timeouts becaue the connection can take ages. Not sure why
   @timeout(0)
 
   {Connection} = require('../../lib/client')
-  {BCSocket} = require('browserchannel/dist/bcsocket')
 
   fixtures = require('../helpers/fixtures.coffee')()
 
   before ->
-    @connection = @alice = new Connection(new BCSocket)
-    @bob = new Connection(new BCSocket)
+    @connection = @alice = new Connection(createSocket())
+    @bob = new Connection(createSocket())
 
     @alice.on 'error', (e)-> throw e
     @bob.on 'error', (e)-> throw e

@@ -1,4 +1,5 @@
 assert = require 'assert'
+createSocket = require '../helpers/socket.coffee'
 
 
 describe 'Connection', ->
@@ -7,11 +8,10 @@ describe 'Connection', ->
 
   share = require('../../lib/client')
   Connection = share.Connection
-  {BCSocket} = require('browserchannel/dist/bcsocket')
 
   describe 'connecting', ->
     it 'connects socket', (done)->
-      socket = new BCSocket
+      socket = createSocket()
       socket.close()
       connection = new Connection(socket)
       connection.on 'connecting', ->
@@ -20,7 +20,7 @@ describe 'Connection', ->
       socket.open()
 
     it 'connects to sharejs', (done)->
-      socket = new BCSocket
+      socket = createSocket()
       connection = new Connection(socket)
       connection.on 'connected', ->
         socket.close()
@@ -30,7 +30,7 @@ describe 'Connection', ->
   describe '#get', ->
 
     before ->
-      socket = new BCSocket
+      socket = createSocket()
       @connection = new Connection(socket)
 
     after ->

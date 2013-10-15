@@ -6,7 +6,7 @@
 #   fix.reset -> 'fixtures reseted'
 #
 module.exports = ->
-  socket: (new BCSocket 'fixtures')
+  socket: (new BCSocket 'http://localhost:3000/fixtures')
   reset: (done)->
     @socket.onmessage = =>
       @socket.onmessage = undefined

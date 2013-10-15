@@ -1,7 +1,8 @@
+createSocket = require '../helpers/socket.coffee'
+
 describe 'Subscribed Document', ->
   assert = require 'assert'
   {Connection} = require '../../lib/client'
-  {BCSocket} = require 'browserchannel/dist/bcsocket'
   require '../../lib/types'
   ottypes = require 'ottypes'
 
@@ -11,8 +12,8 @@ describe 'Subscribed Document', ->
   connections = {}
 
   before ->
-    connections.alice = new Connection(new BCSocket)
-    connections.bob =   new Connection(new BCSocket)
+    connections.alice = new Connection(createSocket())
+    connections.bob =   new Connection(createSocket())
 
   after ->
     for name, connection of connections
