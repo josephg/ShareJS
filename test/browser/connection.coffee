@@ -39,7 +39,6 @@ describe 'Connection', ->
     it 'returns a document', ->
       Doc = share.Doc
       doc = @connection.get('cars', 'porsche')
-      console.log doc
       assert.equal doc.constructor, Doc
 
     it 'always returns the same document', ->

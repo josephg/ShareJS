@@ -27,11 +27,12 @@ module.exports = function(grunt) {
   grunt.registerTask('test-server', ['simplemocha:server']);
 
   grunt.registerTask('test:server', 'Start a server to test clients', function(){
-    //var done = this.async();
+    var done = this.async();
     server = require('./test/helpers/server')({log: false});
     server.listen(3000)
     .on('listening', function() {
       grunt.log.writeln('To test clients go to http://localhost:3000');
+      done();
     })
     .on('error', function(err) {
       if (err.code === 'EADDRINUSE') {
