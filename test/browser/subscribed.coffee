@@ -1,9 +1,12 @@
-assert = require 'assert'
-{Connection} = require('../../lib/client')
-{BCSocket} = require('browserchannel/dist/bcsocket')
-ottypes = require('ottypes')
-
 describe 'Subscribed Document', ->
+  assert = require 'assert'
+  {Connection} = require '../../lib/client'
+  {BCSocket} = require 'browserchannel/dist/bcsocket'
+  require '../../lib/types'
+  ottypes = require 'ottypes'
+
+  # Disable Timeouts becaue the connection can take ages. Not sure why
+  @timeout(0)
 
   connections = {}
 

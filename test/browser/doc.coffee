@@ -3,6 +3,8 @@ ottypes = require 'ottypes'
 sinon = require 'sinon'
 
 describe 'Doc', ->
+  # Disable Timeouts becaue the connection can take ages. Not sure why
+  @timeout(0)
 
   {Connection} = require('../../lib/client')
   {BCSocket} = require('browserchannel/dist/bcsocket')

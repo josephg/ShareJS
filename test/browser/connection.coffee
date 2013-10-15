@@ -2,13 +2,14 @@ assert = require 'assert'
 
 
 describe 'Connection', ->
+  # Disable Timeouts becaue the connection can take ages. Not sure why
+  @timeout(0)
 
   share = require('../../lib/client')
   Connection = share.Connection
   {BCSocket} = require('browserchannel/dist/bcsocket')
 
   describe 'connecting', ->
-
     it 'connects socket', (done)->
       socket = new BCSocket
       socket.close()
