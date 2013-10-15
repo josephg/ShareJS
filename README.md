@@ -18,10 +18,10 @@ A [list of changes from 0.6 is here](https://github.com/share/ShareJS/wiki/Chang
 > The API and the code are unstable, and there are known bugs. Test
 > coverage has dropped from 90% in ShareJS 0.6 to around 50% and documentation
 > of the new APIs is largely nonexistant.
-> 
+>
 > The documentation below is also full of lies. If you want to play with the
 > new version of ShareJS anyway, look at the examples in prototype/.
-> 
+>
 > I understand that if you're using racer & derby, you will use this code
 > anyway despite my warnings. If you run into issues, please file issues so I can fix them.
 
@@ -111,7 +111,7 @@ There are two ways to run a sharejs server:
 3. If you are just mucking around, run:
 
         # sharejs-exampleserver
-  
+
     This will run a simple server on port 8000, and host all the example code there. Run it and check out http://localhost:8000/ . The example server stores everything in ram, so don't get too attached to your data.
 
     > If you're running sharejs from source, you can launch the example server by running `bin/exampleserver`.
@@ -202,13 +202,9 @@ See [`the wiki`](https://github.com/josephg/ShareJS/wiki) for API documentation,
 Testing
 -------
 
-Server-side and client unit tests are run with `grunt test`. For in-browser
-tests fire up `grunt test:server` and go to `http://localhost:3000`. You can
-also run the browser tests in [PhantomJS](http://phantomjs.org/) using `grunt
-test:phantom`. Passing the debug option (`-d`) to the phantom tests shows
-the communication between client and server. You can run single tests using
-[mocha](http://visionmedia.github.io/mocha/).
+Running `grunt` starts a watch task for development.
+
+Using `grunt test` all tests are just executed once.
 
 All tests are located under the `test` directory. Browser tests are contained in
-`test/browser`. If you add browser tests, you also have to add them to the
-script `test/browser/index.coffee` that runs the tests in the browser.
+`test/browser` and node tests are located in `test/server`.

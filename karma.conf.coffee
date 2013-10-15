@@ -25,7 +25,7 @@ module.exports = (config) ->
       watch: true # Watches dependencies only (Karma watches the tests)
 
     # enable / disable watching file and executing tests whenever any file changes
-    autoWatch: true
+    autoWatch: false
 
     # Browsers
     browsers: if process.env.TRAVIS then ['Firefox'] else ['Chrome']
@@ -34,5 +34,4 @@ module.exports = (config) ->
     proxies:
       '/channel': 'http://localhost:3000/channel'
       '/fixtures': 'http://localhost:3000/fixtures'
-
 
