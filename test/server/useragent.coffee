@@ -225,6 +225,70 @@ describe 'UserAgent', ->
           operationStream.push {op: 'first operation'}
 
 
+  describe '#bulkSubscribe', ->
+
+    operationStream = new Readable objectMode: yes
+    operationStream._read = ->
+    beforeEach -> operationStream.unpipe()
+
+    bulkRequest =
+      flowers:
+        lily: 3
+        tulip: null
+      cars:
+        porsche: 2
+
+    before ->
+      backend.bulkSubscribe = (args..., callback)->
+        callback null,
+          flowers:
+            lily: operationStream
+            tulip: operationStream
+          cars:
+            porsche: operationStream
+      shareInstance.useBackendEndpoints()
+
+    it 'calls subscribe on backend', (done)->
+      sinon.spy backend, 'bulkSubscribe'
+      @userAgent.bulkSubscribe bulkRequest, ->
+        sinon.assert.calledWith backend.bulkSubscribe, bulkRequest
+        backend.bulkSubscribe.reset()
+        done()
+
+    it 'can read operationStream', (done)->
+      @userAgent.bulkSubscribe bulkRequest, (error, streams)->
+        stream = streams.flowers.lily
+        stream.on 'readable', (data)->
+          assert.equal stream.read(), 'first operation'
+          done()
+        operationStream.push 'first operation'
+
+
+    describe 'with op filters', ->
+
+      it 'calls the filter', (done)->
+        filter = sinon.spy (args..., next)-> next()
+        shareInstance.opFilters.push filter
+        @userAgent.bulkSubscribe bulkRequest, (error, streams)->
+          stream = streams.flowers.lily
+          stream.on 'readable', (data)=>
+            sinon.assert.calledWith filter, 'flowers', 'lily', 'an op'
+            done()
+          operationStream.push 'an op'
+
+      it 'manipulates operation', (done)->
+        shareInstance.opFilters.push (collection, docName, operation, next)->
+          operation.op = 'gotcha!'
+          next()
+
+        @userAgent.bulkSubscribe bulkRequest, (error, streams)->
+          stream = streams.flowers.lily
+          stream.on 'readable', (data)->
+            assert.deepEqual stream.read(), {op: 'gotcha!'}
+            done()
+          operationStream.push {op: 'first operation'}
+
+
   describe '#fetchAndSubscribe', ->
 
     operationStream = new Readable objectMode: yes
