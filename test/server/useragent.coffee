@@ -9,9 +9,12 @@ describe 'UserAgent', ->
   backend =
     bulkSubscribe: ->
 
-  shareInstance = require('../lib/server').createClient(backend: backend)
-  shareInstance.useDocFilterMiddleware()
-  shareInstance.useOpFilterMiddleware()
+  shareInstance = null
+
+  before ->
+    shareInstance = require('../lib/server').createClient(backend: backend)
+    shareInstance.useDocFilterMiddleware()
+    shareInstance.useOpFilterMiddleware()
 
   beforeEach ->
     @userAgent = new UserAgent shareInstance
@@ -60,6 +63,72 @@ describe 'UserAgent', ->
         @userAgent.fetch 'flowers', 'lily', (error, document)=>
           assert.equal error, 'oops'
           done()
+
+  describe '#bulkFetch', ->
+
+    bulkRequest = flowers: ['edelweiss', 'tulip']
+
+    before ->
+      backend.bulkFetch = (request, callback)->
+        callback null,
+          flowers:
+            edelweiss: { color: 'white' }
+            tulip:     { color: 'eggshell' }
+          cars:
+            porsche:   { color: 'red' }
+      shareInstance.useBackendEndpoints()
+
+    it 'calls bulk fetch on backend', (done)->
+      sinon.spy backend, 'bulkFetch'
+      @userAgent.bulkFetch bulkRequest, ->
+        sinon.assert.calledWith backend.bulkFetch, bulkRequest
+        backend.bulkFetch.reset()
+        done()
+
+    it 'returns backend result', (done)->
+      @userAgent.bulkFetch bulkRequest, (error, documents)->
+        assert.deepEqual documents.flowers.edelweiss, color: 'white'
+        assert.deepEqual documents.flowers.tulip, color: 'eggshell'
+        assert.deepEqual documents.cars.porsche, color: 'red'
+        done()
+
+    describe 'with doc filters', ->
+
+      it 'calls filter', (done)->
+        filter = sinon.spy (args..., next)-> next()
+        shareInstance.docFilter filter
+        @userAgent.bulkFetch bulkRequest, (error, documents)=>
+          sinon.assert.calledWith filter,
+            'flowers', 'edelweiss', color: 'white'
+          sinon.assert.calledWith filter,
+            'flowers', 'tulip', color: 'eggshell'
+          done()
+
+      it 'manipulates document', (done)->
+        shareInstance.docFilter (collection, docName, data, next)->
+          if collection == 'cars'
+            data.color = 'british racing green'
+          else
+            data.color = 'blue'
+          next()
+        @userAgent.bulkFetch bulkRequest, (error, documents)=>
+          assert.equal documents.flowers.edelweiss.color, 'blue'
+          assert.equal documents.flowers.tulip.color, 'blue'
+          assert.equal documents.cars.porsche.color, 'british racing green'
+          done()
+
+      it 'passes errors', (done)->
+        shareInstance.docFilter (args..., next)-> next('oops')
+        @userAgent.bulkFetch bulkRequest, (error)=>
+          assert.equal error, 'oops'
+          done()
+
+    xdescribe 'emulation without backend support', ->
+
+      it 'calls backend fetch'
+
+      it 'builds result map'
+
 
   describe '#getOps', ->
 
