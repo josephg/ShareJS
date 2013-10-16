@@ -343,7 +343,7 @@ describe 'UserAgent', ->
     it 'triggers after submit', (done)->
       sinon.spy @userAgent, 'trigger'
       @userAgent.submit 'flowers', 'lily', 'pluck', {}, =>
-        sinon.assert.calledWith @userAgent.trigger, 'after submit', 'flowers', 'lily'
+        sinon.assert.calledWith @userAgent.trigger, 'after submit'
         done()
 
 
@@ -421,37 +421,3 @@ describe 'UserAgent', ->
           type: 'insert',
           values: [{docName: 'rose', color: 'white'}]
         }])
-
-
-  describe '#trigger with middleware', ->
-
-    beforeEach ->
-      backend.bulkSubscribe = true
-      @instance = require('../../lib/server').createClient(backend: backend)
-      @userAgent.instance = @instance
-
-    it 'runs middleware', (done)->
-      @instance.use 'smell', (request, next)->
-        done()
-      @userAgent.trigger 'smell', 'flowers', 'lily', {}
-
-    it 'runs default middleware', (done)->
-      @instance.use (request, next)->
-        done()
-      @userAgent.trigger 'smell', 'flowers', 'lily', {}
-
-    it 'runs middleware with request', (done)->
-      @instance.use 'smell', (request, next)->
-        assert.equal request.action, 'smell'
-        assert.equal request.collection, 'flowers'
-        assert.equal request.docName, 'lily'
-        assert.equal request.deep, true
-        done()
-      @userAgent.trigger 'smell', 'flowers', 'lily', deep: true
-
-    it 'passes errors to callback', (done)->
-      @instance.use 'smell', (request, next, respond)->
-        respond('Argh!')
-      @userAgent.trigger 'smell', 'flowers', 'lily', (error, request)->
-        assert.equal error, 'Argh!'
-        done()
