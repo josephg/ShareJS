@@ -123,11 +123,29 @@ describe 'UserAgent', ->
           assert.equal error, 'oops'
           done()
 
-    xdescribe 'emulation without backend support', ->
+    describe 'emulation without backend support', ->
 
-      it 'calls backend fetch'
+      before ->
+        delete backend.bulkFetch
+        backend.fetch = (collection, docName, callback)->
+          callback null, { color: 'red' }
+        shareInstance.useBackendEndpoints()
 
-      it 'builds result map'
+      it 'calls backend fetch', (done)->
+        sinon.spy backend, 'fetch'
+        @userAgent.bulkFetch bulkRequest, ->
+          sinon.assert.calledWith backend.fetch, 'flowers', 'edelweiss'
+          sinon.assert.calledWith backend.fetch, 'flowers', 'tulip'
+          backend.fetch.reset()
+          done()
+
+
+      it 'builds result map', (done)->
+        @userAgent.bulkFetch bulkRequest, (error, documents)->
+          assert.deepEqual documents.flowers.edelweiss, color: 'red'
+          assert.deepEqual documents.flowers.tulip, color: 'red'
+          done()
+
 
 
   describe '#getOps', ->
