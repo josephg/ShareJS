@@ -28,4 +28,4 @@ module.exports = (config) ->
     autoWatch: false
 
     # Browsers
-    browsers: if process.env.TRAVIS then ['Firefox'] else ['Chrome']
+    browsers: ['PhantomJS'] #if process.env.TRAVIS then ['Firefox'] else ['Chrome']
