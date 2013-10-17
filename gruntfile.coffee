@@ -7,7 +7,7 @@ module.exports = (grunt) ->
         port: 9998
       ci:
         singleRun: true
-        reporters: ['dots']
+        reporters: ['progress']
       dev:
         background: true
 
@@ -41,7 +41,7 @@ module.exports = (grunt) ->
   # Register Tasks
   grunt.registerTask 'test:browser', ['server', 'karma:ci']
   grunt.registerTask 'test:server', ['simplemocha:server']
-  grunt.registerTask 'test', ['test:browser', 'test:server']
+  grunt.registerTask 'test', ['test:server', 'test:browser']
 
   grunt.registerTask 'server', 'Start a server to test clients', ->
     done = this.async()
