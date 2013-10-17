@@ -4,9 +4,6 @@ sinon = require 'sinon'
 createSocket = require '../helpers/socket.coffee'
 
 describe 'Doc', ->
-  # Disable Timeouts becaue the connection can take ages. Not sure why
-  @timeout(0)
-
   {Connection} = require('../../lib/client')
 
   fixtures = require('../helpers/fixtures.coffee')()

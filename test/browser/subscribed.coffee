@@ -6,9 +6,6 @@ describe 'Subscribed Document', ->
   require '../../lib/types'
   ottypes = require 'ottypes'
 
-  # Disable Timeouts becaue the connection can take ages. Not sure why
-  @timeout(0)
-
   connections = {}
 
   before ->

@@ -3,9 +3,6 @@ createSocket = require '../helpers/socket.coffee'
 
 
 describe 'Connection', ->
-  # Disable Timeouts becaue the connection can take ages. Not sure why
-  @timeout(0)
-
   share = require('../../lib/client')
   Connection = share.Connection
 
