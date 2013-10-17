@@ -7,7 +7,7 @@ module.exports = (grunt) ->
         port: 9998
       ci:
         singleRun: true
-        reporters: ['progress']
+        reporters: ['dots']
       dev:
         background: true
 
