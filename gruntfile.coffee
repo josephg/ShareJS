@@ -32,6 +32,7 @@ module.exports = (grunt) ->
           'test/server/*.coffee'
           'test/helpers/*.coffee'
         ]
+        tasks: ['test:server']
 
   # Load NPM Tasks
   grunt.loadNpmTasks 'grunt-karma'
