@@ -79,7 +79,7 @@ module.exports = (grunt) ->
       .require('./lib/client', {expose: 'share'})
       .add('./lib/types')
       .bundle (error, source)->
-        return grunt.fail.fatal(error) if error
+        return grunt.fail.fatal(error.toString()) if error
         fs.mkdirSync('dist') if !fs.existsSync('dist')
         fs.writeFile('dist/share.js', source, done)
 
