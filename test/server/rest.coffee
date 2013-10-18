@@ -3,7 +3,7 @@
 assert = require 'assert'
 http = require 'http'
 
-rest = require '../lib/server/rest'
+rest = require '../../lib/server/rest'
 ottypes = require 'ottypes'
 connect = require 'connect'
 

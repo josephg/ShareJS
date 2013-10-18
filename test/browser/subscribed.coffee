@@ -1,22 +1,23 @@
-assert = require 'assert'
-{Connection} = require('share')
-{BCSocket} = require('bcsocket')
-ottypes = require('ottypes')
+createSocket = require '../helpers/socket.coffee'
 
 describe 'Subscribed Document', ->
+  assert = require 'assert'
+  {Connection} = require '../../lib/client'
+  require '../../lib/types'
+  ottypes = require 'ottypes'
 
   connections = {}
 
   before ->
-    connections.alice = new Connection(new BCSocket)
-    connections.bob =   new Connection(new BCSocket)
+    connections.alice = new Connection(createSocket())
+    connections.bob =   new Connection(createSocket())
 
   after ->
     for name, connection of connections
       connection.socket.close()
       delete connections[name]
 
-  fixtures = require('../helpers/fixtures')()
+  fixtures = require('../helpers/fixtures.coffee')()
 
   beforeEach (done)->
     fixtures.reset(done)

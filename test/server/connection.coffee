@@ -1,7 +1,7 @@
 sinon  = require 'sinon'
 assert = require 'assert'
-{Connection} = require '../lib/client'
-{Doc} = require '../lib/client/doc'
+{Connection} = require '../../lib/client'
+{Doc} = require '../../lib/client/doc'
 
 
 describe 'Connection', ->

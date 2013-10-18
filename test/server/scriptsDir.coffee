@@ -1,4 +1,4 @@
-sharejs = require '../lib'
+sharejs = require '../../lib'
 fs = require 'fs'
 assert = require 'assert'
 

@@ -1,4 +1,4 @@
-shareServer = require '../lib/server'
+shareServer = require '../../lib/server'
 assert = require 'assert'
 sinon = require 'sinon'
 

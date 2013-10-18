@@ -9,7 +9,7 @@ assert = require 'assert'
 {EventEmitter} = require 'events'
 ottypes = require 'ottypes'
 
-createSession = require '../lib/server/session'
+createSession = require '../../lib/server/session'
 
 describe 'session', ->
   beforeEach ->

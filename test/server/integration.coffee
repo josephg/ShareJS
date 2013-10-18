@@ -6,8 +6,8 @@ assert = require 'assert'
 {EventEmitter} = require 'events'
 ottypes = require 'ottypes'
 
-createSession = require '../lib/server/session'
-{Connection} = require '../lib/client'
+createSession = require '../../lib/server/session'
+{Connection} = require '../../lib/client'
 
 describe 'integration', ->
   beforeEach ->

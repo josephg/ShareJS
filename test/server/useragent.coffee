@@ -1,4 +1,4 @@
-UserAgent = require '../lib/server/useragent'
+UserAgent = require '../../lib/server/useragent'
 {Readable} = require 'stream'
 {EventEmitter} = require 'events'
 sinon = require 'sinon'
@@ -238,7 +238,7 @@ describe 'UserAgent', ->
 
     beforeEach ->
       backend.bulkSubscribe = true
-      @instance = require('../lib/server').createClient(backend: backend)
+      @instance = require('../../lib/server').createClient(backend: backend)
       @userAgent.instance = @instance
 
     it 'runs middleware', (done)->

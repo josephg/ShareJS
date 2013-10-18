@@ -1,6 +1,5 @@
 express = require 'express'
 connect = require 'connect'
-browserify = require 'browserify'
 {Duplex} = require 'stream'
 
 # Creates a sharejs instance with a livedb backend
@@ -54,11 +53,13 @@ module.exports = (options = {})->
   share = createInstance()
 
   # BrowserChannel middleware that creates sharejs sessions
-  shareChannel = require('browserchannel').server (socket)->
+  shareChannel = require('browserchannel')
+  .server cors: '*', (socket)->
     share.listen socketToStream(socket, log)
 
   # Enables client to reset the database
-  fixturesChannel = require('browserchannel').server base: '/fixtures', (socket)->
+  fixturesChannel = require('browserchannel')
+  .server base: '/fixtures', cors: '*', (socket)->
     socket.on 'message', (data)->
       share.backend.redis.flushdb()
       share.backend.db.collections = {}
@@ -73,23 +74,4 @@ module.exports = (options = {})->
 
   app.use(connect.logger('dev')) if log
 
-  app.use(connect.static('test/browser'))
-  # Serve compiled mocha.js and mocha.css
-  .use(connect.static('node_modules/mocha'))
-
-  # Compile all client tests
-  .get '/tests.js', (req, res)->
-    res.type('js')
-    browserify(extensions: ['.coffee'])
-    .transform('coffeeify')
-    .add('./test/browser')
-    .require('browserchannel/dist/bcsocket', expose: 'bcsocket')
-    .require('./lib/client', expose: 'share')
-    .add('./lib/types')
-    .bundle (error, source)->
-      if error
-        console.error error
-        res.status 500
-        res.end "console.error(#{JSON.stringify(error)}}"
-      else
-        res.end(source)
+  app

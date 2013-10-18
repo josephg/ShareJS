@@ -1,14 +1,14 @@
 assert = require 'assert'
+createSocket = require '../helpers/socket.coffee'
+
 
 describe 'Connection', ->
-
-  {Connection} = require('share')
-  {BCSocket} = require('bcsocket')
+  share = require('../../lib/client')
+  Connection = share.Connection
 
   describe 'connecting', ->
-
     it 'connects socket', (done)->
-      socket = new BCSocket
+      socket = createSocket()
       socket.close()
       connection = new Connection(socket)
       connection.on 'connecting', ->
@@ -17,17 +17,17 @@ describe 'Connection', ->
       socket.open()
 
     it 'connects to sharejs', (done)->
-      socket = new BCSocket
+      socket = createSocket()
       connection = new Connection(socket)
       connection.on 'connected', ->
         socket.close()
         done()
-    
+
 
   describe '#get', ->
 
     before ->
-      socket = new BCSocket
+      socket = createSocket()
       @connection = new Connection(socket)
 
     after ->
@@ -35,7 +35,7 @@ describe 'Connection', ->
       delete @connection
 
     it 'returns a document', ->
-      Doc = require('share').Doc
+      Doc = share.Doc
       doc = @connection.get('cars', 'porsche')
       assert.equal doc.constructor, Doc
 

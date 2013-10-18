@@ -1,17 +1,16 @@
 assert = require 'assert'
 ottypes = require 'ottypes'
 sinon = require 'sinon'
+createSocket = require '../helpers/socket.coffee'
 
 describe 'Doc', ->
+  {Connection} = require('../../lib/client')
 
-  {Connection} = require('share')
-  {BCSocket} = require('bcsocket')
-
-  fixtures = require('../helpers/fixtures')()
+  fixtures = require('../helpers/fixtures.coffee')()
 
   before ->
-    @connection = @alice = new Connection(new BCSocket)
-    @bob = new Connection(new BCSocket)
+    @connection = @alice = new Connection(createSocket())
+    @bob = new Connection(createSocket())
 
     @alice.on 'error', (e)-> throw e
     @bob.on 'error', (e)-> throw e
