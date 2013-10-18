@@ -1,12 +1,12 @@
 {expect} = require 'chai'
-{Doc}    = require '../lib/client/doc'
+{Doc}    = require '../../lib/client/doc'
 ottypes  = require 'ottypes'
-require '../lib/types/text-api'
+require '../../lib/types/text-api'
 
 describe 'Doc', ->
 
   textType = ottypes['http://sharejs.org/types/textv1']
-  numberType = require('./support/ot_number')
+  numberType = require('../helpers/ot_number')
 
   # TODO Use the real Connection class and stub things out on demand
   connection =

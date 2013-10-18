@@ -28,9 +28,6 @@ all: webclient
 clean:
 	rm -rf webclient/*
 
-test:
-	node_modules/.bin/mocha
-
 webclient/share.uncompressed.js: $(BUNDLED_TYPES) $(CLIENT_SRCS)
 	mkdir -p webclient
 	echo '(function(){' > $@

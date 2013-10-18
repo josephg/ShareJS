@@ -1,3 +1,0 @@
---compilers coffee:coffee-script
---reporter spec
---check-leaks

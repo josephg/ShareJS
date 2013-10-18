@@ -9,7 +9,7 @@ types = require 'ottypes'
 # Mixin the random op generation functions
 require 'ottypes/randomizer'
 # & mixin the API methods
-require '../lib/types'
+require '../../lib/types'
 
 # Find all the types that claim to implement text.
 textTypes = {}

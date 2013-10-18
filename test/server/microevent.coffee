@@ -2,8 +2,8 @@
 
 assert = require 'assert'
 
-MicroEvent = require '../lib/client/microevent'
-makePassPart = require('./helpers').makePassPart
+MicroEvent = require '../../lib/client/microevent'
+makePassPart = require('../helpers').makePassPart
 
 tests = ->
   it 'does nothing when you emit an event with no listeners', ->

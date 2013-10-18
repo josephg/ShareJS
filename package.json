@@ -21,18 +21,30 @@
     "semver": "~2",
     "express": "~3",
     "hat": "*",
-    "sinon": "~1.7.3",
     "async": "~0.2"
   },
   "devDependencies": {
-    "coffee-script": "<=1.6",
+    "coffee-script": "~1.6.3",
     "connect": "~2",
+    "coffeeify": "*",
+    "browserify": "~2.34",
     "optimist": ">= 0.2.4",
     "browserchannel": "*",
-    "mocha": "*",
+    "mocha": "~1.13.0",
     "chai": "*",
-    "sinon": "1.7.3",
-    "uglify-js": "~2"
+    "sinon": "1.7.1",
+    "redis": "~0.8.6",
+    "uglify-js": "~2",
+    "karma": "~0.10.2",
+    "karma-chrome-launcher": "~0.1.0",
+    "karma-firefox-launcher": "~0.1.0",
+    "karma-coffee-preprocessor": "~0.1.0",
+    "karma-browserify": "0.0.5",
+    "karma-mocha": "~0.1.0",
+    "grunt": "~0.4.1",
+    "grunt-karma": "~0.6.2",
+    "grunt-contrib-watch": "~0.5.3",
+    "grunt-simple-mocha": "~0.4.0"
   },
   "engine": "node >= 0.10",
   "main": "lib/index.js",
@@ -41,7 +53,7 @@
   },
   "scripts": {
     "build": "make",
-    "test": "mocha",
+    "test": "grunt test",
     "prepublish": "make webclient"
   },
   "licenses": [
