@@ -12,7 +12,7 @@ describe 'UserAgent', ->
   shareInstance = null
 
   before ->
-    shareInstance = require('../lib/server').createClient(backend: backend)
+    shareInstance = require('../../lib/server').createClient(backend: backend)
     shareInstance.useDocFilterMiddleware()
     shareInstance.useOpFilterMiddleware()
 
