@@ -45,14 +45,14 @@ module.exports = (grunt) ->
 
   grunt.registerTask 'server', 'Start a server to test clients', ->
     done = this.async()
-    server = require('./test/helpers/server')({log: false})
+    server = require('./test/helpers/server')({log: !!grunt.cli.options.debug})
     server.listen(3000)
     .on('listening', done)
     .on 'error', (err) ->
       if (err.code is 'EADDRINUSE')
         grunt.fatal('Port 3000 is already in use by another process.')
       else
-        grunt.fatal(err);
+        grunt.fatal(err)
 
   # Default Task
   grunt.registerTask 'default', ['server', 'karma:dev:start', 'watch']

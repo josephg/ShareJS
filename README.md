@@ -202,9 +202,9 @@ See [`the wiki`](https://github.com/josephg/ShareJS/wiki) for API documentation,
 Testing
 -------
 
-Running `grunt` starts a watch task for development.
-
-Using `grunt test` all tests are just executed once.
+Running `grunt` starts a watch task for development.  Using `grunt test` all
+tests are just executed once.  Passing the `--debug` option to the grunt tasks
+makes the share server dump the communication with clients.
 
 All tests are located under the `test` directory. Browser tests are contained in
 `test/browser` and node tests are located in `test/server`.
