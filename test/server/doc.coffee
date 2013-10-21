@@ -143,12 +143,14 @@ describe 'Doc', ->
       sendMessage connection.sent[0]
       expect(@doc.snapshot).to.equal 'a note on music'
 
-    it 'gets ready', ->
+    it 'gets ready', (done)->
       expect(@doc.state).to.be.null
       @doc.create(textType, 'a note on music')
       @doc.flush()
+      @doc.on 'ready', =>
+        expect(@doc.state).to.equal 'ready'
+        done()
       sendMessage connection.sent[0]
-      expect(@doc.state).to.equal 'ready'
 
     it 'emits create after snapshot created', (done)->
       @doc.once 'create', =>
