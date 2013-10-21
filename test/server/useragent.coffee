@@ -266,7 +266,7 @@ describe 'UserAgent', ->
             porsche: operationStream
       shareInstance.useBackendEndpoints()
 
-    it 'calls subscribe on backend', (done)->
+    it 'calls bulkSubscribe on backend', (done)->
       sinon.spy backend, 'bulkSubscribe'
       @userAgent.bulkSubscribe bulkRequest, ->
         sinon.assert.calledWith backend.bulkSubscribe, bulkRequest
@@ -305,6 +305,32 @@ describe 'UserAgent', ->
             assert.deepEqual stream.read(), {op: 'gotcha!'}
             done()
           operationStream.push {op: 'first operation'}
+
+
+    describe 'emulation without backend support', ->
+
+      before ->
+        delete backend.bulkSubscribe
+        backend.subscribe = (args..., callback)->
+          callback(null, operationStream)
+        shareInstance.useBackendEndpoints()
+
+      it 'calls subscribe on backend', (done)->
+        sinon.spy backend, 'subscribe'
+        @userAgent.bulkSubscribe bulkRequest, ->
+          sinon.assert.calledWith backend.subscribe, 'flowers', 'lily', 3
+          sinon.assert.calledWith backend.subscribe, 'flowers', 'tulip', null
+          sinon.assert.calledWith backend.subscribe, 'cars', 'porsche', 2
+          backend.subscribe.reset()
+          done()
+
+      it 'reads stream from result map', (done)->
+        @userAgent.bulkSubscribe bulkRequest, (error, streams)->
+          stream = streams.flowers.lily
+          stream.on 'readable', (data)->
+            assert.equal stream.read(), 'first operation'
+            done()
+          operationStream.push 'first operation'
 
 
   describe '#fetchAndSubscribe', ->
