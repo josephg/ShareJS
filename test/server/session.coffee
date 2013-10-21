@@ -29,9 +29,7 @@ describe 'session', ->
       trigger: (a, b, callback) -> callback()
 
     @instance =
-      createAgent: (stream) =>
-        assert.strictEqual stream, @stream
-        @userAgent
+      createAgent: (stream) => @userAgent
 
     @send = (data) =>
       #console.log 'C->S', JSON.stringify data

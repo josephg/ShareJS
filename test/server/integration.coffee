@@ -27,9 +27,7 @@ describe 'integration', ->
       trigger: (a, b, callback) -> callback()
 
     @instance =
-      createAgent: (stream) =>
-        assert.strictEqual stream, @serverStream
-        @userAgent
+      createAgent: (stream) => @userAgent
 
     @clientStream =
       send: (data) =>
