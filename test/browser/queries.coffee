@@ -80,7 +80,6 @@ describe 'Queries', ->
       @connection.createSubscribeQuery 'cars', {}, {docMode: 'sub'}
       , (error, [document])=>
         document.on 'op', (operation)->
-          console.log operation
           assert.deepEqual operation, [3, 'y']
           done()
         porsche = @anotherConnection.get('cars', 'porsche')
