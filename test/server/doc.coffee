@@ -122,8 +122,7 @@ describe 'Doc', ->
 
   describe '#create', ->
 
-    xit 'calls callback', (done)->
-      # TODO this currently fails, but should not
+    it 'calls callback', (done)->
       @doc.create(textType, done)
       @doc.flush()
       sendMessage connection.sent[0]
