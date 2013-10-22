@@ -17,6 +17,7 @@ createInstance = ->
 socketToStream = (socket)->
   stream = new Duplex objectMode: yes
   socket.on 'message', (data)->
+    data = JSON.parse data
     console.log "<<< client receive"
     console.log data
     stream.push(data)
