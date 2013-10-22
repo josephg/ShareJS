@@ -83,6 +83,7 @@ Run examples with `grunt example:<name>` and have a look at the code under
 `examples/name`. Be sure to run `grunt dist` first. Currently available examples are
 
 * **Text.** Share a simple textarea.
+* **SockJS.** Share a simple textarea using [SockJS](sockjs.org).
 
 
 

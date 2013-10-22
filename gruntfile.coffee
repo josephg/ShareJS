@@ -41,6 +41,7 @@ module.exports = (grunt) ->
 
     example:
       text: 'examples/text/server.coffee'
+      sockjs: 'examples/sockjs/server.coffee'
 
 
   # Load NPM Tasks
@@ -68,7 +69,7 @@ module.exports = (grunt) ->
         grunt.fatal(err)
 
 
-  # Registers Dist Tasks 
+  # Registers Dist Tasks
   grunt.registerTask 'dist', ['dist:build', 'uglify:dist']
 
   grunt.registerTask 'dist:build', 'Compile the client distribution', ->

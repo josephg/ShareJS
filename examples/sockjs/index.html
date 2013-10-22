@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ShareJS SockJS Example</title>
+  <style>
+#pad {
+  width: 100%;
+  height: 20em;
+}
+  </style>
+</head>
+
+<body>
+
+<textarea width="300" id="pad">Connecting...</textarea>
+<script src="http://cdn.sockjs.org/sockjs-0.3.js"></script>
+<script src="/share-textarea.js"></script>
+<script src="/share.js"></script>
+<script>
+var share = require('share');
+var sock = new SockJS('/sock');
+
+var connection = new share.Connection(sock);
+sock.onopen = function () {
+  notes = connection.get('shared', 'notes')
+  notes.subscribe(function(error, data){
+    if (typeof notes.type === "undefined")
+      notes.create('text', '', function(){
+        onready();
+      });
+    else
+      onready();
+  });
+}
+function onready() {
+  var pad = document.getElementById('pad');
+  shareTextarea(pad, notes.createContext());
+};
+</script>
+</body>
+</html>
