@@ -25,7 +25,7 @@
   },
   "devDependencies": {
     "coffee-script": "~1.6.3",
-    "connect": "~2",
+    "connect": "~2.9.0",
     "coffeeify": "*",
     "browserify": "~2.34",
     "optimist": ">= 0.2.4",

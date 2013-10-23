@@ -46,7 +46,6 @@ app = express()
 .use(connect.logger('dev'))
 .use(connect.static(__dirname))
 .use(connect.static(__dirname + '/../../dist'))
-.use(connect.static(__dirname + '/../../node_modules/browserchannel/dist'))
 .listen 3000, (error)->
   if error
     console.error(error)
