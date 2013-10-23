@@ -17,7 +17,7 @@ module.exports = (grunt) ->
         reporter: 'dot',
         ignoreLeaks: false
       server:
-        src: ['test/server/*.coffee']
+        src: ['test/server/**/*.coffee']
 
     watch:
       karma:
