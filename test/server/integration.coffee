@@ -24,12 +24,10 @@ describe 'integration', ->
         @opStream = new Readable objectMode:yes
         @opStream._read = ->
         callback null, {v:100, type:ottypes.text, data:'hi there'}, @opStream
-      trigger: (a, b, c, d, callback) -> callback()
+      trigger: (a, b, callback) -> callback()
 
     @instance =
-      createAgent: (stream) =>
-        assert.strictEqual stream, @serverStream
-        @userAgent
+      createAgent: (stream) => @userAgent
 
     @clientStream =
       send: (data) =>

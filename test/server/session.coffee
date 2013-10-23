@@ -26,12 +26,10 @@ describe 'session', ->
         @opStream = new Readable objectMode:yes
         @opStream._read = ->
         callback null, {v:100, type:ottypes.text, data:'hi there'}, @opStream
-      trigger: (a, b, c, d, callback) -> callback()
+      trigger: (a, b, callback) -> callback()
 
     @instance =
-      createAgent: (stream) =>
-        assert.strictEqual stream, @stream
-        @userAgent
+      createAgent: (stream) => @userAgent
 
     @send = (data) =>
       #console.log 'C->S', JSON.stringify data

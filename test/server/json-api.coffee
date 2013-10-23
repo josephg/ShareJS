@@ -56,15 +56,15 @@ Doc = (data) ->
 MicroEvent.mixin Doc
 
 apply = (cxt,op) ->
-    cxt._beforeOp? op
-    cxt.submitOp op
-    cxt._onOp op
+  cxt._beforeOp? op
+  cxt.submitOp op
+  cxt._onOp op
 
 waitBriefly = (done) ->
-  setTimeout ( ->
-      assert.ok true
-      done()
-    ), 10
+  setTimeout ->
+    assert.ok true
+    done()
+  , 10
 
 describe "JSON Client API", ->
   it "sanity check", ->
