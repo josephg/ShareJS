@@ -5,12 +5,9 @@ browserify = require 'browserify'
 
 # Creates a sharejs instance with a livedb backend
 createInstance = ->
-  redis = require('redis').createClient()
-  redis.flushdb()
-
   livedbLib = require 'livedb'
   memorydb  = livedbLib.memory()
-  livedb    = livedbLib.client(db: memorydb, redis: redis)
+  livedb    = livedbLib.client(memorydb)
 
   shareServer = require '../../lib/server'
   shareServer.createClient(backend: livedb)
