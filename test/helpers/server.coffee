@@ -1,7 +1,7 @@
 express = require 'express'
 connect = require 'connect'
 {Duplex} = require 'stream'
-BCStream = require '../../lib/server/adapters/browserchannel'
+{BCStream} = require('../../lib').adapters
 
 # Creates a sharejs instance with a livedb backend
 createInstance = ->

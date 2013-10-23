@@ -2,7 +2,7 @@ express = require 'express'
 connect = require 'connect'
 browserify = require 'browserify'
 {Duplex} = require 'stream'
-SockStream = require '../../lib/server/adapters/sockjs'
+{SockStream} = require('../../lib').adapters
 
 # Creates a sharejs instance with a livedb backend
 createInstance = ->
