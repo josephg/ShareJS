@@ -2,6 +2,7 @@ express = require 'express'
 connect = require 'connect'
 browserify = require 'browserify'
 {Duplex} = require 'stream'
+BCStream = require '../../lib/server/adapters/browserchannel'
 
 # Creates a sharejs instance with a livedb backend
 createInstance = ->
@@ -12,35 +13,11 @@ createInstance = ->
   shareServer = require '../../lib/server'
   shareServer.createClient(backend: livedb)
 
-
-# Converts a socket to a Duplex stream
-socketToStream = (socket)->
-  stream = new Duplex objectMode: yes
-  socket.on 'message', (data)->
-    data = JSON.parse data
-    console.log "<<< client receive"
-    console.log data
-    stream.push(data)
-  socket.on 'close', ->
-    stream.end()
-    stream.emit('close')
-    stream.emit('end')
-
-  stream._read = ->
-  stream._write = (data, enc, callback)->
-    console.log ">>> server send"
-    console.log data
-    socket.send(data)
-    callback()
-  stream
-
-
-
 share = createInstance()
 
 # BrowserChannel middleware that creates sharejs sessions
 shareChannel = require('browserchannel').server (socket)->
-  share.listen socketToStream(socket)
+  share.listen new BCStream(socket, {debug: yes})
 
 app = express()
 .use(shareChannel)
