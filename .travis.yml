@@ -5,10 +5,13 @@ node_js:
 services:
   - redis-server
 
+install:
+  - npm install -g grunt-cli
+  - npm install
+
 before_script:
   - export DISPLAY=:99.0
   - sh -e /etc/init.d/xvfb start
-  - npm install -g grunt-cli
 
 script:
   - grunt test:server

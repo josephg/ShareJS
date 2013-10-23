@@ -25,7 +25,7 @@
   },
   "devDependencies": {
     "coffee-script": "~1.6.3",
-    "connect": "~2",
+    "connect": "~2.9.0",
     "coffeeify": "*",
     "browserify": "~2.34",
     "optimist": ">= 0.2.4",
@@ -44,7 +44,8 @@
     "grunt": "~0.4.1",
     "grunt-karma": "~0.6.2",
     "grunt-contrib-watch": "~0.5.3",
-    "grunt-simple-mocha": "~0.4.0"
+    "grunt-simple-mocha": "~0.4.0",
+    "grunt-contrib-uglify": "*"
   },
   "engine": "node >= 0.10",
   "main": "lib/index.js",
@@ -52,9 +53,9 @@
     "sharejs": "bin/sharejs"
   },
   "scripts": {
-    "build": "make",
+    "build": "grunt dist",
     "test": "grunt test",
-    "prepublish": "make webclient"
+    "prepublish": "grunt dist"
   },
   "licenses": [
     {
