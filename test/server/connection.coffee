@@ -66,16 +66,23 @@ describe 'Connection', ->
 
 
   describe 'socket onmessage', ->
+    msg = {d: 'doc'}
+    beforeEach ->
+      sinon.stub(@connection, 'handleMessage')
 
     it 'calls handle message', ->
-      handleMessage = sinon.spy @connection, 'handleMessage'
-      socket.onmessage('a message')
-      sinon.assert.calledWith handleMessage, 'a message'
+      socket.onmessage({data: JSON.stringify(msg)})
+      sinon.assert.calledWith @connection.handleMessage, msg
 
     it 'pushes message buffer', ->
       assert @connection.messageBuffer.length == 0
-      socket.onmessage('a message')
+      socket.onmessage(data: JSON.stringify(msg))
       assert @connection.messageBuffer.length == 1
+
+    it 'handles string messages', ->
+      socket.onmessage({data: 'a message'})
+      sinon.assert.calledWith @connection.handleMessage, 'a message'
+
 
 
   describe '#disconnect', ->

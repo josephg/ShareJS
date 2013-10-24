@@ -33,7 +33,8 @@ describe 'integration', ->
 
     @clientStream =
       send: (data) =>
-        #console.log 'C->S', JSON.stringify data
+        data = JSON.parse data
+        #console.log 'C->S', data
         @serverStream.push data
       readyState: 0 # Connecting
       close: =>
@@ -43,7 +44,7 @@ describe 'integration', ->
 
     @serverStream._write = (chunk, encoding, callback) =>
       #console.log 'S->C', JSON.stringify chunk
-      @clientStream.onmessage? chunk
+      @clientStream.onmessage? {data: JSON.stringify chunk}
       callback()
     @serverStream._read = ->
 
@@ -78,13 +79,13 @@ describe 'integration', ->
 
         doc.subscribe (err) =>
           assert.equal err, null
-          
+
           assert.equal doc.state, 'ready'
           assert doc.subscribed
 
           assert.deepEqual doc.snapshot, 'hi there'
           assert.strictEqual doc.version, 100
-          assert.strictEqual doc.type, ottypes.text
+          assert.deepEqual doc.type, JSON.parse(JSON.stringify ottypes.text)
 
           assert.strictEqual doc.name, @subscribedDoc
           assert.strictEqual doc.collection, @subscribedCollection
@@ -250,7 +251,7 @@ describe 'integration', ->
           doc.on 'op', (op) ->
             assert doc.version <= 100
             done() if doc.version is 100
-       
+
 
 
 
