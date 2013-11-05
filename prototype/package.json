@@ -1,0 +1,26 @@
+{
+  "name": "sharejs-prototype",
+  "version": "0.1.0",
+  "description": "sharejs example",
+  "homepage": "",
+  "author": {
+    "name": "Joseph Gentle",
+    "email": "josephg@gmail.com"
+  },
+  "dependencies": {
+    "optimist": "~0.6.0",
+    "livedb": "~0.2.6",
+    "browserchannel": "~1.0.8",
+    "connect-browserify": "~0.7.0",
+    "livedb-mongo": "~0.2.5",
+    "connect": "~2.11.0"
+  },
+  "engine": "node >= 0.10",
+  "main": "./server.js",
+  "licenses": [
+    {
+      "type": "BSD",
+      "url": "http://www.freebsd.org/copyright/freebsd-license.html"
+    }
+  ]
+}
