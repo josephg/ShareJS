@@ -27,7 +27,7 @@
     "coffee-script": "~1.6.3",
     "connect": "~2",
     "coffeeify": "*",
-    "browserify": "~2.34",
+    "browserify": "~2.35.1",
     "optimist": ">= 0.2.4",
     "browserchannel": "*",
     "mocha": "~1.13.0",
