@@ -5,15 +5,22 @@ connect = require 'connect'
 argv = require('optimist').argv
 livedb = require 'livedb'
 livedbMongo = require 'livedb-mongo'
+browserify = require 'connect-browserify'
 
 sharejs = require '../lib'
 
 webserver = connect(
   #  connect.logger()
   connect.static "#{__dirname}/public"
-  connect.static sharejs.scriptsDir
 )
 
+webserver.use('/share.js', browserify.serve
+  entry: '../lib/client'
+  standalone: 'sharejs'
+)
+webserver.use('/textarea.js', browserify.serve
+  entry: '../lib/client/textarea'
+)
 #backend = livedb.client livedb.memory()
 backend = livedb.client livedbMongo('localhost:27017/test?auto_reconnect', safe:false)
 share = sharejs.server.createClient {backend}
