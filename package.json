@@ -21,7 +21,7 @@
     "coffee-script": "*",
     "browserchannel": "*",
     "hat": "*",
-    "redis": "*"
+    "mysql": "0.9.6"
   },
   "devDependencies": {
     "nodeunit": "*",
