@@ -42,7 +42,7 @@ module.exports =
     hat: "*"
 
     # Require mysql since this is the backend we use.
-    mysql: "0.9.6"
+    mysql: "*"
 
   # Developer dependencies
   devDependencies:
