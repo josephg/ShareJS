@@ -36,7 +36,7 @@ Run the examples with:
 
 If you want redis support, you'll need to install redis:
 
-    # sudo brew install redis
+    # brew install redis
     # npm install -g redis
 
 ### From source
@@ -45,7 +45,7 @@ Install redis (optional)
     
 * Mac:
 
-        # sudo brew install redis
+        # brew install redis
 
 * Linux:
    
@@ -58,9 +58,13 @@ Then:
     # npm install redis   # If you want redis support
     # npm link
 
-Run the tests:
+Run the tests: (you will need nodeunit for this!)
 
     # cake test
+
+The test output is suppressed by default, but can be enabled using the `--verbose` option:
+
+    # cake --verbose test
 
 Build the coffeescript into .js:
 
@@ -151,7 +155,7 @@ And add this code:
 </script>
 ```
 
-> **NOTE:** If you're using the current version in npm (0.4) or earler, the argument order is the other way around (`function(doc, error)`).
+> **NOTE:** If you're using version 0.4 or earler, the argument order is the other way around (`function(doc, error)`).
 
 Thats about it :)
 
@@ -190,7 +194,7 @@ client.open('hello', 'text', 'http://localhost:8000/sjs', function(error, doc) {
 });
 ```
 
-> **NOTE:** If you're using the current version in npm (0.4) or earler, the argument order is the other way around (`function(doc, error)`).
+> **NOTE:** If you're using version 0.4 or earler, the argument order is the other way around (`function(doc, error)`).
 
 See [`the wiki`](https://github.com/josephg/ShareJS/wiki) for API documentation, and `examples/node*` for some more example apps.
 

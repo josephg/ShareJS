@@ -255,13 +255,23 @@ try
   exports.redis = test require('../src/server/db/redis')
 
 try
-if options.db.type == 'pg'
-  exports.pg = test require('../src/server/db/pg'), options.db
+  if options.db.type == 'pg'
+    exports.pg = test require('../src/server/db/pg'), options.db
 
 try
-if options.db.type == 'amazon'
-  exports.amazon = test require('../src/server/db/amazon'), options.db
+  if options.db.type == 'amazon'
+    exports.amazon = test require('../src/server/db/amazon'), options.db
 
 try
   require 'mongodb'
-  exports.mongodb = test require('../src/server/db/mongo'), { db: "sharejs-test" }
+  exports.mongodbOpsCollectionPerDoc = test require('../src/server/db/mongo'), 
+    db: "sharejs-test"
+    opsCollectionPerDoc: true
+  
+  exports.mongodbSingleOpsCollection = test require('../src/server/db/mongo'), 
+    db: "sharejs-test-single-ops-collection"
+    opsCollectionPerDoc: false
+
+try
+  require 'mysql'
+  exports.mysql = test require('../src/server/db/mysql'), options.db

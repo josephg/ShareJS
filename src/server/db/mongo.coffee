@@ -22,6 +22,7 @@ defaultOptions =
   client: null    # an instance of mongodb.Db
   user: null      # an optional username for authentication
   password: null  # an optional password for authentication
+  opsCollectionPerDoc: true # whether to create an ops collection for each document or just have a large single ops collection
 
 # Valid options as above.
 module.exports = MongoDb = (options) ->
@@ -29,21 +30,35 @@ module.exports = MongoDb = (options) ->
   options ?= {}
   options[k] ?= v for k, v of defaultOptions
 
-  client = options.client or new mongodb.Db(options.db, new mongodb.Server(options.hostname, options.port, options.mongoOptions))
+  client = options.client or new mongodb.Db(options.db, new mongodb.Server(options.hostname, options.port, options.mongoOptions), {safe: true})
   
-  if options.user and options.password
-    client.open (err, db) -> 
-      if not err
-        client = db
+  client.open (err, db) ->
+    if not err
+      client = db
+      if options.user and options.password
         client.authenticate(options.user, options.password)
+  
+  # Checking if an index needs creating is cheap, so do it on every connect
+  if not options.opsCollectionPerDoc
+    client.collection 'ops', (err, collection) ->
+      if err
+        console.warn "failed to create ops index: #{err}"
+        return
+      collection.ensureIndex {"_id.doc": 1, "_id.v": 1}, {background: true}, ->
+        # ignore callback
 
-  opsCollectionForDoc = (docName) -> 'ops.' + encodeURIComponent(docName).replace(/\./g, '%2E').replace(/-/g, '%2D')
+  opsCollectionForDoc = (docName) -> 
+    if options.opsCollectionPerDoc
+      'ops.' + encodeURIComponent(docName).replace(/\./g, '%2E').replace(/-/g, '%2D')
+    else
+      'ops'
 
   # Creates a new document.
   # data = {snapshot, type:typename, [meta]}
   @create = (docName, data, callback) ->
-    # docName too long? http://www.mongodb.org/display/DOCS/Collections#Collections-Overview
-    return callback? "Document name too long: #{docName}" if opsCollectionForDoc(docName).length > 90
+    if options.opsCollectionPerDoc
+      # docName too long? http://www.mongodb.org/display/DOCS/Collections#Collections-Overview
+      return callback? "Document name too long: #{docName}" if opsCollectionForDoc(docName).length > 90
 
     client.collection 'docs', (err, collection) ->
       return callback? err if err
@@ -74,12 +89,21 @@ module.exports = MongoDb = (options) ->
     client.collection opsCollectionForDoc(docName), (err, collection) ->
       return callback? err if err
       
-      query = 
-        _id:
-          $gte: start
-      query._id.$lt = end if end
+      if options.opsCollectionPerDoc
+        query = 
+          _id:
+            $gte: start
+        query._id.$lt = end if end
+        cursor = collection.find(query).sort('_id')
+      else
+        query = 
+          '_id.doc': docName
+          '_id.v':
+            $gte: start
+        query['_id.v'].$lt = end if end
+        cursor = collection.find(query).sort('_id.v')
       
-      collection.find(query).sort('_id').toArray (err, docs) ->
+      cursor.toArray (err, docs) ->
         console.warn "failed to get ops for #{docName}: #{err}" if err
         return callback? err if err
 
@@ -101,11 +125,19 @@ module.exports = MongoDb = (options) ->
       return callback? err if err
       
       doc = 
-        _id: opData.v
         opData:
           op: opData.op
           meta: opData.meta
       
+      if options.opsCollectionPerDoc
+        doc._id = opData.v
+      else
+        # Be careful to always insert { doc, v } not { v, doc }. Mongo
+        # thinks objects with keys in a different order are different objects
+        doc._id = 
+          doc: docName
+          v: opData.v
+
       collection.insert doc, safe: true, (err, doc) ->
         console.warn "failed to save op #{opData} for #{docName}: #{err}" if err
         return callback? err if err
@@ -147,9 +179,6 @@ module.exports = MongoDb = (options) ->
         
   # Permanently deletes a document. There is no undo.
   @delete = (docName, dbMeta, callback) ->
-    client.collection opsCollectionForDoc(docName), (err, collection) ->
-      collection.drop()
-
     client.collection 'docs', (err, collection) ->
       return callback? err if err
       
@@ -158,7 +187,19 @@ module.exports = MongoDb = (options) ->
         if count == 0
           callback? "Document does not exist" 
         else
-          callback? null
+          client.collection opsCollectionForDoc(docName), (err, opsCollection) ->
+            return callback? err if err
+
+            if options.opsCollectionPerDoc
+              opsCollection.drop (err, reply) ->
+                # Ignore collection not existing
+                if err?.errmsg == 'ns not found'
+                  callback? null
+                else
+                  callback? err
+            else
+              opsCollection.remove { '_id.doc': docName }, (err, count) ->
+                callback? err
 
   # Close the connection to the database
   @close = ->

@@ -1,0 +1,21 @@
+#!/usr/bin/env node
+
+require('coffee-script');
+
+var createdb = require('../src/server/db');
+var options = require('./options');
+console.log(options);
+if (options.db.type !== 'mysql') {
+  throw new Error('You must configure your server to use mysql before using this script');
+}
+
+var db = createdb(options.db);
+db.initialize(function(error) {
+  if(error) {
+    throw new Error(error.toString());
+  } else {
+    console.log("DB initialized successfully");
+  }
+  db.close();
+});
+
