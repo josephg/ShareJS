@@ -41,8 +41,8 @@ module.exports =
     # Useragent hashing
     hat: "*"
 
-    # Require redis since this is the backend we use.
-    redis: '*'
+    # Require mysql since this is the backend we use.
+    mysql: "*"
 
   # Developer dependencies
   devDependencies:

@@ -22,7 +22,7 @@
     "request": ">= 2.1.1",
     "coffee-script": "<1.7",
     "hat": "*",
-    "redis": "*"
+    "mysql": "*"
   },
   "devDependencies": {
     "express": "~ 3.x",
