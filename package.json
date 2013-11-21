@@ -40,11 +40,7 @@
     "karma-firefox-launcher": "~0.1.0",
     "karma-coffee-preprocessor": "~0.1.0",
     "karma-browserify": "0.0.5",
-    "karma-mocha": "~0.1.0",
-    "grunt": "~0.4.1",
-    "grunt-karma": "~0.6.2",
-    "grunt-contrib-watch": "~0.5.3",
-    "grunt-simple-mocha": "~0.4.0"
+    "karma-mocha": "~0.1.0"
   },
   "engine": "node >= 0.10",
   "main": "lib/index.js",
@@ -53,7 +49,6 @@
   },
   "scripts": {
     "build": "make",
-    "test": "grunt test",
     "prepublish": "make webclient"
   },
   "licenses": [
