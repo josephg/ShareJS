@@ -84,12 +84,6 @@ module.exports = MysqlDb = (options) ->
     client.query sql, (error, result) ->
       callback? error?.message
 
-  # This will perminantly delete all data in the database.
-  @dropTables = (callback) ->
-    sql = "DROP SCHEMA #{options.schema} CASCADE;"
-    client.query sql, (error, result) ->
-      callback? error.message
-
   @create = (docName, docData, callback) ->
     sql = """
       INSERT INTO #{snapshot_table} SET ?

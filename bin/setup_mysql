@@ -2,8 +2,14 @@
 
 require('coffee-script');
 
+var argv = require('optimist').
+    usage("Usage: $0 -f options.js").
+	demand('f').
+    alias('f','options').
+	argv;
+
 var createdb = require('../src/server/db');
-var options = require('./options');
+options = require(argv.options);
 console.log(options);
 if (options.db.type !== 'mysql') {
   throw new Error('You must configure your server to use mysql before using this script');

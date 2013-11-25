@@ -3,13 +3,18 @@
   "version": "1.1.0",
   "dependencies": {
     "sockjs": {
-      "version": "0.3.7",
+      "version": "0.3.8",
       "dependencies": {
         "node-uuid": {
           "version": "1.3.3"
         },
         "faye-websocket": {
-          "version": "0.4.4"
+          "version": "0.7.0",
+          "dependencies": {
+            "websocket-driver": {
+              "version": "0.3.0"
+            }
+          }
         }
       }
     },
@@ -39,10 +44,10 @@
       }
     },
     "browserchannel": {
-      "version": "1.0.7"
+      "version": "1.0.8"
     },
     "ws": {
-      "version": "0.4.30",
+      "version": "0.4.31",
       "dependencies": {
         "commander": {
           "version": "0.6.1"
@@ -59,7 +64,7 @@
       }
     },
     "connect": {
-      "version": "2.9.0",
+      "version": "2.11.0",
       "dependencies": {
         "qs": {
           "version": "0.6.5"
@@ -85,7 +90,7 @@
           }
         },
         "bytes": {
-          "version": "0.2.0"
+          "version": "0.2.1"
         },
         "fresh": {
           "version": "0.2.0"
@@ -94,22 +99,36 @@
           "version": "0.0.1"
         },
         "uid2": {
-          "version": "0.0.2"
+          "version": "0.0.3"
         },
         "debug": {
-          "version": "0.7.2"
+          "version": "0.7.4"
         },
         "methods": {
           "version": "0.0.1"
         },
+        "raw-body": {
+          "version": "0.0.3"
+        },
+        "negotiator": {
+          "version": "0.3.0"
+        },
         "multiparty": {
-          "version": "2.1.8",
+          "version": "2.2.0",
           "dependencies": {
             "readable-stream": {
-              "version": "1.0.17"
+              "version": "1.1.9",
+              "dependencies": {
+                "core-util-is": {
+                  "version": "1.0.0"
+                },
+                "debuglog": {
+                  "version": "0.0.2"
+                }
+              }
             },
             "stream-counter": {
-              "version": "0.1.0"
+              "version": "0.2.0"
             }
           }
         }
@@ -177,7 +196,7 @@
           "version": "1.2.11"
         },
         "form-data": {
-          "version": "0.1.1",
+          "version": "0.1.2",
           "dependencies": {
             "combined-stream": {
               "version": "0.0.4",
@@ -200,20 +219,169 @@
     "hat": {
       "version": "0.0.3"
     },
-    "redis": {
-      "version": "0.8.4"
-    },
-    "shelljs": {
-      "version": "0.2.3"
+    "mysql": {
+      "version": "2.0.0-alpha9",
+      "dependencies": {
+        "require-all": {
+          "version": "0.0.3"
+        },
+        "bignumber.js": {
+          "version": "1.0.1"
+        }
+      }
     },
     "uglify-js": {
-      "version": "1.3.4"
+      "version": "1.3.5"
+    },
+    "shelljs": {
+      "version": "0.2.6"
+    },
+    "websocket": {
+      "version": "1.0.8"
     },
     "optimist": {
-      "version": "0.3.5",
+      "version": "0.6.0",
       "dependencies": {
         "wordwrap": {
           "version": "0.0.2"
+        },
+        "minimist": {
+          "version": "0.0.5"
+        }
+      }
+    },
+    "express": {
+      "version": "3.4.4",
+      "dependencies": {
+        "commander": {
+          "version": "1.3.2",
+          "dependencies": {
+            "keypress": {
+              "version": "0.1.0"
+            }
+          }
+        },
+        "range-parser": {
+          "version": "0.0.4"
+        },
+        "mkdirp": {
+          "version": "0.3.5"
+        },
+        "cookie": {
+          "version": "0.1.0"
+        },
+        "buffer-crc32": {
+          "version": "0.2.1"
+        },
+        "fresh": {
+          "version": "0.2.0"
+        },
+        "methods": {
+          "version": "0.1.0"
+        },
+        "send": {
+          "version": "0.1.4",
+          "dependencies": {
+            "mime": {
+              "version": "1.2.11"
+            }
+          }
+        },
+        "cookie-signature": {
+          "version": "1.0.1"
+        },
+        "debug": {
+          "version": "0.7.4"
+        }
+      }
+    },
+    "nodeunit": {
+      "version": "0.8.2",
+      "dependencies": {
+        "tap": {
+          "version": "0.4.4",
+          "dependencies": {
+            "inherits": {
+              "version": "2.0.0"
+            },
+            "yamlish": {
+              "version": "0.0.5"
+            },
+            "slide": {
+              "version": "1.1.5"
+            },
+            "runforcover": {
+              "version": "0.0.2",
+              "dependencies": {
+                "bunker": {
+                  "version": "0.1.2",
+                  "dependencies": {
+                    "burrito": {
+                      "version": "0.2.12",
+                      "dependencies": {
+                        "traverse": {
+                          "version": "0.5.2"
+                        },
+                        "uglify-js": {
+                          "version": "1.1.1"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "nopt": {
+              "version": "2.1.2",
+              "dependencies": {
+                "abbrev": {
+                  "version": "1.0.4"
+                }
+              }
+            },
+            "mkdirp": {
+              "version": "0.3.5"
+            },
+            "difflet": {
+              "version": "0.2.6",
+              "dependencies": {
+                "traverse": {
+                  "version": "0.6.6"
+                },
+                "charm": {
+                  "version": "0.1.2"
+                },
+                "deep-is": {
+                  "version": "0.1.2"
+                }
+              }
+            },
+            "deep-equal": {
+              "version": "0.0.0"
+            },
+            "buffer-equal": {
+              "version": "0.0.0"
+            },
+            "glob": {
+              "version": "3.2.7",
+              "dependencies": {
+                "minimatch": {
+                  "version": "0.2.12",
+                  "dependencies": {
+                    "lru-cache": {
+                      "version": "2.3.1"
+                    },
+                    "sigmund": {
+                      "version": "1.0.0"
+                    }
+                  }
+                },
+                "inherits": {
+                  "version": "2.0.1"
+                }
+              }
+            }
+          }
         }
       }
     }
