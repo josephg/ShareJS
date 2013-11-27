@@ -60,10 +60,10 @@ module.exports = MysqlDb = (options) ->
 
     sql =  """
       CREATE TABLE #{snapshot_table} (
-        doc varchar(256) NOT NULL,
+        doc varchar(900) NOT NULL,
         v int NOT NULL,
         type varchar(256) NOT NULL,
-        snapshot text NOT NULL,
+        snapshot mediumtext NOT NULL,
         meta text NOT NULL,
         created_at timestamp NOT NULL,
         CONSTRAINT snapshots_pkey PRIMARY KEY (doc, v)
@@ -74,9 +74,9 @@ module.exports = MysqlDb = (options) ->
 
     sql = """
       CREATE TABLE #{operations_table} (
-        doc varchar(256) NOT NULL,
+        doc varchar(900) NOT NULL,
         v int NOT NULL,
-        op text NOT NULL,
+        op mediumtext NOT NULL,
         meta text NOT NULL,
         CONSTRAINT operations_pkey PRIMARY KEY (doc, v)
       );
@@ -116,7 +116,7 @@ module.exports = MysqlDb = (options) ->
           WHERE doc = ?
         """
         client.query sql, values, (error, result) ->
-          if !error? and result.length > 0
+          if !error? and result.affectedRows > 0
             callback?()
           else if !error?
             callback? "Document does not exist"
