@@ -513,7 +513,7 @@
       var oldSnapshot;
       oldSnapshot = this.snapshot;
       this.snapshot = this.type.apply(this.snapshot, docOp);
-      this.emit('change', docOp, oldSnapshot);
+      this.emit('change', docOp, oldSnapshot, isRemote);
       if (isRemote) {
         return this.emit('remoteop', docOp, oldSnapshot);
       }
