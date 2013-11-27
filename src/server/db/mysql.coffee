@@ -60,7 +60,7 @@ module.exports = MysqlDb = (options) ->
 
     sql =  """
       CREATE TABLE #{snapshot_table} (
-        doc varchar(256) NOT NULL,
+        doc varchar(1000) NOT NULL,
         v int NOT NULL,
         type varchar(256) NOT NULL,
         snapshot mediumtext NOT NULL,
@@ -74,7 +74,7 @@ module.exports = MysqlDb = (options) ->
 
     sql = """
       CREATE TABLE #{operations_table} (
-        doc varchar(256) NOT NULL,
+        doc varchar(1000) NOT NULL,
         v int NOT NULL,
         op mediumtext NOT NULL,
         meta text NOT NULL,
