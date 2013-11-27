@@ -116,7 +116,7 @@ module.exports = MysqlDb = (options) ->
           WHERE doc = ?
         """
         client.query sql, values, (error, result) ->
-          if !error? and result.length > 0
+          if !error? and result.affectedRows > 0
             callback?()
           else if !error?
             callback? "Document does not exist"
