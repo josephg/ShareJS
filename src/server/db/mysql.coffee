@@ -63,7 +63,7 @@ module.exports = MysqlDb = (options) ->
         doc varchar(256) NOT NULL,
         v int NOT NULL,
         type varchar(256) NOT NULL,
-        snapshot text NOT NULL,
+        snapshot mediumtext NOT NULL,
         meta text NOT NULL,
         created_at timestamp NOT NULL,
         CONSTRAINT snapshots_pkey PRIMARY KEY (doc, v)
@@ -76,7 +76,7 @@ module.exports = MysqlDb = (options) ->
       CREATE TABLE #{operations_table} (
         doc varchar(256) NOT NULL,
         v int NOT NULL,
-        op text NOT NULL,
+        op mediumtext NOT NULL,
         meta text NOT NULL,
         CONSTRAINT operations_pkey PRIMARY KEY (doc, v)
       );
