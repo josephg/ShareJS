@@ -31,12 +31,15 @@ module.exports = MysqlDb = function(options) {
         }
     }
 
+    snapshot_table = options.schema && ("" + options.schema + "." + options.snapshot_table) || options.snapshot_table;
+    operations_table = options.schema && ("" + options.schema + "." + options.operations_table) || options.operations_table;
+
     var client;
 
     /**
      * @see https://github.com/felixge/node-mysql/blob/master/Readme.md#server-disconnects
      */
-    function handleDisconnect() {
+    function mysqlConnect() {
         client = options.client || mysql.createConnection(options);
 
         /**
@@ -70,14 +73,12 @@ module.exports = MysqlDb = function(options) {
             });
         });
 
-        snapshot_table = options.schema && ("" + options.schema + "." + options.snapshot_table) || options.snapshot_table;
-        operations_table = options.schema && ("" + options.schema + "." + options.operations_table) || options.operations_table;
         this.close = function() {
             return client.end();
         };
     }
 
-    handleDisconnect();
+    mysqlConnect();
 
     this.initialize = function(callback) {
         var sql;
