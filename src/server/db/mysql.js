@@ -54,7 +54,7 @@ module.exports = MysqlDb = function(options) {
                  * process asynchronous requests in the meantime.
                  * If you're also serving http, display a 503 error.
                  */
-                setTimeout(handleDisconnect, 2000);
+                setTimeout(mysqlConnect, 2000);
             }
 
             client.on('error', function(err) {
@@ -66,7 +66,7 @@ module.exports = MysqlDb = function(options) {
                  * server variable configures this)
                  */
                 if (err.code === 'PROTOCOL_CONNECTION_LOST') {
-                    handleDisconnect();
+                    mysqlConnect();
                 } else {
                     throw err;
                 }
