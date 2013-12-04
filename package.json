@@ -16,7 +16,7 @@
     "email": "josephg@gmail.com"
   },
   "dependencies": {
-    "livedb": ">=0.2.3",
+    "livedb": "git://github.com/Dignifiedquire/livedb#old_snapshot",
     "ottypes": "~1",
     "semver": "~2",
     "express": "~3",
