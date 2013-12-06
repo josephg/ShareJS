@@ -72,13 +72,13 @@ module.exports = MysqlDb = function(options) {
                 }
             });
         });
-
-        this.close = function() {
-            return client.end();
-        };
     }
 
     mysqlConnect();
+
+    this.close = function() {
+        return client.end();
+    };
 
     this.initialize = function(callback) {
         var sql;
