@@ -111,7 +111,7 @@ in your app.</p>
 <div class="row">
 <div class="span6 offset1">
   <h3>Here’s etherpad in 4 lines.</h3>  
-  <textarea id="pad" rows="8" disabled>Loading. (Or its probably broken and you should come back later.)</textarea>
+  <textarea id="pad" rows="8" disabled>Loading. (Or it's probably broken and you should come back later.)</textarea>
   <span class="help-block">Everyone viewing this page can see your edits live. Open this in another browser window for maximum wow.</span>
 </div>
 <div class="span8">
@@ -127,11 +127,11 @@ sharejs.open('blag', 'text', function(error, doc) {
 </section>
 <section id="body">
 <p>
-You’re writing a web app. Your app contains data that users edit. Your users should be able to user your app from multiple computers if they need to. Sometimes you want multiple users to view &amp; edit the same data.</p>
+You’re writing a web app. Your app contains data that users edit. Your users should be able to use your app from multiple computers if they need to. Sometimes you want multiple users to view &amp; edit the same data.</p>
 
 <p>How do you make that work, without the data going out of sync and without losing anything?</p>
 
-<p>One option is to have Submit buttons everywhere. <a href="http://stackexchange.com/">Stackexchange</a>, <a href="http://reddit.com/">Reddit</a> and <a href="http://news.ycombinator.com/">Hacker News</a> work like this. You can’t write half a HN comment from your laptop and half from your phone. Most wikis have a ‘save’ button and do locking. Its like the ghostly hand of <a href="http://www.codinghorror.com/blog/2006/08/source-control-anything-but-sourcesafe.html">visual sourcesafe</a> has somehow infected the web with sloppy engineering and a terrible user experience. If your wiki lock expires while you’re doing a big edit, you're in a world of hurt.</p>
+<p>One option is to have Submit buttons everywhere. <a href="http://stackexchange.com/">Stackexchange</a>, <a href="http://reddit.com/">Reddit</a> and <a href="http://news.ycombinator.com/">Hacker News</a> work like this. You can’t write half a HN comment from your laptop and half from your phone. Most wikis have a ‘save’ button and do locking. It's like the ghostly hand of <a href="http://www.codinghorror.com/blog/2006/08/source-control-anything-but-sourcesafe.html">visual sourcesafe</a> has somehow infected the web with sloppy engineering and a terrible user experience. If your wiki lock expires while you’re doing a big edit, you're in a world of hurt.</p>
 
 <p>The solution is <strong><a href="http://en.wikipedia.org/wiki/Operational_transformation">Operational Transformation</a></strong> (OT). If you haven’t heard of it, OT is a class of algorithms that do <i>multi-site realtime concurrency</i>. OT is like realtime git. It works with any amount of lag (from zero to an extended holiday). It lets users make live, concurrent edits with low bandwidth. OT gives you eventual consistency between multiple users without retries, without errors and without any data being overwritten.</p>
 
@@ -179,9 +179,12 @@ You’re writing a web app. Your app contains data that users edit. Your users s
 
 <p>There’s currently nothing stopping you playing as the other team, or cheating and writing a script which moves the other player’s pieces around. You can also use the game board as a low res 3 color display and write rude messages with it. Jeremy’s game is <i>cool</i>.</p>
 
+<p>A simpler demo of the JSON interface is a <b>really trivial</b> <a href="peep-peep/peep-peep.html">Twitter clone</a>. It's based the chat part of Jeremy's Hex game, but strips out all the game logic to make things a bit easier to understand.</p>
+
+
 <p>ShareJS is <i>mostly</i> working, but it’s still a bit shit. The next version will fix some connection flakiness and tell you who’s editing the document with you. I want to add rich text support as well, though I can’t find any good HTML rich text editors.</p>
 
-<p>If you’re making the next <a href="https://trello.com/">Trello</a> or Google Spreadsheets, check out <a href="https://github.com/josephg/ShareJS">ShareJS</a>. Make your web apps realtime and collaborative. Its the one true way ;)</p>
+<p>If you’re making the next <a href="https://trello.com/">Trello</a> or Google Spreadsheets, check out <a href="https://github.com/josephg/ShareJS">ShareJS</a>. Make your web apps realtime and collaborative. It's the one true way ;)</p>
 </section>
 </div>
 <footer class="footer">

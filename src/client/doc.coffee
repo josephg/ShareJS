@@ -30,7 +30,7 @@ class Doc
     # Any of these can be null / undefined at this stage.
     openData ||= {}
     @version = openData.v
-    @snapshot = openData.snaphot
+    @snapshot = openData.snapshot
     @_setType openData.type if openData.type
 
     @state = 'closed'
@@ -71,7 +71,7 @@ class Doc
     # Its important that these event handlers are called with oldSnapshot.
     # The reason is that the OT type APIs might need to access the snapshots to
     # determine information about the received op.
-    @emit 'change', docOp, oldSnapshot
+    @emit 'change', docOp, oldSnapshot, isRemote
     @emit 'remoteop', docOp, oldSnapshot if isRemote
   
   _connectionStateChanged: (state, data) ->
@@ -93,6 +93,7 @@ class Doc
     @emit state, data
 
   _setType: (type) ->
+    return if @type
     if typeof type is 'string'
       type = types[type]
 

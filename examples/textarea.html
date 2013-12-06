@@ -25,6 +25,7 @@
 var elem = document.getElementById('editor');
 
 sharejs.open('hello', 'text', function(error, doc) {
+	window.doc = doc;
 	if (error) {
 		console.log(error);
 	} else {

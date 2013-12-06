@@ -2,6 +2,14 @@ body {
 	overflow: hidden;
 }
 
+.ace_bold {
+	font-weight:bold;
+}
+
+.ace_italic {
+	font-style:italic;
+}
+
 #header {
 	position: fixed;
 	top: 0;
