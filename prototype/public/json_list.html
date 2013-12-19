@@ -1,7 +1,7 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.17/jquery-ui.min.js"></script>
 <script src="channel/bcsocket.js"></script>
-<script src="share.uncompressed.js"></script>
+<script src="share.js"></script>
 <script>
 
 var s = new BCSocket(null, {reconnect: true});
@@ -49,7 +49,7 @@ function trainExample(doc) {
   });
 
   var dragFrom = null;
-  
+
   list.on('move', function(from, to) {
     //console.log('move', from, to);
     if (dragFrom === from) {
@@ -69,8 +69,8 @@ function trainExample(doc) {
           .insertAfter($('#trains :nth-child(' + to + ')'));
       }
     }
-  });  
-  
+  });
+
   $("#trains").sortable({
     helper: 'clone',
     start: function(event, ui) {
@@ -93,7 +93,7 @@ function trainExample(doc) {
     },
     axis: 'y'
   });
-  
+
   $("#trains").disableSelection();
 }
 
