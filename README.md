@@ -9,7 +9,7 @@ For the stable 0.6 branch that you will get if you `npm install share`, look [in
 
 ShareJS 0.7 is a complete rewrite of ShareJS 0.6. *Most* APIs have changed, at
 least slightly. Motivation for the new design is discussed [in a blog post
-here](https://josephg.com/blog/sharejs)
+here](http://josephg.com/blog/sharejs)
 and [I demo the new features here](http://www.youtube.com/watch?v=uDzME15UxVM).
 
 A [list of changes from 0.6 is here](https://github.com/share/ShareJS/wiki/Changelog).
