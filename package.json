@@ -50,7 +50,7 @@
   "scripts": {
     "build": "make",
     "prepublish": "make webclient",
-    "test": "node_modules/.bin/mocha --compilers coffee:coffee-script test/server/*.coffee && node_modules.bin/karma start --single-run"
+    "test": "make test"
   },
   "licenses": [
     {

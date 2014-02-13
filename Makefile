@@ -1,4 +1,4 @@
-.PHONY: all test clean webclient
+.PHONY: all test clean webclient testServer testBrowser
 
 COFFEE = node_modules/.bin/coffee
 UGLIFY = node_modules/.bin/uglifyjs -d WEB=true
@@ -27,6 +27,15 @@ all: webclient
 
 clean:
 	rm -rf webclient/*
+
+test: testServer testBrowser
+
+testServer:
+	node_modules/.bin/mocha --compilers coffee:coffee-script test/server/*.coffee
+
+testBrowser:
+	node_modules/.bin/coffee scripts/testserver.coffee &
+	node_modules/.bin/karma start --single-run
 
 webclient/share.uncompressed.js: $(BUNDLED_TYPES) $(CLIENT_SRCS)
 	mkdir -p webclient
