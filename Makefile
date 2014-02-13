@@ -1,4 +1,4 @@
-.PHONY: all test clean webclient testServer testBrowser
+.PHONY: all test clean webclient
 
 COFFEE = node_modules/.bin/coffee
 UGLIFY = node_modules/.bin/uglifyjs -d WEB=true
@@ -28,9 +28,7 @@ all: webclient
 clean:
 	rm -rf webclient/*
 
-test: testServer testBrowser
-
-testServer:
+test:
 	node_modules/.bin/mocha --compilers coffee:coffee-script test/server/*.coffee
 
 testBrowser:

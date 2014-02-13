@@ -34,13 +34,7 @@
     "chai": "*",
     "sinon": "1.7.1",
     "redis": "~0.8.6",
-    "uglify-js": "~2",
-    "karma": "~0.10.2",
-    "karma-chrome-launcher": "~0.1.0",
-    "karma-firefox-launcher": "~0.1.0",
-    "karma-coffee-preprocessor": "~0.1.0",
-    "karma-browserify": "0.0.5",
-    "karma-mocha": "~0.1.0"
+    "uglify-js": "~2"
   },
   "engine": "node >= 0.10",
   "main": "lib/index.js",
