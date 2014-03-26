@@ -1,6 +1,6 @@
 {
   "name": "share",
-  "version": "0.7.0-alpha12",
+  "version": "0.7.0-alpha13",
   "description": "A database for concurrent document editing",
   "keywords": [
     "operational transformation",
@@ -25,23 +25,11 @@
   },
   "devDependencies": {
     "coffee-script": "~1.6.3",
-    "connect": "~2",
-    "coffeeify": "*",
     "browserify": "~2.35.1",
     "optimist": ">= 0.2.4",
     "browserchannel": "*",
-    "mocha": "~1.13.0",
-    "chai": "*",
-    "sinon": "1.7.1",
-    "redis": "~0.8.6",
-    "uglify-js": "~2",
-    "karma": "~0.10.2",
-    "karma-chrome-launcher": "~0.1.0",
-    "karma-firefox-launcher": "~0.1.0",
-    "karma-coffee-preprocessor": "~0.1.0",
-    "karma-browserify": "0.0.5",
-    "karma-mocha": "~0.1.0",
-    "transport-adapters": "git://github.com/Dignifiedquire/transport-adapters"
+    "mocha": "~1",
+    "uglify-js": "~2"
   },
   "engine": "node >= 0.10",
   "main": "lib/index.js",
