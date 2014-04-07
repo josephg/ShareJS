@@ -1,7 +1,6 @@
 UserAgent = require '../../lib/server/useragent'
 {Readable} = require 'stream'
 {EventEmitter} = require 'events'
-sinon = require 'sinon'
 assert = require 'assert'
 
 describe 'UserAgent', ->
@@ -22,12 +21,11 @@ describe 'UserAgent', ->
     shareInstance.opFilters  = []
 
 
-  describe '#fetch', ->
+  describe 'fetch', ->
+    backend.fetch = (collection, document, callback) ->
+      callback null, {v:10, color: 'yellow'}
 
-    backend.fetch = (collection, document, callback)->
-      callback(null, color: 'yellow')
-
-    it 'calls fetch on backend', (done)->
+    it 'calls fetch on backend', (done) ->
       sinon.spy backend, 'fetch'
       @userAgent.fetch 'flowers', 'lily', ->
         sinon.assert.calledWith backend.fetch, 'flowers', 'lily'
