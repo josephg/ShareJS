@@ -25,6 +25,7 @@
   },
   "devDependencies": {
     "coffee-script": "~1.6.3",
+    "browserify": "~2.35.1",
     "optimist": ">= 0.2.4",
     "browserchannel": "*",
     "mocha": "~1",
