@@ -279,4 +279,9 @@ queryBox.onsearch = function() {
 
 };
 
+function makeDocs() {
+  var d = sjs.get('users', 'noise' + Math.floor(Math.random()*100));
+  d.create('json0', {x:Math.floor(Math.random() * 100)});
+}
+
 </script>
