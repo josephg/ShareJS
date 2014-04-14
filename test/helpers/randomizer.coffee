@@ -34,7 +34,7 @@ testRandomOp = (type, initialDoc = type.create()) ->
     s = type.apply s, op for op in doc.ops
 
     checkSnapshotsEq s, doc.result
-  
+
   testApply set for set in opSets
 
   if type.invert?
@@ -50,7 +50,7 @@ testRandomOp = (type, initialDoc = type.create()) ->
         snapshot = type.apply snapshot, op_
 
       checkSnapshotsEq snapshot, initialDoc
-  
+
     testInvert set for set in opSets
 
   # If all the ops are composed together, then applied, we should get the same result.
@@ -65,7 +65,7 @@ testRandomOp = (type, initialDoc = type.create()) ->
     compose set for set in opSets
 
     testInvert? set, [set.composed] for set in opSets when set.composed?
-  
+
     # Check the diamond property holds
     if client.composed? && server.composed?
       [server_, client_] = helpers.transformX type, server.composed, client.composed
@@ -85,10 +85,10 @@ testRandomOp = (type, initialDoc = type.create()) ->
         rhs = type.transform client2.composed, (type.compose server.composed, client_), 'left'
 
         assert.deepEqual lhs, rhs
-  
+
   if type.prune?
     p 'PRUNE'
-    
+
     [op1] = type.generateRandomOp initialDoc
     [op2] = type.generateRandomOp initialDoc
 
@@ -117,7 +117,7 @@ testRandomOp = (type, initialDoc = type.create()) ->
       checkSnapshotsEq server.result, server_result_
       orig_ = server.ops.slice().reverse().map(type.invert).reduce(type.apply, server_result_)
       checkSnapshotsEq orig_, initialDoc
-  
+
   client.result
 
 collectStats = (type) ->
@@ -127,14 +127,14 @@ collectStats = (type) ->
   orig[fn] = type[fn] for fn in functions when type[fn]?
   restore = ->
     type[fn] = orig[fn] for fn in functions when orig[fn]?
-  
+
   stats = {}
   stats[fn] = 0 for fn in functions when orig[fn]?
 
   collect = (fn) -> (args...) ->
     stats[fn]++
     orig[fn].apply null, args
-  
+
   type[fn] = collect fn for fn in functions when orig[fn]?
 
   [stats, restore]

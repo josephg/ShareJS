@@ -57,4 +57,3 @@ describe 'session', ->
   it 'gives the client a session id', ->
     @onmessage = (msg) ->
       assert.deepEqual msg, a:'init', protocol:0, id:'session id'
-

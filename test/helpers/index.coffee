@@ -30,7 +30,7 @@ exports.transformLists = (type, serverOps, clientOps) ->
       [s, c_] = transformX type, s, c
       c_
     s
-  
+
   [serverOps, clientOps]
 
 # Compose a list of ops together
@@ -66,5 +66,3 @@ exports.applyOps = applyOps = (model, docName, startVersion, ops, callback) =>
 exports.newDocName = do ->
   index = 1
   -> 'testing_doc_' + index++
-
-

@@ -78,7 +78,7 @@ describe 'integration', ->
 
         doc.subscribe (err) =>
           assert.equal err, null
-          
+
           assert.equal doc.state, 'ready'
           assert doc.subscribed
 
@@ -250,7 +250,7 @@ describe 'integration', ->
           doc.on 'op', (op) ->
             assert doc.version <= 100
             done() if doc.version is 100
-       
+
 
 
 
@@ -270,5 +270,3 @@ describe 'integration', ->
 
       # regression
       it 'emits an error on the connection or document if an exception is thrown in an event handler'
-
-
