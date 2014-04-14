@@ -18,4 +18,3 @@ db.initialize(function(error) {
   }
   db.close();
 });
-

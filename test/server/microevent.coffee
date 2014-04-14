@@ -10,11 +10,11 @@ tests = ->
     @e.emit 'a'
     @e.emit 'a', 1, 2, 3
     @e.emit 'b', 1, 2, 3
-  
+
   it 'fires the event listener', (done) ->
     @e.on 'foo', -> done()
     @e.emit 'foo'
-  
+
   it 'does not fire a removed event listener', ->
     fn = -> throw new Error 'event listener fired'
     @e.on 'foo', fn
@@ -28,7 +28,7 @@ tests = ->
       assert.strictEqual c, 3
       done()
     @e.emit 'foo', 1, 2, 3
-  
+
   it 'fires multiple event listeners', (done) ->
     passPart = makePassPart 2, done
     @e.on 'foo', passPart
@@ -52,14 +52,14 @@ tests = ->
       passPart()
     @e.on 'foo', passPart
     @e.emit 'foo'
-  
+
   it 'will fire an event if you remove it and add it back', (done) ->
     fn = -> done()
     @e.on 'foo', fn
     @e.removeListener 'foo', fn
     @e.on 'foo', fn
     @e.emit 'foo'
-  
+
   it 'fires an event listener that was removed from a different event', (done) ->
     fn = -> done()
     @e.on 'foo', fn
@@ -125,4 +125,3 @@ describe 'eventEmitter', ->
     @e = new (require 'events').EventEmitter
 
   tests()
-

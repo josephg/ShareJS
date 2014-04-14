@@ -70,7 +70,7 @@ describe 'Queries', ->
         done()
       @connection.get('cars', 'porsche').del()
 
-  
+
   describe 'docMode: sub', ->
     before -> @anotherConnection = new Connection(createSocket())
     after  -> @anotherConnection.socket.close()
