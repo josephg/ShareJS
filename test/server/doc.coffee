@@ -13,12 +13,12 @@ describe 'Doc', ->
     state: 'connected'
     sent: []
     canSend: true
-    send: (data)-> @sent.push(data)
-    sendOp: (msg)->
+    send: (data) -> @sent.push(data)
+    sendOp: (msg) ->
       msg.src = @id
       msg.seq = @seq
       @send(msg)
-    sendSubscribe: (collection, name, version)->
+    sendSubscribe: (collection, name, version) ->
       msg =  c:collection, d:name, src: @id, seq: @seq, a:'sub'
       msg.v = version if version
       @send msg
@@ -33,7 +33,7 @@ describe 'Doc', ->
       @doc.flush()
       sendMessage connection.sent.pop()
 
-  sendMessage = (msg)->
+  sendMessage = (msg) ->
     connection.receiver._onMessage(msg)
 
   beforeEach ->
@@ -44,14 +44,14 @@ describe 'Doc', ->
 
   describe '#subscribe', ->
 
-    it 'sets subscribed', (done)->
+    it 'sets subscribed', (done) ->
       expect(@doc.subscribed).to.be.false
       @doc.subscribe =>
         expect(@doc.subscribed).to.be.true
         done()
       sendMessage c: 'notes', d: 'music', a: 'sub'
 
-    it 'emits subscribe', (done)->
+    it 'emits subscribe', (done) ->
       @doc.subscribe()
       @doc.on('subscribe', done)
       sendMessage c: 'notes', d: 'music', a: 'sub'
@@ -66,7 +66,7 @@ describe 'Doc', ->
       @doc.subscribe()
       expect(@doc.snapshot).to.be.undefined
       sendMessage c: 'notes', d: 'music', a: 'sub', data:
-        {data: 'snapshot', v: 0}
+        {data: 'snapshot', v: 0, type: 'text'}
       expect(@doc.snapshot).to.equal 'snapshot'
 
 
@@ -75,14 +75,14 @@ describe 'Doc', ->
 
     beforeEach -> @doc.subscribed = true
 
-    it 'sets unsubscribed', (done)->
+    it 'sets unsubscribed', (done) ->
       expect(@doc.subscribed).to.be.true
       @doc.unsubscribe =>
         expect(@doc.subscribed).to.be.false
         done()
       sendMessage c: 'notes', d: 'music', a: 'unsub'
 
-    it 'emits unsubscribe', (done)->
+    it 'emits unsubscribe', (done) ->
       @doc.on('unsubscribe', done)
       sendMessage c: 'notes', d: 'music', a: 'unsub'
 
@@ -90,7 +90,7 @@ describe 'Doc', ->
       @doc.unsubscribe()
       expect(connection.sent[0]).to.deep.equal {c: 'notes', d: 'music', a: 'unsub'}
 
-    it 'calls subscribe callbacks', (done)->
+    it 'calls subscribe callbacks', (done) ->
       @doc.subscribe(done)
       @doc.unsubscribe()
       sendMessage c: 'notes', d: 'music', a: 'unsub'
@@ -104,10 +104,10 @@ describe 'Doc', ->
 
     it 'sets snapshot', ->
       @doc.fetch()
-      sendMessage c: 'notes', d: 'music', a: 'fetch', data: { data: 'cool' , v: 0}
+      sendMessage c: 'notes', d: 'music', a: 'fetch', data: { data: 'cool' , v: 0, type: 'text'}
       expect(@doc.snapshot).to.equal 'cool'
 
-    it 'gets ready', (done)->
+    it 'gets ready', (done) ->
       @doc.fetch()
       @doc.on 'ready', =>
         expect(@doc.state).to.equal 'ready'
@@ -122,7 +122,7 @@ describe 'Doc', ->
 
   describe '#create', ->
 
-    it 'calls callback', (done)->
+    it 'calls callback', (done) ->
       @doc.create(textType, done)
       @doc.flush()
       sendMessage connection.sent[0]
@@ -142,7 +142,7 @@ describe 'Doc', ->
       sendMessage connection.sent[0]
       expect(@doc.snapshot).to.equal 'a note on music'
 
-    it 'gets ready', (done)->
+    it 'gets ready', (done) ->
       expect(@doc.state).to.be.null
       @doc.create(textType, 'a note on music')
       @doc.flush()
@@ -151,7 +151,7 @@ describe 'Doc', ->
         done()
       sendMessage connection.sent[0]
 
-    it 'emits create after snapshot created', (done)->
+    it 'emits create after snapshot created', (done) ->
       @doc.once 'create', =>
         expect(@doc.snapshot).to.equal 'Love The Police'
         done()
@@ -171,7 +171,7 @@ describe 'Doc', ->
       @doc.del()
       expect(@doc.type).to.be.null
 
-    it 'emits del after unsetting type', (done)->
+    it 'emits del after unsetting type', (done) ->
       @doc.once 'del', =>
         expect(@doc.type).to.be.null
         done()
@@ -257,18 +257,18 @@ describe 'Doc', ->
 
     beforeEachCreateDocument()
 
-    it 'is triggered when submitting operation', (done)->
+    it 'is triggered when submitting operation', (done) ->
       @doc.on('after op', -> done())
       @doc.submitOp(-2)
 
-    it 'is triggered after applying operation', (done)->
+    it 'is triggered after applying operation', (done) ->
       expect(@doc.snapshot).to.equal 1
       @doc.on 'after op', =>
         expect(@doc.snapshot).to.equal 0
         done()
       @doc.submitOp(-1)
 
-    it 'sends operations in correct order', (done)->
+    it 'sends operations in correct order', (done) ->
       @doc.once 'after op', =>
         @doc.submitOp(1)
         @doc.flush()
@@ -280,18 +280,18 @@ describe 'Doc', ->
 
     beforeEachCreateDocument()
 
-    it 'is triggered when submitting operation', (done)->
+    it 'is triggered when submitting operation', (done) ->
       @doc.on('before op', -> done())
       @doc.submitOp(-2)
 
-    it 'is triggered before applying operation', (done)->
+    it 'is triggered before applying operation', (done) ->
       expect(@doc.snapshot).to.equal 1
       @doc.on 'before op', =>
         expect(@doc.snapshot).to.equal 1
         done()
       @doc.submitOp(-1)
 
-    it 'is triggered when document is locked', (done)->
+    it 'is triggered when document is locked', (done) ->
       @doc.once 'before op', =>
         expect(@doc.locked).to.be.true
         done()

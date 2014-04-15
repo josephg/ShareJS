@@ -165,7 +165,7 @@ describe 'integration', ->
         @userAgent.queryFetch = (index, query, opts, callback) ->
           callback null, [{data:'internet', type:ottypes.text.uri, v:100, docName:'docname', c:'collection'}], 'oh hi'
 
-        @userAgent.subscribe = (collection, doc, version, callback) =>
+        @userAgent.subscribe = (collection, doc, version, options, callback) =>
           assert.strictEqual collection, 'collection'
           assert.strictEqual doc, 'docname'
           assert.strictEqual version, 100
@@ -204,7 +204,7 @@ describe 'integration', ->
           @userAgent.queryFetch = (index, query, opts, callback) ->
             callback null, [{data:'internet', type:ottypes.text.uri, v:100, docName:'docname', c:'collection'}], 'oh hi'
 
-          @userAgent.subscribe = (collection, doc, version, callback) =>
+          @userAgent.subscribe = (collection, doc, version, options, callback) =>
             assert.strictEqual collection, 'collection'
             assert.strictEqual doc, 'docname'
             assert.strictEqual version, 98

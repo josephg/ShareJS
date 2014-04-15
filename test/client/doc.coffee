@@ -2,47 +2,52 @@ assert = require 'assert'
 ottypes = require 'ottypes'
 sinon = require 'sinon'
 createSocket = require '../helpers/socket.coffee'
+Server = require '../helpers/server.coffee'
+Fixtures = require '../helpers/fixtures.coffee'
 
 describe 'Doc', ->
   {Connection} = require('../../lib/client')
-
-  fixtures = require('../helpers/fixtures.coffee')()
 
   before ->
     @connection = @alice = new Connection(createSocket())
     @bob = new Connection(createSocket())
 
-    @alice.on 'error', (e)-> throw e
-    @bob.on 'error', (e)-> throw e
+    @alice.on 'error', (e) -> throw e
+    @bob.on 'error', (e) -> throw e
+    @server = Server()
+    @fixtures = Fixtures()
 
-  after ->
+  after (done) ->
     @alice.socket.close()
     delete @alice
     @bob.socket.close()
     delete @bob
-
+    @fixtures.close()
+    delete @fixtures
+    @server.close done
 
   # Reset documents
-  beforeEach (done)->
+  beforeEach ->
     @alice.collections = {}
     @bob.collections = {}
-    fixtures.reset(done)
 
   describe '#create', ->
+    afterEach (done) ->
+      @fixtures.reset done
 
-    it 'creates a document', (done)->
+    it 'creates a document', (done) ->
       doc = @connection.get('garage', 'porsche')
       doc.create 'json0', {color: 'black'}, done
 
-    it 'creates a document remotely data', (done)->
+    it 'creates a document remotely data', (done) ->
       doc = @alice.get('garage', 'porsche')
       doc.create 'json0', {color: 'red'}, =>
         doc2 = @bob.get('garage', 'porsche')
-        doc2.fetch (error)->
+        doc2.fetch (error) ->
           assert.deepEqual doc2.snapshot, color: 'red'
           done(error)
 
-    it 'triggers created', (done)->
+    it 'triggers created', (done) ->
       doc = @alice.get('garage', 'jaguar')
       oncreate = sinon.spy()
       doc.on 'create', oncreate
@@ -50,34 +55,38 @@ describe 'Doc', ->
         sinon.assert.calledOnce oncreate
         done()
 
-    it 'sets state floating', (done)->
+    it 'sets state floating', (done) ->
       doc = @alice.get('garage', 'porsche')
       assert.equal doc.state, null
       doc.create 'json0', {color: 'white'}, done
       assert.equal doc.state, 'floating'
 
-    it 'sets state ready on success', (done)->
+    it 'sets state ready on success', (done) ->
       doc = @alice.get('garage', 'porsche')
       assert.equal doc.state, null
-      doc.create 'json0', {color: 'rose'}, (error)->
+      doc.create 'json0', {color: 'rose'}, (error) ->
         assert.equal doc.state, 'ready'
         done(error)
 
 
   describe '#del', ->
+    afterEach (done) ->
+      @fixtures.reset done
 
-    it 'deletes doc remotely', (done)->
+    it 'deletes doc remotely', (done) ->
       doc = @alice.get('garage', 'porsche')
       doc.create 'json0', {color: 'beige'}, false, =>
         doc.del false, =>
           doc2 = @bob.get('garage', 'porsche')
-          doc2.fetch (error)->
+          doc2.fetch (error) ->
             assert.equal doc2.type, undefined
             assert.equal doc2.snapshot, undefined
             done(error)
 
 
   describe '#destroy', ->
+    afterEach (done) ->
+      @fixtures.reset done
 
     it 'removes doc from cache', ->
       doc = @alice.get('garage', 'porsche')
@@ -86,19 +95,21 @@ describe 'Doc', ->
       assert.notEqual @alice.get('garage', 'porsche')
 
   describe '#submitOp', ->
+    afterEach (done) ->
+      @fixtures.reset done
 
-    beforeEach (done)->
+    beforeEach (done) ->
       @doc = @alice.get('songs', 'dedododo')
       @doc.create 'text', '', false, done
 
-    it 'applies operation locally', (done)->
+    it 'applies operation locally', (done) ->
       @doc.submitOp ['dedadada'], false, =>
         assert.equal @doc.snapshot, 'dedadada'
         done()
 
-    it 'applies operation remotely', (done)->
+    it 'applies operation remotely', (done) ->
       @doc.submitOp ['dont think'], false, =>
         doc2 = @bob.get('songs', 'dedododo')
-        doc2.fetch (error)->
+        doc2.fetch (error) ->
           assert.equal doc2.snapshot, 'dont think'
           done(error)
