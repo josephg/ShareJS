@@ -2,7 +2,7 @@
 
 var request = require('request')
   , couchapp = require('couchapp')
-  , ddoc = { 
+  , ddoc = {
       _id: '_design/sharejs'
     , views: {
         operations: {
@@ -20,4 +20,3 @@ var request = require('request')
 couchapp.createApp(ddoc, db, function(app){
   app.push();
 });
-

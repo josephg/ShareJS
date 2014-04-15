@@ -26,7 +26,7 @@ composeAdjacent = (data, window) ->
 			time = opData.meta.ts
 		else
 			op.op = text.compose op.op, opData.op
-	
+
 	composedOps.push(op) if op?
 
 	console.log "#{data.length} ops composed into #{composedOps.length} ops (avg #{data.length / composedOps.length} ops/#{window}ms)"
@@ -97,4 +97,3 @@ client.lrange 'OTDB:ops:hello', 1, 12639, (err, values) ->
 	printStats composeAdjacent(data, window) for window in [500, 1000, 2000, 5000]
 
 	process.exit(0)
-

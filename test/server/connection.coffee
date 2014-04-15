@@ -66,15 +66,19 @@ describe 'Connection', ->
 
 
   describe 'socket onmessage', ->
+    beforeEach ->
+      sinon.stub @connection, 'handleMessage'
+
+    afterEach ->
+      @connection.handleMessage.restore()
 
     it 'calls handle message', ->
-      handleMessage = sinon.spy @connection, 'handleMessage'
-      socket.onmessage('a message')
-      sinon.assert.calledWith handleMessage, 'a message'
+      socket.onmessage 'a message'
+      sinon.assert.calledWith @connection.handleMessage, 'a message'
 
     it 'pushes message buffer', ->
       assert @connection.messageBuffer.length == 0
-      socket.onmessage('a message')
+      socket.onmessage 'a message'
       assert @connection.messageBuffer.length == 1
 
 
@@ -104,8 +108,8 @@ describe 'Connection', ->
       second = @connection.get('food', 'steak')
       assert.equal first, second
 
-    it 'injests data on creation', ->
-      doc = @connection.get('food', 'steak', data: 'content', v: 0)
+    it 'ingests data on creation', ->
+      doc = @connection.get 'food', 'steak', {data: 'content', v: 0, type: 'text'}
       assert.equal doc.snapshot, 'content'
-      doc = @connection.get('food', 'steak', data: 'other content', v: 0)
+      doc = @connection.get 'food', 'steak', {data: 'other content', v: 0, type: 'text'}
       assert.equal doc.snapshot, 'content'

@@ -85,4 +85,3 @@ The server will pre-transform cursor positions before rebroadcasting them.
   - It could be told its ID when it gets its first message from the server, or when it opens a document
 - Are clients allowed to make arbitrary changes to the document's metadata?
 - What is the client API for querying cursor positions and getting notified of metadata changes?
-

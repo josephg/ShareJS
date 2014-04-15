@@ -1,10 +1,16 @@
 assert = require 'assert'
 createSocket = require '../helpers/socket.coffee'
+Server = require '../helpers/server.coffee'
 
 
 describe 'Connection', ->
   share = require('../../lib/client')
   Connection = share.Connection
+  before ->
+    @server = Server()
+  after (done) ->
+    @server.close done
+
 
   describe 'connecting', ->
     it 'connects socket', (done)->

@@ -40,7 +40,7 @@ generator = (doc) ->
 			# However, we want the document to hover around targetSize.
 			bias = if doc.length > targetSize then 0.3 else 0.7
 			if Math.random() < bias then 'insert' else 'delete'
-		
+
 		if action == 'insert'
 			# Insert a random character.
 			chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 \n"
