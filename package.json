@@ -30,6 +30,7 @@
     "connect": "^2.14.4",
     "mocha": "~1",
     "optimist": ">= 0.2.4",
+    "redis": "^0.10.1",
     "sinon": "^1.9.1",
     "uglify-js": "~2"
   },
@@ -41,7 +42,7 @@
   "scripts": {
     "build": "make",
     "prepublish": "make webclient",
-    "test": "node_modules/.bin/mocha test/server/*.coffee"
+    "test": "node_modules/.bin/mocha test/server/*.coffee test/client/*.coffee"
   },
   "licenses": [
     {

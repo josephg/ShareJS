@@ -219,7 +219,7 @@ describe 'JSON Client API', ->
     cxt.add [0], 4
     assert.deepEqual cxt.get(), [5]
 
-  it.only 'basic listeners', (done) ->
+  it 'basic listeners', (done) ->
     doc = new Doc(list: [1])
     cxt = doc.createContext()
     cxt.createContextAt('list').on 'insert', (pos, num) ->

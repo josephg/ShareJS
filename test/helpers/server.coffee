@@ -47,7 +47,7 @@ socketToStream = (socket, log = true)->
 #   defaults to true
 module.exports = (options = {})->
 
-  log = true
+  log = no
   log = options.log if options.log?
 
   share = createInstance()
@@ -74,4 +74,4 @@ module.exports = (options = {})->
 
   app.use(connect.logger('dev')) if log
 
-  app
+  app.listen 3000

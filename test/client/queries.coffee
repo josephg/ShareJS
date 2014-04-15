@@ -1,19 +1,19 @@
 assert = require 'assert'
 createSocket = require '../helpers/socket.coffee'
 {Connection} = require '../../lib/client'
+Server = require '../helpers/server.coffee'
 
 describe 'Queries', ->
 
-  before -> @connection = new Connection(createSocket())
-  after  -> @connection.socket.close()
+  before ->
+    @connection = new Connection(createSocket())
+    @server = Server()
 
-  fixtures = require('../helpers/fixtures.coffee')()
+  after (done) ->
+    @connection.socket.close()
+    @server.close done
 
-  beforeEach (done)->
-    fixtures.reset(done)
     @connection.collections = {}
-
-  beforeEach (done)->
     @connection.get('cars', 'porsche').create 'text', 'red', =>
       @connection.get('cars', 'jaguar').create 'text', 'green', =>
         @connection.collections = {}

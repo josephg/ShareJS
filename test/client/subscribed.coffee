@@ -1,31 +1,29 @@
 createSocket = require '../helpers/socket.coffee'
+assert = require 'assert'
+{Connection} = require '../../lib/client'
+require '../../lib/types'
+ottypes = require 'ottypes'
+Server = require '../helpers/server.coffee'
 
-describe 'Subscribed Document', ->
-  assert = require 'assert'
-  {Connection} = require '../../lib/client'
-  require '../../lib/types'
-  ottypes = require 'ottypes'
+describe.skip 'Subscribed Document', ->
 
   connections = {}
 
   before ->
     connections.alice = new Connection(createSocket())
     connections.bob =   new Connection(createSocket())
+    @server = Server()
 
-  after ->
+  after (done) ->
     for name, connection of connections
       connection.socket.close()
       delete connections[name]
-
-  fixtures = require('../helpers/fixtures.coffee')()
+    @server.close done
 
   beforeEach (done)->
-    fixtures.reset(done)
     for name, connection of connections
       connection.collections = {}
 
-
-  beforeEach (done)->
     @docs = {}
     for name, connection of connections
       @docs[name] = connection.get('poems', 'lorelay')
@@ -39,8 +37,7 @@ describe 'Subscribed Document', ->
 
 
   describe 'shared create', ->
-
-    it 'triggers create', (done)->
+    it 'triggers create', (done) ->
       @docs.bob.on 'create', =>
         done()
       @docs.alice.create 'text', 'ich', =>

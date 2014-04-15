@@ -1,4 +1,4 @@
-{BCSocket} = require('browserchannel/dist/bcsocket')
+{BCSocket} = require 'browserchannel'
 
 # Control documents on the server
 #
