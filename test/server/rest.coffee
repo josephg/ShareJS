@@ -75,7 +75,7 @@ describe 'rest', ->
         assert.strictEqual headers['x-ot-version'], '0'
         assert.equal headers['x-ot-type'], null
         done()
-        
+
     it 'return 404 and empty body when on HEAD on a nonexistant document', (done) ->
       fetch 'HEAD', @port, "/doc/#{@collection}/#{@name}", null, (res, data, headers) ->
         assert.strictEqual res.statusCode, 404
@@ -83,7 +83,7 @@ describe 'rest', ->
         assert.strictEqual headers['x-ot-version'], '0'
         assert.equal headers['x-ot-type'], null
         done()
-    
+
     it 'returns 200, empty body, version and type when on HEAD on a document', (done) ->
       @docs.c = {}
       @docs.c.d = {v:1, type:ottypes.text.uri, data:'hi there'}
@@ -95,7 +95,7 @@ describe 'rest', ->
         assert.ok headers['etag']
         assert.strictEqual data, ''
         done()
-            
+
     it 'document returns the document snapshot', (done) ->
       @docs.c = {}
       @docs.c.d = {v:1, type:ottypes.simple.uri, data:{str:'Hi'}}
@@ -209,7 +209,7 @@ describe 'rest', ->
       fetch 'POST', @port, "/doc/c/d", 'invalid>{json', (res, data) ->
         assert.strictEqual res.statusCode, 400
         done()
-    
+
   describe 'PUT', ->
     it 'PUT a document creates it', (done) ->
       called = false
@@ -242,7 +242,7 @@ describe 'rest', ->
         assert.strictEqual headers['x-ot-version'], '5'
         assert called
         done()
-    
+
 
   # Tests past this line haven't been rewritten yet for the new API.
 
@@ -285,7 +285,7 @@ describe 'rest', ->
     @model.create doc2, 'simple', =>
       @model.applyOp doc2, {v:0, op:{position: 0, text: 'Hi'}}, =>
         fetch 'GET', @port, "/doc/#{doc2}", null, checkResponse
-    
+
         # Create an existing document
         fetch 'PUT', @port, "/doc/#{doc2}", {type:'simple'}, checkResponse
 

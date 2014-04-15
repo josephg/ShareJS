@@ -95,4 +95,3 @@ genTests = (type) -> describe "text api for '#{type.name}'", ->
       assert.strictEqual @ctx.get(), contents
 
 genTests(type) for name, type of textTypes
-

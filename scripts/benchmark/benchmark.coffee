@@ -21,11 +21,11 @@ generator = (doc) ->
 		else
 			# Slightly bias it toward inserts. Documents tend to grow more than shrink.
 			if Math.random() < 0.55 then 'insert' else 'delete'
-		
+
 		if action == 'insert'
 			# Insert a random character.
 			code = 97 + Math.floor(Math.random() * 26)
-			
+
 			{pos:pos, i:String.fromCharCode(code)}
 		else
 			char = doc[pos]
@@ -63,7 +63,7 @@ genOps = (doc) ->
 		doc = newDoc
 
 		ops.push cOp
-	
+
 	ops
 
 benchmark = (callback) ->
@@ -87,7 +87,7 @@ doc = null
 		times.push [i, Date.now(), doc.length] if i % 1000 == 0
 
 	times.push [ops.length, Date.now(), doc.length]
-	
+
 	times
 
 #console.log "Applied #{ops.length} ops, final doc length #{doc.length} in #{total} ms. #{total / ops.length} ms per op, #{1000 * ops.length / total} ops/sec"

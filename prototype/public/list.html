@@ -19,7 +19,7 @@
   #container {
     width: 100%;
     height: 100%;
-    
+
     position: absolute;
   }
 
@@ -125,6 +125,8 @@
 var s = new BCSocket(null, {reconnect: true});
 var sjs = new window.sharejs.Connection(s);
 
+sjs.debug = true;
+
 var listElem = document.getElementById('list');
 
 var contentArea = document.getElementById('content');
@@ -183,8 +185,10 @@ var select = function(doc) {
 };
 
 //q = sjs.query('users', {'data.x':5}, true, function(err, data) { console.log(err, data); });
+query = sjs.createSubscribeQuery('users', {$query:{"x":5}}, {docMode:'fetch'});
 //query = sjs.createSubscribeQuery('users', {$query:{"data.x":5}}, {autoFetch:true});
-query = sjs.createSubscribeQuery('users', 'users', {docMode:'fetch'});
+//query = sjs.createSubscribeQuery('users', 'users', {docMode:'fetch'});
+//query = sjs.createSubscribeQuery('users', {$count:1, $query:{}}, {docMode:'fetch'});
 //query = sjs.createSubscribeQuery('stories', {$query:{}}, {autoFetch:true});
 
 //query = sjs.createSubscribeQuery('players', {"$orderby":{"data.score":-1},"$limit":5}, {autoFetch:true});
@@ -274,5 +278,10 @@ queryBox.onsearch = function() {
   } catch (e) {}
 
 };
+
+function makeDocs() {
+  var d = sjs.get('users', 'noise' + Math.floor(Math.random()*100));
+  d.create('json0', {x:Math.floor(Math.random() * 100)});
+}
 
 </script>
