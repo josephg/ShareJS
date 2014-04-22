@@ -1,7 +1,10 @@
+sinon = require 'sinon'
+assert = require 'assert'
+
 UserAgent = require '../../lib/server/useragent'
 {Readable} = require 'stream'
 {EventEmitter} = require 'events'
-assert = require 'assert'
+server = require '../../lib/server'
 
 describe 'UserAgent', ->
 
@@ -11,7 +14,7 @@ describe 'UserAgent', ->
     docFilters: []
     opFilters: []
     backend: backend
-    _trigger: (request, callback)->
+    _trigger: (request, callback) ->
       callback(null, request)
 
   beforeEach ->
@@ -22,46 +25,43 @@ describe 'UserAgent', ->
 
 
   describe 'fetch', ->
-    backend.fetch = (collection, document, callback) ->
-      callback null, {v:10, color: 'yellow'}
+    backend.fetch = sinon.stub().yields null, {v:10, color: 'yellow'}
 
     it 'calls fetch on backend', (done) ->
-      sinon.spy backend, 'fetch'
       @userAgent.fetch 'flowers', 'lily', ->
         sinon.assert.calledWith backend.fetch, 'flowers', 'lily'
-        backend.fetch.reset()
         done()
 
-    it 'returns backend result', (done)->
-      @userAgent.fetch 'flowers', 'lily', (error, document)->
-        assert.deepEqual document, color: 'yellow'
+    it 'returns backend result', (done) ->
+      @userAgent.fetch 'flowers', 'lily', (error, document) ->
+        assert.deepEqual document, {v: 10, color: 'yellow'}
         done()
 
     describe 'with doc filters', ->
 
-      it 'calls filter', (done)->
-        filter = sinon.spy (args..., next)-> next()
+      it 'calls filter', (done) ->
+        filter = sinon.spy (args..., next) -> next()
         shareInstance.docFilters.push filter
         @userAgent.fetch 'flowers', 'lily', (error, document)=>
-          sinon.assert.calledWith filter, 'flowers', 'lily', color: 'yellow'
+          sinon.assert.calledWith filter, 'flowers', 'lily', {v: 10, color: 'yellow'}
           done()
 
-      it 'manipulates document', (done)->
-        shareInstance.docFilters.push (collection, docName, data, next)->
+      it 'manipulates document', (done) ->
+        shareInstance.docFilters.push (collection, docName, data, next) ->
           data.color = 'red'
           next()
         @userAgent.fetch 'flowers', 'lily', (error, document)=>
           assert.equal document.color, 'red'
           done()
 
-      it 'passes exceptions as error', (done)->
+      it 'passes exceptions as error', (done) ->
         shareInstance.docFilters.push -> throw Error 'oops'
         @userAgent.fetch 'flowers', 'lily', (error, document)=>
           assert.equal error, 'oops'
           done()
 
-      it 'passes errors', (done)->
-        shareInstance.docFilters.push (args..., next)-> next('oops')
+      it 'passes errors', (done) ->
+        shareInstance.docFilters.push (args..., next) -> next('oops')
         @userAgent.fetch 'flowers', 'lily', (error, document)=>
           assert.equal error, 'oops'
           done()
@@ -69,88 +69,87 @@ describe 'UserAgent', ->
 
   describe '#subscribe', ->
 
-    operationStream = new Readable objectMode: yes
-    operationStream._read = ->
-    beforeEach -> operationStream.unpipe()
+    beforeEach ->
+      @opStream = new Readable objectMode: yes
+      @opStream._read = ->
+      @opStream.unpipe()
+      backend.subscribe = sinon.stub().yields null, @opStream
 
-    backend.subscribe = (args..., callback)->
-      callback(null, operationStream)
+    afterEach ->
+      backend.subscribe = null
 
-    it 'calls fetch on backend', (done)->
-      sinon.spy backend, 'subscribe'
+    it 'calls subscribe on the backend', (done) ->
       @userAgent.subscribe 'flowers', 'lily', 10, ->
         sinon.assert.calledWith backend.subscribe, 'flowers', 'lily', 10
-        backend.subscribe.reset()
         done()
 
-    it 'can read operationStream', (done)->
-      @userAgent.subscribe 'flowers', 'lily', 10, (error, subscriptionStream)->
-        subscriptionStream.on 'readable', (data)->
+    it 'can read operationStream', (done) ->
+      @userAgent.subscribe 'flowers', 'lily', 10, (error, subscriptionStream) =>
+        subscriptionStream.on 'readable', (data) ->
           assert.equal subscriptionStream.read(), 'first operation'
           done()
-        operationStream.push 'first operation'
-
+        @opStream.push 'first operation'
 
     describe 'with op filters', ->
 
-      it 'calls the filter', (done)->
-        filter = sinon.spy (args..., next)-> next()
+      it 'calls the filter', (done) ->
+        filter = sinon.stub().yields()
         shareInstance.opFilters.push filter
-        @userAgent.subscribe 'flowers', 'lily', 10, (error, subscriptionStream)=>
-          subscriptionStream.on 'readable', (data)=>
+        @userAgent.subscribe 'flowers', 'lily', 10, (error, subscriptionStream) =>
+          subscriptionStream.on 'readable', (data) ->
             sinon.assert.calledWith filter, 'flowers', 'lily', 'an op'
             done()
-          operationStream.push 'an op'
+          @opStream.push 'an op'
 
-      it 'passes exceptions as errors to operationStream', (done)->
+      it 'passes exceptions as errors to operationStream', (done) ->
         shareInstance.opFilters.push -> throw Error 'oops'
 
-        @userAgent.subscribe 'flowers', 'lily', 10, (error, subscriptionStream)->
-          subscriptionStream.on 'readable', (data)->
+        @userAgent.subscribe 'flowers', 'lily', 10, (error, subscriptionStream) =>
+          subscriptionStream.on 'readable', (data) ->
             assert.deepEqual subscriptionStream.read(), {error: 'oops'}
             done()
-          operationStream.push {op: 'first operation'}
+          @opStream.push {op: 'first operation'}
 
-      it 'passes errors to operationStream', (done)->
-        shareInstance.opFilters.push (args..., next)-> next('oops')
+      it 'passes errors to operationStream', (done) ->
+        shareInstance.opFilters.push sinon.stub().yields 'oops'
 
-        @userAgent.subscribe 'flowers', 'lily', 10, (error, subscriptionStream)->
-          subscriptionStream.on 'readable', (data)->
+        @userAgent.subscribe 'flowers', 'lily', 10, (error, subscriptionStream) =>
+          subscriptionStream.on 'readable', (data) ->
             assert.deepEqual subscriptionStream.read(), {error: 'oops'}
             done()
-          operationStream.push {op: 'first operation'}
+          @opStream.push {op: 'first operation'}
 
-      it 'manipulates operation', (done)->
-        shareInstance.opFilters.push (collection, docName, operation, next)->
+      it 'manipulates operation', (done) ->
+        shareInstance.opFilters.push (collection, docName, operation, next) ->
           operation.op = 'gotcha!'
           next()
 
-        @userAgent.subscribe 'flowers', 'lily', 10, (error, subscriptionStream)->
-          subscriptionStream.on 'readable', (data)->
+        @userAgent.subscribe 'flowers', 'lily', 10, (error, subscriptionStream) =>
+          subscriptionStream.on 'readable', (data) ->
             assert.deepEqual subscriptionStream.read(), {op: 'gotcha!'}
             done()
-          operationStream.push {op: 'first operation'}
+          @opStream.push {op: 'first operation'}
 
 
   describe '#submit', ->
 
-    backend.submit = (collection, document, opData, options, callback)->
+    backend.submit = (collection, document, opData, options, callback) ->
       callback(null, 41, ['operation'], 'a document')
 
-    it 'calls submit on backend', (done)->
+    it 'calls submit on backend', (done) ->
       sinon.spy backend, 'submit'
       @userAgent.submit 'flowers', 'lily', 'pluck', {}, ->
         sinon.assert.calledWith backend.submit, 'flowers', 'lily', 'pluck'
         backend.submit.reset()
         done()
 
-    it 'returns version and operations', (done)->
-      @userAgent.submit 'flowers', 'lily', 'pluck', {}, (error, version, operations)->
+    it 'returns version and operations', (done) ->
+      @userAgent.submit 'flowers', 'lily', 'pluck', {}, (error, version, operations) ->
         assert.equal version, 41
         assert.deepEqual operations, ['operation']
         done()
 
-    it 'triggers after submit', (done)->
+    it 'triggers after submit', (done) ->
       sinon.spy @userAgent, 'trigger'
       @userAgent.submit 'flowers', 'lily', 'pluck', {}, =>
         sinon.assert.calledWith @userAgent.trigger, 'after submit', 'flowers', 'lily'
@@ -158,33 +157,33 @@ describe 'UserAgent', ->
 
 
   describe '#queryFetch', ->
-
-    backend.queryFetch = (collection, query, options, callback)->
-      callback null, [
+    beforeEach ->
+      backend.queryFetch = sinon.stub().yields null, [
         {docName: 'rose', color: 'white'},
         {docName: 'lily', color: 'yellow'}]
       , 'all'
 
-    it 'calls queryFetch on backend', (done)->
-      sinon.spy backend, 'queryFetch'
+    afterEach ->
+      backend.queryFetch = null
+
+    it 'calls queryFetch on backend', (done) ->
       @userAgent.queryFetch 'flowers', {smell: 'nice'}, {all: yes}, ->
         sinon.assert.calledWith backend.queryFetch, 'flowers', {smell: 'nice'}, {all: yes}
-        backend.queryFetch.reset()
         done()
 
-    it 'returns documents and extra', (done)->
-      @userAgent.queryFetch 'flowers', {smell: 'nice'}, {all: yes}, (error, results, extra)->
+    it 'returns documents and extra', (done) ->
+      @userAgent.queryFetch 'flowers', {smell: 'nice'}, {all: yes}, (error, results, extra) ->
         assert.equal extra, 'all'
         assert.deepEqual results[0], {docName: 'rose', color: 'white'}
         assert.deepEqual results[1], {docName: 'lily', color: 'yellow'}
         done()
 
-    it 'filters documents', (done)->
-      shareInstance.docFilters.push (collection, docName, data, next)->
+    it 'filters documents', (done) ->
+      shareInstance.docFilters.push (collection, docName, data, next) ->
         if docName == 'rose'
           data.color = 'red'
         next()
-      @userAgent.queryFetch 'flowers', {}, {}, (error, results)->
+      @userAgent.queryFetch 'flowers', {}, {}, (error, results) ->
         assert.equal results[0].color, 'red'
         done()
 
@@ -195,35 +194,35 @@ describe 'UserAgent', ->
       @queryEmitter = new EventEmitter
       @queryEmitter.data = [{docName: 'lily', color: 'yellow'}]
 
-      backend.query = (collection, query, options, next)=>
-        next(null, @queryEmitter)
+      backend.query = sinon.stub().yields null, @queryEmitter
 
-    it 'calls query on backend', (done)->
-      sinon.spy backend, 'query'
+    afterEach ->
+      backend.query = null
+
+    it 'calls query on backend', (done) ->
       @userAgent.query 'flowers', {smell: 'nice'}, {all: yes}, ->
         sinon.assert.calledWith backend.query, 'flowers', {smell: 'nice'}, {all: yes}
-        backend.query.reset()
         done()
 
-    it 'attaches results to emitter', (done)->
-      @userAgent.query 'flowers', {}, {}, (error, emitter)=>
+    it 'attaches results to emitter', (done) ->
+      @userAgent.query 'flowers', {}, {}, (error, emitter) =>
         assert.deepEqual emitter.data[0], {docName: 'lily', color: 'yellow'}
         done()
 
-    it 'fires emit', (done)->
-      @userAgent.query 'flowers', {}, {}, (error, emitter)=>
-        emitter.on 'diff', (diffs)->
+    it 'fires emit', (done) ->
+      @userAgent.query 'flowers', {}, {}, (error, emitter) =>
+        emitter.on 'diff', (diffs) ->
           assert.equal diffs, 'This changed'
           done()
         @queryEmitter.emit('diff', 'This changed')
 
-    it 'filters records inserted into query results', (done)->
-      shareInstance.docFilters.push (collection, docName, data, next)->
+    it 'filters records inserted into query results', (done) ->
+      shareInstance.docFilters.push (collection, docName, data, next) ->
         if docName == 'rose'
           data.color = 'red'
         next()
-      @userAgent.query 'flowers', {}, {}, (error, emitter)=>
-        emitter.on 'diff', (diff)->
+      @userAgent.query 'flowers', {}, {}, (error, emitter) =>
+        emitter.on 'diff', (diff) ->
           assert.equal diff[0].values[0].color, 'red'
           done()
         @queryEmitter.emit('diff', [{
@@ -236,21 +235,21 @@ describe 'UserAgent', ->
 
     beforeEach ->
       backend.bulkSubscribe = true
-      @instance = require('../../lib/server').createClient(backend: backend)
+      @instance = server.createClient backend: backend
       @userAgent.instance = @instance
 
-    it 'runs middleware', (done)->
-      @instance.use 'smell', (request, next)->
+    it 'runs middleware', (done) ->
+      @instance.use 'smell', (request, next) ->
         done()
       @userAgent.trigger 'smell', 'flowers', 'lily', {}
 
-    it 'runs default middleware', (done)->
-      @instance.use (request, next)->
+    it 'runs default middleware', (done) ->
+      @instance.use (request, next) ->
         done()
       @userAgent.trigger 'smell', 'flowers', 'lily', {}
 
-    it 'runs middleware with request', (done)->
-      @instance.use 'smell', (request, next)->
+    it 'runs middleware with request', (done) ->
+      @instance.use 'smell', (request, next) ->
         assert.equal request.action, 'smell'
         assert.equal request.collection, 'flowers'
         assert.equal request.docName, 'lily'
@@ -259,17 +258,17 @@ describe 'UserAgent', ->
         done()
       @userAgent.trigger 'smell', 'flowers', 'lily', deep: true
 
-    it 'passes modified request to callback', (done)->
-      @instance.use 'smell', (request, next)->
+    it 'passes modified request to callback', (done) ->
+      @instance.use 'smell', (request, next) ->
         request.eyesClosed = true
         next()
-      @userAgent.trigger 'smell', 'flowers', 'lily', (error, request)->
+      @userAgent.trigger 'smell', 'flowers', 'lily', (error, request) ->
         assert.ok request.eyesClosed
         done()
 
-    it 'passes errors to callback', (done)->
-      @instance.use 'smell', (request, next)->
+    it 'passes errors to callback', (done) ->
+      @instance.use 'smell', (request, next) ->
         next('Argh!')
-      @userAgent.trigger 'smell', 'flowers', 'lily', (error, request)->
+      @userAgent.trigger 'smell', 'flowers', 'lily', (error, request) ->
         assert.equal error, 'Argh!'
         done()
