@@ -1,6 +1,8 @@
 ShareJS
 =======
 
+[![Build Status](https://secure.travis-ci.org/share/ShareJS.svg)](http://travis-ci.org/share/ShareJS) [![Dependency Status](https://david-dm.org/share/ShareJS.svg)](https://david-dm.org/share/ShareJS) [![devDependency Status](https://david-dm.org/share/ShareJS/dev-status.svg)](https://david-dm.org/share/ShareJS#info=devDependencies)
+
 ---
 
 ## You are looking at the 0.7 alpha branch of ShareJS.
@@ -39,8 +41,6 @@ ShareJS currently supports operational transform on plain-text and arbitrary JSO
 **Visit [Google groups](https://groups.google.com/forum/?fromgroups#!forum/sharejs) for discussions and announcements**
 
 **Check out the [live interactive demos](http://sharejs.org/).**
-
-[![Build Status](https://secure.travis-ci.org/share/ShareJS.png)](http://travis-ci.org/share/ShareJS)
 
 
 Browser support
