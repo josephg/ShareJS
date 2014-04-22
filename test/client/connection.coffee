@@ -10,7 +10,7 @@ Server = require '../helpers/server.coffee'
 
 delay = (done) -> setTimeout done, 100
 
-describe.only 'Connection', ->
+describe 'Connection', ->
   share = require('../../lib/client')
   Connection = share.Connection
   before ->
@@ -66,7 +66,7 @@ describe.only 'Connection', ->
       delete @connection
 
 
-    it.only 'uses bulk subscribe when reconnecting and subscribed to multiple docs', (done) ->
+    it.skip 'uses bulk subscribe when reconnecting and subscribed to multiple docs', (done) ->
       firstDoc = @connection.get 'hello', 'first'
       secondDoc = @connection.get 'hello', 'second'
 
@@ -78,11 +78,10 @@ describe.only 'Connection', ->
         @connection.on 'connected', cb
 
       firstDoc.subscribe => secondDoc.subscribe =>
-        sinon.spy @connection, 'send'
-        firstDoc.create 'text', 'new', => restart =>
+        createHandler = (finished) =>
           expect(@connection.send).to.have.been.calledWith
             a: 'bs'
-            s: {hello: {first: 1, second: null}}
+            s: {hello: {second: null}}
 
           insert = (cb) ->
             ctx = firstDoc.createContext()
@@ -95,11 +94,27 @@ describe.only 'Connection', ->
 
           assertPresence = (cb) ->
             ctx = firstDoc.createContext()
-            expect(ctx.getPresence()).to.be.eql {}
+            expect(ctx.getPresence()).to.be.eql {'_selection': [0, 4]}
             ctx.destroy()
             cb()
 
           # Ensure we can create and modify docs
           insert => assertPresence =>
             @connection.send.restore()
-            done()
+            finished()
+
+        setPresence = (cb) ->
+          firstDoc.onPresence = ->
+            expect(firstDoc.presence).to.be.eql {'_selection': [0, 4]}
+            cb()
+
+          ctx = firstDoc.createContext()
+          ctx.setSelection [0,4]
+          ctx.destroy()
+
+        sinon.spy @connection, 'send'
+
+        firstDoc.on 'create', =>
+          setPresence => restart => createHandler done
+
+        firstDoc.create 'text', 'new'
