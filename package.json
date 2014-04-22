@@ -32,6 +32,7 @@
     "optimist": ">= 0.2.4",
     "redis": "^0.10.1",
     "sinon": "^1.9.1",
+    "sinon-chai": "^2.5.0",
     "uglify-js": "~2"
   },
   "engine": "node >= 0.10",

@@ -41,12 +41,7 @@ socketToStream = (socket, log = true)->
 
 
 
-# Exports an express app that handles sharejs and tests
-#
-# @param options.log  enables logging of wire protocol and server requests,
-#   defaults to true
-module.exports = (options = {})->
-
+createServer = (options) ->
   log = no
   log = options.log if options.log?
 
@@ -74,4 +69,23 @@ module.exports = (options = {})->
 
   app.use(connect.logger('dev')) if log
 
-  app.listen 3000
+  # Start the server
+  app.listen options.port or 3000
+
+# Exports an express app that handles sharejs and tests
+#
+# @param options.log  enables logging of wire protocol and server requests,
+#   defaults to true
+module.exports = (options = {}) ->
+  server = createServer options
+  connections = []
+
+  server.on 'connection', (conn) ->
+    connections.push conn
+
+  server.kill = (done) ->
+    conn.destroy() for conn in connections
+    server.close done
+
+
+  server
