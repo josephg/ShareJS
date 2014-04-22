@@ -204,7 +204,7 @@ describe 'Doc', ->
 
         ctx.setSelection [0,4]
 
-    describe.only '#setPresenceProperty', ->
+    describe '#setPresenceProperty', ->
       beforeEach  (done) ->
         @doc = @alice.get 'songs', 'dedododo'
         @doc.create 'text', 'hello world', false, done
@@ -214,8 +214,9 @@ describe 'Doc', ->
 
       it 'calls context specific onPresence', (done) ->
         ctx = @doc.createContext()
-        ctx.onPresence = =>
-          expect(@doc.presence).to.have.a.property 'hello', {world: 2}
+        ctx.onPresence = (presence) =>
+          expect(@doc.presence).to.be.eql presence
+          expect(presence).to.have.a.property 'hello', {world: 2}
           done()
 
         ctx.setPresenceProperty 'hello', {world: 2}
@@ -225,7 +226,7 @@ describe 'Doc', ->
         @doc.on 'presence', (presence) =>
           expect(presence).to.be.eql @doc.presence
           expect(presence).to.be.eql @doc.myPresence
-          expect(@presence).to.have.a.property 'hello', {world: 2}
+          expect(presence).to.have.a.property 'hello', {world: 2}
           done()
 
         ctx.setPresenceProperty 'hello', {world: 2}
