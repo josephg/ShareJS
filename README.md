@@ -1,6 +1,8 @@
 ShareJS
 =======
 
+[![Build Status](https://secure.travis-ci.org/share/ShareJS.svg)](http://travis-ci.org/share/ShareJS) [![Dependency Status](https://david-dm.org/share/ShareJS.svg)](https://david-dm.org/share/ShareJS) [![devDependency Status](https://david-dm.org/share/ShareJS/dev-status.svg)](https://david-dm.org/share/ShareJS#info=devDependencies)
+
 ---
 
 ## You are looking at the 0.7 alpha branch of ShareJS.
@@ -39,8 +41,6 @@ ShareJS currently supports operational transform on plain-text and arbitrary JSO
 **Visit [Google groups](https://groups.google.com/forum/?fromgroups#!forum/sharejs) for discussions and announcements**
 
 **Check out the [live interactive demos](http://sharejs.org/).**
-
-[![Build Status](https://secure.travis-ci.org/share/ShareJS.png)](http://travis-ci.org/share/ShareJS)
 
 
 Browser support
@@ -202,9 +202,11 @@ See [`the wiki`](https://github.com/josephg/ShareJS/wiki) for API documentation,
 Testing
 -------
 
-Running `grunt` starts a watch task for development.  Using `grunt test` all
-tests are just executed once.  Passing the `--debug` option to the grunt tasks
-makes the share server dump the communication with clients.
+The tests can be run by executing
 
-All tests are located under the `test` directory. Browser tests are contained in
-`test/browser` and node tests are located in `test/server`.
+```bash
+$ npm test
+```
+
+All tests are located under the `test` directory. Client tests are contained in
+`client/browser` and node tests are located in `test/server`.

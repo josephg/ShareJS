@@ -6,6 +6,9 @@ argv = require('optimist').argv
 livedb = require 'livedb'
 livedbMongo = require 'livedb-mongo'
 
+try
+  require 'heapdump'
+
 sharejs = require '../lib'
 
 webserver = connect(
@@ -29,7 +32,10 @@ share.use 'connect', (req, callback) ->
   callback()
 ###
 
-webserver.use browserChannel {webserver}, (client) ->
+numClients = 0
+
+webserver.use browserChannel {webserver, sessionTimeoutInterval:5000}, (client) ->
+  numClients++
   stream = new Duplex objectMode:yes
   stream._write = (chunk, encoding, callback) ->
     console.log 's->c ', chunk
@@ -50,9 +56,14 @@ webserver.use browserChannel {webserver}, (client) ->
     client.stop()
 
   client.on 'close', (reason) ->
+    stream.push null
     stream.emit 'close'
-    stream.emit 'end'
-    stream.end()
+
+    numClients--
+    console.log 'client went away', numClients
+
+  stream.on 'end', ->
+    client.close()
 
   # ... and give the stream to ShareJS.
   share.listen stream

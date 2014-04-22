@@ -13,7 +13,7 @@ module.exports = {
 
     // By default, sharejs tries to use the redis DB backend.
 		type: 'redis',
-   
+
 		// The prefix for database entries
 		prefix: 'ShareJS:',
 

@@ -9,7 +9,7 @@ getSocket = (hostname, port, docName) ->
 			doc.snapshot
 		else
 			JSON.stringify doc.snapshot)
-		
+
 		c.disconnect()
 
 

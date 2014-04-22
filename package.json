@@ -10,24 +10,29 @@
     "database",
     "server"
   ],
-  "homepage": "",
+  "homepage": "http://sharejs.org",
   "author": {
     "name": "Joseph Gentle",
     "email": "josephg@gmail.com"
   },
   "dependencies": {
-    "livedb": ">=0.2.3",
-    "ottypes": "~1",
-    "semver": "~2",
+    "async": "^0.7.0",
     "express": "~3",
     "hat": "*",
-    "async": "~0.2"
+    "livedb": "git://github.com/share/livedb#presence",
+    "ottypes": "git://github.com/share/ottypes",
+    "semver": "~2"
   },
   "devDependencies": {
-    "coffee-script": "~1.6.3",
-    "optimist": ">= 0.2.4",
     "browserchannel": "*",
+    "chai": "^1.9.1",
+    "coffee-script": "^1.7.1",
+    "connect": "^2.14.4",
     "mocha": "~1",
+    "optimist": ">= 0.2.4",
+    "redis": "^0.10.1",
+    "sinon": "^1.9.1",
+    "sinon-chai": "^2.5.0",
     "uglify-js": "~2"
   },
   "engine": "node >= 0.10",
@@ -37,7 +42,8 @@
   },
   "scripts": {
     "build": "make",
-    "prepublish": "make webclient"
+    "prepublish": "make webclient",
+    "test": "node_modules/.bin/mocha test/server/*.coffee test/client/*.coffee"
   },
   "licenses": [
     {
@@ -49,14 +55,7 @@
     "type": "git",
     "url": "http://github.com/josephg/sharejs.git"
   },
-  "readme": "ShareJS\n=======\n\n---\n\n# You are looking at the 0.7 alpha branch of ShareJS.\n\n> *Welcome.* So you know, this code might spontaniously catch fire. Both the\n> API and the code are unstable and **will to change and crash on you**. Test\n> coverage has dropped from 90% in ShareJS 0.6 to around 30% and documentation\n> of the new APIs is almost nonexistant.\n> \n> The documentation below is also full of lies. If you want to play with the\n> new version of ShareJS anyway, look at the examples in prototype/.\n> \n> I understand that if you're using racer & derby, you will use this code\n> anyway despite my warnings. **YOU WILL RUN INTO BUGS.**\n\n---\n\n\nThis is a little server (& client library) to allow concurrent editing of any kind of content. The server runs on NodeJS and the client works in NodeJS or a web browser.\n\nShareJS currently supports operational transform on plain-text and arbitrary JSON data.\n\n**Immerse yourself in [API Documentation](https://github.com/josephg/ShareJS/wiki).**\n\n**Visit [Google groups](https://groups.google.com/forum/?fromgroups#!forum/sharejs) for discussions and announcements**\n\n**Check out the [live interactive demos](http://sharejs.org/).**\n\n> Note: CI sometimes breaks for random reasons even though the tests work locally. Don't stress!\n[![Build Status](https://secure.travis-ci.org/share/ShareJS.png)](http://travis-ci.org/share/ShareJS)\n\n\nBrowser support\n---------------\n\nShareJS **should** work with all of them ![logos of all of all the browsers](http://twitter.github.com/bootstrap/assets/img/browsers.png)\n\nThat said, I only test regularly with FF, Safari and Chrome, and occasionally with IE8+. **File bug reports if you have issues**\n\n\nInstalling and running\n----------------------\n\n    # npm install share\n\nRun the examples with:\n\n    # sharejs-exampleserver\n\nIf you want redis support, you'll need to install redis:\n\n    # brew install redis\n    # npm install -g redis\n\n### From source\n\nInstall redis (optional)\n    \n* Mac:\n\n        # brew install redis\n\n* Linux:\n   \n        # sudo apt-get install redis\n\nThen:\n\n    # git clone git://github.com/josephg/ShareJS.git\n    # cd ShareJS\n    # npm install redis   # If you want redis support\n    # npm link\n\nRun the tests:\n\n    # cake test\n\nBuild the coffeescript into .js:\n\n    # cake build\n    # cake webclient\n\nRun the example server:\n\n    # bin/exampleserver\n\nRunning a server\n----------------\n\nThere are two ways to run a sharejs server:\n\n1. Embedded in a node.js server app:\n\n    ```javascript\n    var connect = require('connect'),\n        sharejs = require('share').server;\n\n    var server = connect(\n          connect.logger(),\n          connect.static(__dirname + '/my_html_files')\n        );\n\n    var options = {db: {type: 'none'}}; // See docs for options. {type: 'redis'} to enable persistance.\n\n    // Attach the sharejs REST and Socket.io interfaces to the server\n    sharejs.attach(server, options);\n\n    server.listen(8000);\n    console.log('Server running at http://127.0.0.1:8000/');\n    ```\n    The above script will start up a ShareJS server on port 8000 which hosts static content from the `my_html_files` directory. See [bin/exampleserver](https://github.com/josephg/ShareJS/blob/master/bin/exampleserver) for a more complex configuration example.\n\n    > See the [Connect](http://senchalabs.github.com/connect/) or [Express](http://expressjs.com/) documentation for more complex routing.\n\n2. From the command line:\n\n        # sharejs\n    Configuration is pulled from a configuration file that can't be easily edited at the moment. For now, I recommend method #1 above.\n\n3. If you are just mucking around, run:\n\n        # sharejs-exampleserver\n  \n    This will run a simple server on port 8000, and host all the example code there. Run it and check out http://localhost:8000/ . The example server stores everything in ram, so don't get too attached to your data.\n\n    > If you're running sharejs from source, you can launch the example server by running `bin/exampleserver`.\n\n\nPutting Share.js on your website\n--------------------------------\n\nIf you want to get a simple editor working in your webpage with sharejs, here's what you need to do:\n\nFirst, get an ace editor on your page:\n\n```html\n<div id=\"editor\"></div>\n```\n\nYour web app will need access to the following JS files:\n\n- Ace (http://ace.ajax.org/)\n- Browserchannel\n- ShareJS client and ace bindings.\n\nAdd these script tags:\n\n```html\n<script src=\"http://ajaxorg.github.com/ace/build/src/ace.js\"></script>\n<script src=\"/channel/bcsocket.js\"></script>\n<script src=\"/share/share.js\"></script>\n<script src=\"/share/ace.js\"></script>\n```\n\nAnd add this code:\n\n```html\n<script>\n    var editor = ace.edit(\"editor\");\n\n    sharejs.open('hello', 'text', function(error, doc) {\n        doc.attach_ace(editor);\n    });\n</script>\n```\n\n> **NOTE:** If you're using the current version in npm (0.4) or earler, the argument order is the other way around (`function(doc, error)`).\n\nThats about it :)\n\nThe easiest way to get your code running is to check sharejs out from source and put your html and css files in the `examples/` directory. Run `bin/exampleserver` to launch the demo server and browse to http://localhost:8000/your-app.html .\n\nSee the [wiki](https://github.com/josephg/ShareJS/wiki) for documentation.\n\nIts also possible to use sharejs without ace. See the textarea example for details.\n\nWriting a client using node.js\n------------------------------\n\nThe client API is the same whether you're using the web or nodejs.\n\nHere's an example application which opens a document and inserts some text in it. Every time an op is applied to the document, it'll print out the document's version.\n\nRun this from a couple terminal windows when sharejs is running to see it go.\n\n```javascript\nvar client = require('share').client;\n\n// Open the 'hello' document, which should have type 'text':\nclient.open('hello', 'text', 'http://localhost:8000/sjs', function(error, doc) {\n    // Insert some text at the start of the document (position 0):\n    doc.insert(\"Hi there!\\n\", 0);\n\n    // Get the contents of the document for some reason:\n    console.log(doc.snapshot);\n\n    doc.on('change', function(op) {\n        console.log('Version: ' + doc.version);\n    });\n\n    // Close the doc if you want your node app to exit cleanly\n    // doc.close();\n});\n```\n\n> **NOTE:** If you're using the current version in npm (0.4) or earler, the argument order is the other way around (`function(doc, error)`).\n\nSee [`the wiki`](https://github.com/josephg/ShareJS/wiki) for API documentation, and `examples/node*` for some more example apps.\n\n\n",
-  "readmeFilename": "README.md",
   "bugs": {
     "url": "https://github.com/josephg/sharejs/issues"
-  },
-  "_id": "share@0.7.0alpha6",
-  "dist": {
-    "shasum": "25af3f557a9d355245eb6b3cca308e9309695279"
-  },
-  "_from": "/Users/josephg/src/ShareJS2/"
+  }
 }

@@ -21,10 +21,19 @@ var s = new BCSocket(null, {reconnect: true});
 var sjs = new window.sharejs.Connection(s);
 
 var doc = sjs.get('users', 'blah ' + Math.random());
+
+setTimeout(function() {
+
 //var doc = sjs.get('users', 'seph');
 doc.create('text', function(e) { if (e) console.error('x', e); });
-doc.createContext().insert('hi there');
+var ctx = doc.createContext();
+ctx.insert('hi there');
 console.log(doc);
+
+setTimeout(function() {
+  ctx.insert('two');
+});
+}, 1000);
 
 /*
 setTimeout(function() {
