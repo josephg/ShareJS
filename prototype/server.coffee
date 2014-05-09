@@ -19,6 +19,9 @@ webserver = connect(
 
 #backend = livedb.client livedb.memory()
 backend = livedb.client livedbMongo('localhost:27017/test?auto_reconnect', safe:false)
+
+backend.addProjection '_users', 'users', 'json0', {x:true}
+
 share = sharejs.server.createClient {backend}
 
 
