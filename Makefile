@@ -6,6 +6,7 @@ UGLIFY = node_modules/.bin/uglifyjs -d WEB=true
 CLIENT = \
 	web-prelude.js \
 	microevent.js \
+	register.js \
 	doc.js \
 	connection.js \
 	textarea.js \
