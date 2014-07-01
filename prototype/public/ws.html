@@ -1,0 +1,32 @@
+<style>
+  #pad {
+    width: 100%;
+    height: 100%;
+    font-size: 20px;
+    font-family: monaco;
+    background: -webkit-canvas(cursors);
+    background-repeat: no-repeat;
+  }
+</style>
+<textarea id='pad' autofocus>Connecting...</textarea>
+<script src="text.js"></script>
+<script src="share.uncompressed.js"></script>
+<script>
+
+var elem = document.getElementById('pad');
+
+var ws = new WebSocket('ws://' + window.location.host);
+
+var sjs = new window.sharejs.Connection(ws);
+
+var doc = sjs.get('users', 'seph');
+console.log(doc);
+doc.subscribe();
+
+doc.whenReady(function () {
+  if (!doc.type) doc.create('text');
+  if (doc.type && doc.type.name === 'text')
+    doc.attachTextarea(elem);
+});
+
+</script>
