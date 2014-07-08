@@ -60,9 +60,9 @@ module.exports = MysqlDb = (options) ->
 
     sql =  """
       CREATE TABLE #{snapshot_table} (
-        doc varchar(256) NOT NULL,
+        doc varchar(255) NOT NULL,
         v int NOT NULL,
-        type varchar(256) NOT NULL,
+        type varchar(255) NOT NULL,
         snapshot text NOT NULL,
         meta text NOT NULL,
         created_at timestamp NOT NULL,
@@ -74,7 +74,7 @@ module.exports = MysqlDb = (options) ->
 
     sql = """
       CREATE TABLE #{operations_table} (
-        doc varchar(256) NOT NULL,
+        doc varchar(255) NOT NULL,
         v int NOT NULL,
         op text NOT NULL,
         meta text NOT NULL,
@@ -83,6 +83,9 @@ module.exports = MysqlDb = (options) ->
     """
     client.query sql, (error, result) ->
       callback? error?.message
+    
+    console.warn 'Finished creation of database tables'
+    
 
   # This will perminantly delete all data in the database.
   @dropTables = (callback) ->
