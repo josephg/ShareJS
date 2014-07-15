@@ -48,6 +48,11 @@ Contributors:
 - Didier Colens
 - Wout Mertens
 ###
+
+unless WEB?
+  WebSocket = require 'ws'
+
+
 class ReconnectingWebSocket
   constructor: (url, protocols, Socket) ->
     if protocols? and typeof protocols is 'function'
@@ -139,3 +144,8 @@ class ReconnectingWebSocket
   ###
   refresh: ->
     @ws.close()  if @ws
+
+
+# for node server side client
+unless WEB?
+  exports.ReconnectingWebSocket = ReconnectingWebSocket

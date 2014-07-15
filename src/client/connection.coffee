@@ -26,6 +26,7 @@ else
   {BCSocket} = require 'browserchannel'
   Doc = require('./doc').Doc
   WebSocket = require 'ws'
+  {ReconnectingWebSocket} = require "./reconnecting_websocket"
   socketImpl = null
 
 class Connection
