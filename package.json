@@ -16,18 +16,16 @@
     "email": "josephg@gmail.com"
   },
   "dependencies": {
-    "livedb": ">=0.2.3",
+    "livedb": "^0.4",
     "ottypes": "~1",
-    "express": "~3",
-    "hat": "*",
-    "async": "~0.2"
+    "hat": "*"
   },
   "devDependencies": {
-    "coffee-script": "~1.6.3",
-    "optimist": ">= 0.2.4",
-    "browserchannel": "*",
-    "mocha": "~1",
-    "uglify-js": "~2"
+    "coffee-script": "~1.7",
+    "optimist": "^0.6",
+    "browserchannel": "^2",
+    "mocha": "^1",
+    "uglify-js": "^2"
   },
   "engine": "node >= 0.10",
   "main": "lib/index.js",
