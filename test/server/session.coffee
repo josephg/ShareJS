@@ -12,11 +12,10 @@ ottypes = require 'ottypes'
 createSession = require '../../lib/server/session'
 
 describe 'session', ->
-  beforeEach ->
+  beforeEach (next) ->
     @stream = new Duplex objectMode:yes
 
     @userAgent =
-      sessionId: 'session id' # The unique client ID
       fetchAndSubscribe: (collection, doc, callback) =>
         @subscribedCollection = collection
         @subscribedDoc = doc
@@ -28,11 +27,6 @@ describe 'session', ->
         callback null, {v:100, type:ottypes.text, data:'hi there'}, @opStream
       trigger: (a, b, c, d, callback) -> callback()
 
-    @instance =
-      createAgent: (stream) =>
-        assert.strictEqual stream, @stream
-        @userAgent
-
     @send = (data) =>
       #console.log 'C->S', JSON.stringify data
       @stream.push data
@@ -43,9 +37,12 @@ describe 'session', ->
       callback()
     @stream._read = ->
 
+    @initialReq = {}
+
     # Let the test register an onmessage handler before creating the session.
     process.nextTick =>
-      @session = createSession @instance, @stream
+      @session = createSession @userAgent, @stream, @initialReq
+      next()
 
   afterEach ->
     @stream.emit 'close'
@@ -55,6 +52,7 @@ describe 'session', ->
   # This is just a smoke test. Most of the tests for session should be done in
   # the session integration tests to allow the client-server API to change.
   it 'gives the client a session id', ->
-    @onmessage = (msg) ->
-      assert.deepEqual msg, a:'init', protocol:0, id:'session id'
+    @onmessage = (msg) =>
+      assert.equal 'string', typeof msg.id
+      assert.deepEqual msg, a:'init', protocol:0, id:@session.sessionId
 
