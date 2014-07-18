@@ -1,43 +1,50 @@
 # This is a little prototype browserchannel wrapper for the session code.
 {Duplex} = require 'stream'
 browserChannel = require('browserchannel').server
-connect = require 'connect'
+express = require 'express'
 argv = require('optimist').argv
 livedb = require 'livedb'
-livedbMongo = require 'livedb-mongo'
+livedb.ot.registerType require('quillot').type
 
 try
   require 'heapdump'
 
 sharejs = require '../lib'
 
-webserver = connect(
-  #  connect.logger()
-  connect.static "#{__dirname}/public"
-  connect.static sharejs.scriptsDir
-)
+app = express()
 
-#backend = livedb.client livedb.memory()
-backend = livedb.client livedbMongo('localhost:27017/test?auto_reconnect', safe:false)
+app.use express.static "#{__dirname}/public"
+  #  express.logger()
+  #express.static sharejs.scriptsDir
+webserver = require('http').createServer app
 
+#livedbMongo = require 'livedb-mongo'
+#backend = livedb.client livedbMongo('localhost:27017/test?auto_reconnect', safe:false)
+backend = livedb.client livedb.memory()
 backend.addProjection '_users', 'users', 'json0', {x:true}
 
-share = sharejs.server.createClient {backend}
+
+clientView = require('livedb-middleware') backend
 
 
 ###
-share.use 'validate', (req, callback) ->
+clientView.use (req) ->
+  console.log "middleware #{req.action}"
+
+
+clientView.use 'connect', (req, next) ->
+  console.log 'connect middleware'
+  next()
+clientView.use 'validate', (req, next) ->
   err = 'noooo' if req.snapshot.data?.match /x/
-  callback err
-
-share.use 'connect', (req, callback) ->
-  console.log req.agent
-  callback()
+  next err
 ###
+
+share = sharejs.server {backend: clientView}
 
 numClients = 0
 
-webserver.use browserChannel {webserver, sessionTimeoutInterval:5000}, (client) ->
+app.use browserChannel {webserver, sessionTimeoutInterval:5000}, (client, initialReq) ->
   numClients++
   stream = new Duplex objectMode:yes
   stream._write = (chunk, encoding, callback) ->
@@ -69,9 +76,9 @@ webserver.use browserChannel {webserver, sessionTimeoutInterval:5000}, (client) 
     client.close()
 
   # ... and give the stream to ShareJS.
-  share.listen stream
+  share.listen stream, initialReq
 
-webserver.use '/doc', share.rest()
+#webserver.use '/doc', share.rest()
 
 port = argv.p or 7007
 webserver.listen port

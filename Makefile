@@ -1,24 +1,21 @@
 .PHONY: all test clean webclient
 
-COFFEE = node_modules/.bin/coffee
-UGLIFY = node_modules/.bin/uglifyjs -d WEB=true
+COFFEE=node_modules/.bin/coffee
+UGLIFY=node_modules/.bin/uglifyjs -d WEB=true
+
+BROWSERIFY=node_modules/.bin/browserify
 
 CLIENT = \
-	web-prelude.js \
-	microevent.js \
-	register.js \
-	doc.js \
-	connection.js \
-	textarea.js \
-	query.js
+  lib/client/index.js \
+  lib/client/types.js \
+  lib/client/textarea.js \
+  lib/client/doc.js \
+  lib/client/query.js \
+  lib/client/connection.js \
+  node_modules/ot-text/package.json \
+  node_modules/ot-json0/package.json \
 
 # not included:	index.coffee 
-
-BUNDLED_TYPES = \
-	webclient/text.js \
-	lib/types/text-api.js \
-	webclient/json0.js \
-	lib/types/json-api.js 
 
 # Disabled: lib/types/json-api.coffee
 
@@ -29,11 +26,13 @@ all: webclient
 clean:
 	rm -rf webclient/*
 
-webclient/share.uncompressed.js: $(BUNDLED_TYPES) $(CLIENT_SRCS)
+webclient/share.uncompressed.js: $(CLIENT)
 	mkdir -p webclient
-	echo '(function(){' > $@
-	cat $(filter %.js,$^) >> $@
-	echo '})();' >> $@
+	$(BROWSERIFY) --full-paths -r ./lib/client -s sharejs -o $@
+
+#	echo '(function(){' > $@
+#	cat $(filter %.js,$^) >> $@
+#	echo '})();' >> $@
 
 
 # Copy other types from ottypes.
