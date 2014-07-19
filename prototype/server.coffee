@@ -15,7 +15,7 @@ app = express()
 
 app.use express.static "#{__dirname}/public"
   #  express.logger()
-  #express.static sharejs.scriptsDir
+app.use express.static sharejs.scriptsDir
 webserver = require('http').createServer app
 
 #livedbMongo = require 'livedb-mongo'
