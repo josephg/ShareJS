@@ -7,7 +7,7 @@
 assert = require 'assert'
 {Duplex, Readable} = require 'stream'
 {EventEmitter} = require 'events'
-ottypes = require 'ottypes'
+ottext = require 'ot-text'
 
 createSession = require '../../lib/server/session'
 
@@ -24,7 +24,7 @@ describe 'session', ->
 
         @opStream = new Readable objectMode:yes
         @opStream._read = ->
-        callback null, {v:100, type:ottypes.text, data:'hi there'}, @opStream
+        callback null, {v:100, type:ottext.type, data:'hi there'}, @opStream
       trigger: (a, b, c, d, callback) -> callback()
 
     @send = (data) =>
@@ -32,7 +32,7 @@ describe 'session', ->
       @stream.push data
 
     @stream._write = (chunk, encoding, callback) =>
-      console.log 'S->C', JSON.stringify chunk
+      # console.log 'S->C', JSON.stringify chunk
       @onmessage? chunk
       callback()
     @stream._read = ->
