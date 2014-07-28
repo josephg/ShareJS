@@ -41,7 +41,7 @@ webserver.use browserChannel {webserver, sessionTimeoutInterval:5000}, (client) 
   numClients++
   stream = new Duplex objectMode:yes
   stream._write = (chunk, encoding, callback) ->
-    console.log 's->c ', chunk
+    console.log 's->c ', JSON.stringify(chunk)
     if client.state isnt 'closed' # silently drop messages after the session is closed
       client.send chunk
     callback()
@@ -52,7 +52,7 @@ webserver.use browserChannel {webserver, sessionTimeoutInterval:5000}, (client) 
   stream.remoteAddress = stream.address
 
   client.on 'message', (data) ->
-    console.log 'c->s ', data
+    console.log 'c->s ', JSON.stringify(data)
     stream.push data
 
   stream.on 'error', (msg) ->
