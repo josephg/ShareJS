@@ -115,7 +115,7 @@
   </div>
 </div>
 
-<script src="jsoneditor-min.js"></script>
+<script src="jsoneditor.js"></script>
 <script src="channel/bcsocket.js"></script>
 <script src="text.js"></script>
 <script src="json0.js"></script>
@@ -160,9 +160,16 @@ var select = function(doc) {
       editorElem = jsonEditor;
       ctx = null;
 
-      var editor = new jsoneditor.JSONEditor(editorElem, {change:function() {
-          console.log('change', JSON.stringify(editor.get()));
-          doc.submitOp([{p:[], od:doc.snapshot, oi:editor.get()}], true);
+      var editor = new JSONEditor(editorElem, {change:function(type, change) {
+        console.log('change', JSON.stringify(editor.get()));
+        if (type === 'editValue') {
+          var path = [];
+          //console.log(change.node
+
+        } else {
+
+        }
+        doc.submitOp([{p:[], od:doc.snapshot, oi:editor.get()}], true);
       }}, doc.snapshot);
       editor.expandAll();
 
