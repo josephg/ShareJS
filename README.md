@@ -88,6 +88,101 @@ currently documented, but when it is, the documentation [will live
 here](https://github.com/share/middleware/blob/master/README.md).
 
 
+## Client server communication
+
+ShareJS requires *you* to provide a way for the client to communicate with the
+server. As such, its transport agnostic. You can use
+[browserchannel](https://github.com/josephg/node-browserchannel),
+[websockets](https://github.com/einaros/ws), or whatever you like. ShareJS
+requires the transport to:
+
+- Guarantee in-order message delivery. (**Danger danger socket.io does not guarantee this**)
+- Provide a websocket-like API on the client
+- Provide a node object stream to the server to talk to a client.
+
+When a client times out, the server will throw away all information
+related to that client. When the client client reconnects, it will reestablish
+all its state on the server again.
+
+It is the responsibility of the transport to handle reconnection - the client
+should emit state change events to tell sharejs that it has reconnected.
+
+### Server communication
+
+The server exposes a method `share.listen(stream)` which you can call with a
+node stream which can communicate with the client.
+
+Here's an example using browserchannel:
+
+```javascript
+var Duplex = require('stream').Duplex;
+var browserChannel = require('browserchannel').server
+
+var share = require('share').server.createClient({backend: ...});
+var app = require('express')();
+
+app.use(browserChannel({webserver: webserver}, function(client) {
+  var stream = new Duplex({objectMode: true});
+
+  stream._read = function() {};
+  stream._write = function(chunk, encoding, callback) {
+    if (client.state !== 'closed') {
+      client.send(chunk);
+    }
+    callback();
+  };
+
+  client.on('message', function(data) {
+    stream.push(data);
+  });
+
+  client.on('close', function(reason) {
+    stream.push(null);
+    stream.emit('close');
+  });
+
+  stream.on('end', function() {
+    client.close();
+  });
+
+  // Give the stream to sharejs
+  return share.listen(stream);
+}));
+```
+
+And [here](examples/ws.coffee) is a more complete example using websockets.
+
+### Client communication
+
+The client needs a
+[websocket](https://developer.mozilla.org/en-US/docs/WebSockets)-like session
+object to communicate. You can use a normal websocket if you want:
+
+```javascript
+var ws = new WebSocket('ws://' + window.location.host);
+var share = new sharejs.Connection(ws);
+```
+
+Sharejs also supports the following changes from the spec:
+
+- The socket can reconnect. Simply call `socket.onopen` again when the socket
+reconnects and sharejs will reestablish its session state and send any
+outstanding user data.
+- If your underlying API allows data to be sent while in the CONNECTING state,
+set `socket.canSendWhileConnecting = true`.
+- If your API allows JSON messages, set `socket.canSendJSON = true` to avoid
+extra JSON stringifying.
+
+If you use browserchannel, all of this is done for you. Simply tell
+browserchannel to reconnect and it'll take care of everything:
+
+```javascript
+var socket = new BCSocket(null, {reconnect: true});
+var share = new sharejs.Connection(socket);
+```
+
+---
+
 ## Client API
 
 The client API can be used either from nodejs or from a browser.
@@ -120,7 +215,7 @@ Then in your web app include whichever OT types you need in your app and sharejs
 
 This will create a global `sharejs` object in the browser.
 
-### Connections, Docs and Queries
+### Connections
 
 The client exposes 2 classes you care about:
 
@@ -163,7 +258,7 @@ recieved over the wire.
 - **connection.messageBuffer** contains the last 100 messages, for debugging
 error states.
 
-#### Documents
+### Documents
 
 Document objects store your actual data in the client. They can be modified
 syncronously and they can automatically sync their data with the server.
@@ -360,100 +455,6 @@ doc.submitOp([{p:['x'], na:10}]);
 ```
 
 See the [examples directory](https://github.com/share/ShareJS/tree/master/examples/public) for more examples.
-
-
-## Client server communication
-
-ShareJS requires *you* to provide a way for the client to communicate with the
-server. As such, its transport agnostic. You can use
-[browserchannel](https://github.com/josephg/node-browserchannel),
-[websockets](https://github.com/einaros/ws), or whatever you like. ShareJS
-requires the transport to:
-
-- Guarantee in-order message delivery. (**Danger danger socket.io does not guarantee this**)
-- Provide a websocket-like API on the client
-- Provide a node object stream to the server to talk to a client.
-
-When a client times out, the server will throw away all information
-related to that client. When the client client reconnects, it will reestablish
-all its state on the server again.
-
-It is the responsibility of the transport to handle reconnection - the client
-should emit state change events to tell sharejs that it has reconnected.
-
-### Server communication
-
-The server exposes a method `share.listen(stream)` which you can call with a
-node stream which can communicate with the client.
-
-Here's an example using browserchannel:
-
-```javascript
-var Duplex = require('stream').Duplex;
-var browserChannel = require('browserchannel').server
-
-var share = require('share').server.createClient({backend: ...});
-var app = require('express')();
-
-app.use(browserChannel({webserver: webserver}, function(client) {
-  var stream = new Duplex({objectMode: true});
-
-  stream._read = function() {};
-  stream._write = function(chunk, encoding, callback) {
-    if (client.state !== 'closed') {
-      client.send(chunk);
-    }
-    callback();
-  };
-
-  client.on('message', function(data) {
-    stream.push(data);
-  });
-
-  client.on('close', function(reason) {
-    stream.push(null);
-    stream.emit('close');
-  });
-
-  stream.on('end', function() {
-    client.close();
-  });
-
-  // Give the stream to sharejs
-  return share.listen(stream);
-}));
-```
-
-And [here](examples/ws.coffee) is a more complete example using websockets.
-
-### Client communication
-
-The client needs a
-[websocket](https://developer.mozilla.org/en-US/docs/WebSockets)-like session
-object to communicate. You can use a normal websocket if you want:
-
-```javascript
-var ws = new WebSocket('ws://' + window.location.host);
-var share = new sharejs.Connection(ws);
-```
-
-Sharejs also supports the following changes from the spec:
-
-- The socket can reconnect. Simply call `socket.onopen` again when the socket
-reconnects and sharejs will reestablish its session state and send any
-outstanding user data.
-- If your underlying API allows data to be sent while in the CONNECTING state,
-set `socket.canSendWhileConnecting = true`.
-- If your API allows JSON messages, set `socket.canSendJSON = true` to avoid
-extra JSON stringifying.
-
-If you use browserchannel, all of this is done for you. Simply tell
-browserchannel to reconnect and it'll take care of everything:
-
-```javascript
-var socket = new BCSocket(null, {reconnect: true});
-var share = new sharejs.Connection(socket);
-```
 
 
 ---
