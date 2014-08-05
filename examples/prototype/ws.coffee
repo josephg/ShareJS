@@ -6,9 +6,6 @@ livedb = require 'livedb'
 livedbMongo = require 'livedb-mongo'
 http = require 'http'
 
-try
-  require 'heapdump'
-
 sharejs = require '../lib'
 
 app = connect(
@@ -20,25 +17,10 @@ app = connect(
 
 # app.use '/doc', share.rest()
 
-#backend = livedb.client livedb.memory()
-backend = livedb.client livedbMongo('localhost:27017/test?auto_reconnect', safe:false)
-
-backend.addProjection '_users', 'users', 'json0', {x:true}
+backend = livedb.client livedb.memory()
+#backend = livedb.client livedbMongo('localhost:27017/test?auto_reconnect', safe:false)
 
 share = sharejs.server.createClient {backend}
-
-
-###
-share.use 'validate', (req, callback) ->
-  err = 'noooo' if req.snapshot.data?.match /x/
-  callback err
-
-share.use 'connect', (req, callback) ->
-  console.log req.agent
-  callback()
-###
-
-numClients = 0
 
 
 server = http.createServer app
@@ -68,8 +50,7 @@ wss.on 'connection', (client) ->
     stream.push null
     stream.emit 'close'
 
-    numClients--
-    console.log 'client went away', numClients
+    console.log 'client went away'
     client.close reason
 
   stream.on 'end', ->
