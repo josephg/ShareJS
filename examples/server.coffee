@@ -24,17 +24,6 @@ backend.addProjection '_users', 'users', 'json0', {x:true}
 
 share = sharejs.server.createClient {backend}
 
-
-###
-share.use 'validate', (req, callback) ->
-  err = 'noooo' if req.snapshot.data?.match /x/
-  callback err
-
-share.use 'connect', (req, callback) ->
-  console.log req.agent
-  callback()
-###
-
 numClients = 0
 
 webserver.use browserChannel {webserver, sessionTimeoutInterval:5000}, (client) ->
@@ -76,3 +65,15 @@ webserver.use '/doc', share.rest()
 port = argv.p or 7007
 webserver.listen port
 console.log "Listening on http://localhost:#{port}/"
+
+
+###
+# initializing middlewares
+share.use 'validate', (req, callback) ->
+  err = 'noooo' if req.snapshot.data?.match /x/
+  callback err
+
+share.use 'connect', (req, callback) ->
+  console.log req.agent
+  callback()
+###
