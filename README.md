@@ -33,7 +33,7 @@ Installing and running
 
 Run the example server with:
 
-    # coffee node_modules/share/prototype/server.coffee
+    # coffee node_modules/share/examples/server.coffee
 
 > Not all of the sharejs 0.6 examples have been ported across yet. I'd love
 > some pull requests!
