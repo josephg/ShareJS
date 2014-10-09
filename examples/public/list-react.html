@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<link rel="stylesheet" type="text/css" href="jsoneditor-min.css">
+<style>
+  html {
+    overflow: hidden;
+  }
+
+  body {
+    /*font-family: monaco;*/
+    font-size: 16px;
+    margin: 0px;
+  }
+
+  *:not(.jsoneditor *) { /* setting box-sizing breaks some of JSON editor's styling */
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+  }
+
+  #container {
+    width: 100%;
+    height: 100%;
+    
+    position: absolute;
+  }
+
+  #left {
+    background-color: #ccc;
+    float: left;
+
+    width: 300px;
+    height: 100%;
+    position: absolute;
+
+    top: 0;
+    left: 0;
+
+    overflow: auto;
+  }
+
+  #list {
+  }
+
+  #list .item {
+    background-color: white;
+
+    padding: 3px;
+    border-right: 1px solid black;
+    border-bottom: 1px solid black;
+    cursor: default;
+  }
+
+  #list .item.selected {
+    background-color: red !important;
+  }
+  #list .item:hover {
+    background-color: #ddd;
+  }
+
+  #content {
+    position: absolute;
+    background-color: #ccc;
+    /*width: 100%;
+    height: 100%;*/
+    top: 0px;
+    left: 300px;
+    bottom: 0px;
+    right: 0px;
+    overflow: auto;
+  }
+
+  .editor {
+    border-radius: 10px;
+    top: 10px;
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+
+    position: absolute;
+    background-color: white;
+    border: 1px solid;
+  }
+
+  textarea.editor {
+    padding: 10px;
+    font-size: 20px;
+  }
+
+  .editor .jsoneditor {
+    height: 100%;
+    width: auto;
+
+    border-radius: 9px;
+  }
+
+  .jsoneditor .menu {
+    background-color: transparent;
+  }
+
+  #q {
+    width: 300px;
+    font-size: 16px;
+  }
+
+  #q.err {
+    color: red;
+  }
+
+</style>
+<div id='container'>
+  <div id='left'>
+    <input id=q type=search results=5 placeholder="{'data.x': 5}" autofocus autosave='sharejsquery' incremental=true pattern='^[0-9]$' />
+    <div id='list'></div>
+  </div>
+  <div id='content'>
+  </div>
+</div>
+
+<script src="jsoneditor.js"></script>
+<script src="channel/bcsocket.js"></script>
+<script src="text.js"></script>
+<script src="json0.js"></script>
+<script src="share.uncompressed.js"></script>
+<script>
+
+var s = new BCSocket(null, {reconnect: true});
+var sjs = new window.sharejs.Connection(s);
+
+sjs.debug = true;
+
+var listElem = document.getElementById('list');
+
+var contentArea = document.getElementById('content');
+
+var textEditor = document.createElement('textarea');
+var jsonEditor = document.createElement('div');
+textEditor.className = jsonEditor.className = 'editor';
+
+var editorElem = null;
+var ctx = null;
+
+var select = function(doc) {
+  window.doc = doc;
+  if (!doc.autoSubscribe) doc.subscribe();
+
+  if (editorElem) {
+    contentArea.removeChild(editorElem);
+    if (ctx) ctx.destroy();
+
+    ctx = editorElem = null;
+  }
+
+  doc.whenReady(function() {
+    if (doc.provides.text) {
+      console.log('text!');
+      ctx = doc.attachTextarea(textEditor);
+      editorElem = textEditor;
+      textEditor.focus();
+    } else if (doc.type && doc.type.name === 'json0') {
+      //ctx = doc.createContext();
+      editorElem = jsonEditor;
+      ctx = null;
+
+      var editor = new JSONEditor(editorElem, {change:function(type, change) {
+        console.log('change', JSON.stringify(editor.get()));
+        if (type === 'editValue') {
+          var path = [];
+          //console.log(change.node
+
+        } else {
+
+        }
+        doc.submitOp([{p:[], od:doc.snapshot, oi:editor.get()}], true);
+      }}, doc.snapshot);
+      editor.expandAll();
+
+      doc.on('op', function(op, local) {
+        if (!local) {
+          editor.set(doc.snapshot);
+          editor.expandAll();
+        }
+      });
+      //ctx._onOp = function() {
+      //  editor.set(ctx.getSnapshot());
+      //};
+
+
+    } else {
+      console.warn(':,(');
+    }
+    if (editorElem) contentArea.appendChild(editorElem);
+  });
+};
+
+//q = sjs.query('users', {'data.x':5}, true, function(err, data) { console.log(err, data); });
+//query = sjs.createSubscribeQuery('users', {$query:{"x":5}}, {docMode:'sub'});
+query = sjs.createSubscribeQuery('demo', {}, {docMode:'sub'});
+//query = sjs.createSubscribeQuery('users', 'users', {docMode:'fetch'});
+//query = sjs.createSubscribeQuery('stories', {$query:{}}, {autoFetch:true});
+
+//query = sjs.createSubscribeQuery('players', {"$orderby":{"data.score":-1},"$limit":5}, {autoFetch:true});
+//query = sjs.createSubscribeQuery('users', {$query:{}}, {autoFetch:true, source:'clock'});
+
+var selected;
+var onAdd;
+query.on('insert', onAdd = function(docs, idx) {
+  console.log('add', docs, idx);
+
+  for (var i = 0; i < docs.length; i++) {
+    (function() {
+      var doc = docs[i];
+      if (!doc.elem) {
+        var item = document.createElement('div');
+        item.className = 'item';
+        item.textContent = doc.name + " (" + doc.type.name + ")";
+        item.onclick = function(e) {
+          if (selected) {
+            selected.className = 'item';
+          }
+          selected = item;
+          item.className = 'item selected';
+
+          select(doc);
+        };
+        item.onmousedown = function() { return false; };
+
+        doc.elem = item;
+      }
+
+      listElem.insertBefore(doc.elem, listElem.children[idx]);
+    })();
+//  listElem.appendChild(doc.elem);
+  }
+});
+
+// Helper for making new documents
+function create(name) {
+  if (!name) name = 'doc' + (Math.random() * 1000 | 0);
+
+  var doc = sjs.get('users', name);
+  doc.create('json0', {x:Math.random() * 20 | 0});
+  return doc;
+}
+
+query.on('remove', function(docs, idx) {
+  for (var i = 0; i < docs.length; i++) {
+    var doc = docs[i];
+    console.log('removed', doc);
+    listElem.removeChild(doc.elem);
+  }
+});
+
+query.on('move', function(docs, from, to) {
+  for (var i = 0; i < docs.length; i++) {
+    var doc = docs[i];
+    listElem.removeChild(doc.elem);
+    listElem.insertBefore(doc.elem, listElem.children[to + i]);
+  }
+});
+
+query.on('change', function() {
+  while(listElem.firstChild) {
+    listElem.removeChild(listElem.firstChild);
+  }
+  onAdd(query.results, 0);
+});
+
+//query.subscribe();
+
+// ****** Set up search box.
+
+var queryBox = document.getElementById('q');
+queryBox.value = JSON.stringify(query.query);
+
+queryBox.onkeyup = function() {
+  try {
+    JSON.parse(queryBox.value);
+    queryBox.className = '';
+  } catch (e) {
+    queryBox.className = 'err';
+
+  }
+};
+
+queryBox.onsearch = function() {
+  var value = queryBox.value;
+  console.log('search ' + value);
+  try {
+    if (value === '') value = '{}';
+    var q = JSON.parse(value);
+
+    query.setQuery(q);
+
+  } catch (e) {}
+
+};
+
+</script>

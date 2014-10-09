@@ -1,54 +1,47 @@
 # This is a little prototype browserchannel wrapper for the session code.
 {Duplex} = require 'stream'
 browserChannel = require('browserchannel').server
-express = require 'express'
+connect = require 'connect'
 argv = require('optimist').argv
 livedb = require 'livedb'
-livedb.ot.registerType require('quillot').type
+livedbMongo = require 'livedb-mongo'
 
 try
   require 'heapdump'
 
 sharejs = require '../lib'
 
-app = express()
+webserver = connect(
+  #  connect.logger()
+  connect.static "#{__dirname}/public"
+  connect.static sharejs.scriptsDir
+)
 
-app.use express.static "#{__dirname}/public"
-  #  express.logger()
-app.use express.static sharejs.scriptsDir
-webserver = require('http').createServer app
+#backend = livedb.client livedb.memory()
+backend = livedb.client livedbMongo('localhost:27017/test?auto_reconnect', safe:false)
 
-#livedbMongo = require 'livedb-mongo'
-#backend = livedb.client livedbMongo('localhost:27017/test?auto_reconnect', safe:false)
-backend = livedb.client livedb.memory()
 backend.addProjection '_users', 'users', 'json0', {x:true}
 
-
-clientView = require('livedb-middleware') backend
+share = sharejs.server.createClient {backend}
 
 
 ###
-clientView.use (req) ->
-  console.log "middleware #{req.action}"
-
-
-clientView.use 'connect', (req, next) ->
-  console.log 'connect middleware'
-  next()
-clientView.use 'validate', (req, next) ->
+share.use 'validate', (req, callback) ->
   err = 'noooo' if req.snapshot.data?.match /x/
-  next err
-###
+  callback err
 
-share = sharejs.server {backend: clientView}
+share.use 'connect', (req, callback) ->
+  console.log req.agent
+  callback()
+###
 
 numClients = 0
 
-app.use browserChannel {webserver, sessionTimeoutInterval:5000}, (client, initialReq) ->
+webserver.use browserChannel {webserver, sessionTimeoutInterval:5000}, (client) ->
   numClients++
   stream = new Duplex objectMode:yes
   stream._write = (chunk, encoding, callback) ->
-    console.log 's->c ', chunk
+    console.log 's->c ', JSON.stringify(chunk)
     if client.state isnt 'closed' # silently drop messages after the session is closed
       client.send chunk
     callback()
@@ -59,7 +52,7 @@ app.use browserChannel {webserver, sessionTimeoutInterval:5000}, (client, initia
   stream.remoteAddress = stream.address
 
   client.on 'message', (data) ->
-    console.log 'c->s ', data
+    console.log 'c->s ', JSON.stringify(data)
     stream.push data
 
   stream.on 'error', (msg) ->
@@ -76,9 +69,9 @@ app.use browserChannel {webserver, sessionTimeoutInterval:5000}, (client, initia
     client.close()
 
   # ... and give the stream to ShareJS.
-  share.listen stream, initialReq
+  share.listen stream
 
-#webserver.use '/doc', share.rest()
+webserver.use '/doc', share.rest()
 
 port = argv.p or 7007
 webserver.listen port

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Hello React</title>
+    <link rel="stylesheet" href="base.css" />
+    <script src="http://fb.me/react-0.11.0.js"></script>
+    <script src="http://fb.me/JSXTransformer-0.11.0.js"></script>
+    <script src="channel/bcsocket.js"></script>
+    <script src="share.uncompressed.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/showdown/0.3.1/showdown.min.js"></script>
+  </head>
+  <body>
+    <div id="content"></div>
+<script type="text/jsx">
+/** @jsx React.DOM */
+
+var s = new BCSocket(null, {reconnect: true});
+var sjs = new window.sharejs.Connection(s);
+
+var doc = sjs.get('demo', 'react');
+doc.subscribe();
+
+doc.whenReady(function() {
+  if (!doc.type) doc.create('json0');
+  if (doc.type.name !== 'json0') throw Error('Unexpected doc type');
+
+  if (!doc.snapshot) {
+    doc.submitOp([{p:[], oi:[]}]);
+  }
+});
+
+
+var Comment = React.createClass({
+  render: function() {
+    return (
+      <div className="comment">
+        <h2 className="commentAuthor">
+          {this.props.author}
+        </h2>
+        {this.props.children}
+      </div>
+    );
+  }
+});
+
+var CommentList = React.createClass({
+  render: function() {
+    var commentNodes = this.props.data.map(function (comment) {
+      return (
+        <Comment author={comment.author}>
+          {comment.text}
+        </Comment>
+      );
+    });
+    return (
+      <div className="commentList">
+        {commentNodes}
+      </div>
+    );
+  }
+});
+
+var CommentForm = React.createClass({
+  handleSubmit: function() {
+    var author = this.refs.author.getDOMNode().value.trim();
+    var text = this.refs.text.getDOMNode().value.trim();
+    if (!text || !author) {
+      return false;
+    }
+    
+    var self = this;
+    doc.whenReady(function() {
+      doc.submitOp([{p:[doc.snapshot.length], li:{author:author, text:text}}], self);
+    });
+
+    // TODO: send request to the server
+    this.refs.author.getDOMNode().value = '';
+    this.refs.text.getDOMNode().value = '';
+    return false;
+  },
+  render: function() {
+    return (
+      <form className="commentForm" onSubmit={this.handleSubmit}>
+        <input type="text" placeholder="Your name" ref="author" />
+        <input type="text" placeholder="Say something..." ref="text" />
+        <input type="submit" value="Post" />
+      </form>
+    );
+  }
+});
+
+var CommentBox = React.createClass({
+  getInitialState: function() {
+    return {data: []};
+  },
+  componentDidMount: function() {
+    var self = this;
+
+    doc.whenReady(function() {
+      self.setState({data: doc.snapshot});
+
+      var context = doc.createContext();
+      context._onOp = function(op) {
+        self.setState({data: this.getSnapshot()});
+      };
+    });
+  },
+  render: function() {
+    return (
+      <div className="commentBox">
+        <h1>Comments</h1>
+        <CommentList data={this.state.data} />
+        <hr />
+        <CommentForm />
+      </div>
+    );
+  }
+});
+
+React.renderComponent(
+  <CommentBox />,
+  document.getElementById('content')
+);
+
+function swap12() {
+  doc.submitOp([{p:[1],lm:0}]);
+}
+
+</script>
+  </body>
+</html>
