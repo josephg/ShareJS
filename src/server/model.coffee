@@ -170,6 +170,7 @@ module.exports = Model = (db, options) ->
         # and (maybe!) save a new document snapshot to the database.
 
         doc.v = opData.v + 1
+        doc.meta.mtime = Date.now()
         doc.snapshot = snapshot
 
         doc.ops.push opData
