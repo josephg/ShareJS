@@ -172,7 +172,7 @@ module.exports = Model = (db, options) ->
         doc.v = opData.v + 1
         doc.meta.mtime = Date.now()
         doc.snapshot = snapshot
-        
+  
         doc.ops.push opData
         doc.ops.shift() if db and doc.ops.length > options.numCachedOps
 
