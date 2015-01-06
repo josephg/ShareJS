@@ -16,17 +16,19 @@
     "email": "josephg@gmail.com"
   },
   "dependencies": {
+    "hat": "*",
     "livedb": "^0.4",
-    "ottypes": "~1",
-    "hat": "*"
+    "ot-json0": "^1.0.0",
+    "ot-text": "^1.0.1"
   },
   "devDependencies": {
-    "coffee-script": "~1.7",
-    "optimist": "^0.6",
     "browserchannel": "^2",
-    "mocha": "^1",
-    "uglify-js": "^2",
-    "npm-which": "^1.0.1"
+    "browserify": "^8.0.3",
+    "coffee-script": "^1.8.0",
+    "mocha": "^2.1.0",
+    "npm-which": "^2.0.0",
+    "optimist": "^0.6",
+    "uglify-js": "^2"
   },
   "engine": "node >= 0.10",
   "main": "lib/index.js",
@@ -36,6 +38,7 @@
   },
   "scripts": {
     "build": "make",
+    "test": "mocha",
     "prepublish": "make webclient"
   },
   "licenses": [
