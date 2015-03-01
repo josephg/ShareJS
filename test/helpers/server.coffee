@@ -1,5 +1,4 @@
 express = require 'express'
-connect = require 'connect'
 {Duplex} = require 'stream'
 
 # Creates a sharejs instance with a livedb backend
