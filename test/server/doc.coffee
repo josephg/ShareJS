@@ -62,7 +62,7 @@ describe 'Doc', ->
       expect(connection.sent[0].d).to.equal 'music'
       expect(connection.sent[0].a).to.equal 'sub'
 
-    it 'retrives snapshot', ->
+    it.skip 'retrives snapshot', ->
       @doc.subscribe()
       expect(@doc.snapshot).to.be.undefined
       sendMessage c: 'notes', d: 'music', a: 'sub', data:
@@ -102,7 +102,7 @@ describe 'Doc', ->
       @doc.fetch()
       expect(connection.sent[0]).to.deep.equal {c: 'notes', d: 'music', a: 'fetch'}
 
-    it 'sets snapshot', ->
+    it.skip 'sets snapshot', ->
       @doc.fetch()
       sendMessage c: 'notes', d: 'music', a: 'fetch', data: { data: 'cool' , v: 0}
       expect(@doc.snapshot).to.equal 'cool'

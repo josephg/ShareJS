@@ -22,10 +22,13 @@
     "async": "~0.2"
   },
   "devDependencies": {
-    "coffee-script": "~1.6.3",
-    "optimist": ">= 0.2.4",
     "browserchannel": "*",
+    "chai": "^1.9.1",
+    "coffee-script": "^1.7.1",
+    "connect": "^3.3.4",
     "mocha": "~1",
+    "optimist": ">= 0.2.4",
+    "sinon": "^1.9.1",
     "uglify-js": "~2"
   },
   "optionalDependencies": {
@@ -35,6 +38,7 @@
   "main": "lib/index.js",
   "scripts": {
     "build": "make",
+    "test": "mocha test/server",
     "prepublish": "make webclient"
   },
   "licenses": [
