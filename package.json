@@ -16,7 +16,7 @@
     "email": "josephg@gmail.com"
   },
   "dependencies": {
-    "livedb": ">=0.2.3",
+    "livedb": "^0.5.0",
     "ottypes": "~1",
     "semver": "~2",
     "hat": "*",
