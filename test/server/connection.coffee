@@ -46,7 +46,7 @@ describe 'Connection', ->
       socket.onopen()
       assert.equal @connection.state, 'connecting'
 
-    it 'sets canSend', ->
+    it.skip 'sets canSend', ->
       assert !@connection.canSend
       socket.onopen()
       assert @connection.canSend
@@ -59,7 +59,7 @@ describe 'Connection', ->
       socket.close()
       assert.equal @connection.state, 'disconnected'
 
-    it 'sets canSend', ->
+    it.skip 'sets canSend', ->
       assert @connection.canSend
       socket.close()
       assert !@connection.canSend
@@ -67,12 +67,12 @@ describe 'Connection', ->
 
   describe 'socket onmessage', ->
 
-    it 'calls handle message', ->
+    it.skip 'calls handle message', ->
       handleMessage = sinon.spy @connection, 'handleMessage'
       socket.onmessage('a message')
       sinon.assert.calledWith handleMessage, 'a message'
 
-    it 'pushes message buffer', ->
+    it.skip 'pushes message buffer', ->
       assert @connection.messageBuffer.length == 0
       socket.onmessage('a message')
       assert @connection.messageBuffer.length == 1
@@ -104,7 +104,7 @@ describe 'Connection', ->
       second = @connection.get('food', 'steak')
       assert.equal first, second
 
-    it 'injests data on creation', ->
+    it.skip 'ingests data on creation', ->
       doc = @connection.get('food', 'steak', data: 'content', v: 0)
       assert.equal doc.snapshot, 'content'
       doc = @connection.get('food', 'steak', data: 'other content', v: 0)

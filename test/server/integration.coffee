@@ -70,7 +70,7 @@ describe 'integration', ->
     describe 'subscribe', ->
       beforeEach ->
 
-      it 'subscribes to a document', (done) ->
+      it.skip 'subscribes to a document', (done) ->
         doc = @connection.get 'users', 'seph'
         assert.strictEqual doc.collection, 'users'
         assert.strictEqual doc.name, 'seph'
@@ -91,7 +91,7 @@ describe 'integration', ->
 
           done()
 
-      it 'passes subscribe errors back to the client', (done) ->
+      it.skip 'passes subscribe errors back to the client', (done) ->
         @subscribeError = 'You require more vespine gas'
 
         doc = @connection.get 'users', 'seph'
@@ -115,7 +115,7 @@ describe 'integration', ->
     describe 'query', ->
       beforeEach ->
 
-      it 'issues a query to the backend', (done) ->
+      it.skip 'issues a query to the backend', (done) ->
         @userAgent.query = (index, query, opts, callback) ->
           assert.strictEqual index, 'index'
           assert.deepEqual query, {a:5, b:6}
@@ -139,7 +139,7 @@ describe 'integration', ->
       describe 'queryfetch', ->
         it 'does not subscribe to the query result set'
 
-      it 'does not fetch query results when docMode is null', (done) ->
+      it.skip 'does not fetch query results when docMode is null', (done) ->
         @userAgent.queryFetch = (index, query, opts, callback) ->
           callback null, [{data:{x:10}, type:ottypes.text.uri, v:100, docName:'docname', c:'collection'}], 'oh hi'
 
@@ -151,7 +151,7 @@ describe 'integration', ->
           assert.equal results[0].snapshot, null
           done()
 
-      it 'fetches query results if docMode is fetch', (done) ->
+      it.skip 'fetches query results if docMode is fetch', (done) ->
         @userAgent.queryFetch = (index, query, opts, callback) ->
           callback null, [{data:{x:10}, type:ottypes.text.uri, v:100, docName:'docname', c:'collection'}], 'oh hi'
 
@@ -161,7 +161,7 @@ describe 'integration', ->
           assert.deepEqual results[0].snapshot, {x:10}
           done()
 
-      it 'subscribes to documents if docMode is subscribe', (done) ->
+      it.skip 'subscribes to documents if docMode is subscribe', (done) ->
         @userAgent.queryFetch = (index, query, opts, callback) ->
           callback null, [{data:'internet', type:ottypes.text.uri, v:100, docName:'docname', c:'collection'}], 'oh hi'
 
@@ -190,7 +190,7 @@ describe 'integration', ->
 
 
       # regression
-      it 'subscribes from the version specified if the client has a document snapshot already', (done) ->
+      it.skip 'subscribes from the version specified if the client has a document snapshot already', (done) ->
         @userAgent.fetch = (collection, docName, callback) ->
           assert.strictEqual collection, 'collection'
           assert.strictEqual docName, 'docname'
@@ -224,7 +224,7 @@ describe 'integration', ->
 
       it 'does not resend document snapshots when you reconnect' # ?? how do we test this at this level of abstraction?
 
-      it 'fetches operations if the client already has a document snapshot at an old version', (done) ->
+      it.skip 'fetches operations if the client already has a document snapshot at an old version', (done) ->
         @userAgent.fetch = (collection, docName, callback) ->
           assert.strictEqual collection, 'collection'
           assert.strictEqual docName, 'docname'
