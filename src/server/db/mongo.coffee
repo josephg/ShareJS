@@ -9,8 +9,6 @@
 # This implementation isn't written to support multiple frontends
 # talking to a single mongo backend.
 
-mongodb = require 'mongodb'
-
 defaultOptions =
   # Prefix for all database keys.
   db: 'sharejs'
@@ -30,7 +28,11 @@ module.exports = MongoDb = (options) ->
   options ?= {}
   options[k] ?= v for k, v of defaultOptions
 
-  client = options.client or new mongodb.Db(options.db, new mongodb.Server(options.hostname, options.port, options.mongoOptions), {safe: true})
+  if options.client?
+    client = options.client
+  else
+    mongodb = require 'mongodb'    
+    client = new mongodb.Db(options.db, new mongodb.Server(options.hostname, options.port, options.mongoOptions), {safe: true})
   
   client.open (err, db) ->
     if not err
