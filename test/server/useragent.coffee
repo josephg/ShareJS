@@ -1,4 +1,5 @@
 UserAgent = require '../../lib/server/useragent'
+sinon = require 'sinon'
 {Readable} = require 'stream'
 {EventEmitter} = require 'events'
 assert = require 'assert'
@@ -29,12 +30,11 @@ describe 'UserAgent', ->
       sinon.spy backend, 'fetch'
       @userAgent.fetch 'flowers', 'lily', ->
         sinon.assert.calledWith backend.fetch, 'flowers', 'lily'
-        backend.fetch.reset()
         done()
 
     it 'returns backend result', (done)->
       @userAgent.fetch 'flowers', 'lily', (error, document)->
-        assert.deepEqual document, color: 'yellow'
+        assert.deepEqual document, {v: 10, color: 'yellow'}
         done()
 
     describe 'with doc filters', ->
@@ -43,7 +43,7 @@ describe 'UserAgent', ->
         filter = sinon.spy (args..., next)-> next()
         shareInstance.docFilters.push filter
         @userAgent.fetch 'flowers', 'lily', (error, document)=>
-          sinon.assert.calledWith filter, 'flowers', 'lily', color: 'yellow'
+          sinon.assert.calledWith filter, 'flowers', 'lily', {color: 'yellow', v: 10}
           done()
 
       it 'manipulates document', (done)->
@@ -80,7 +80,6 @@ describe 'UserAgent', ->
       sinon.spy backend, 'subscribe'
       @userAgent.subscribe 'flowers', 'lily', 10, ->
         sinon.assert.calledWith backend.subscribe, 'flowers', 'lily', 10
-        backend.subscribe.reset()
         done()
 
     it 'can read operationStream', (done)->
@@ -141,7 +140,6 @@ describe 'UserAgent', ->
       sinon.spy backend, 'submit'
       @userAgent.submit 'flowers', 'lily', 'pluck', {}, ->
         sinon.assert.calledWith backend.submit, 'flowers', 'lily', 'pluck'
-        backend.submit.reset()
         done()
 
     it 'returns version and operations', (done)->
@@ -169,7 +167,6 @@ describe 'UserAgent', ->
       sinon.spy backend, 'queryFetch'
       @userAgent.queryFetch 'flowers', {smell: 'nice'}, {all: yes}, ->
         sinon.assert.calledWith backend.queryFetch, 'flowers', {smell: 'nice'}, {all: yes}
-        backend.queryFetch.reset()
         done()
 
     it 'returns documents and extra', (done)->
@@ -202,7 +199,6 @@ describe 'UserAgent', ->
       sinon.spy backend, 'query'
       @userAgent.query 'flowers', {smell: 'nice'}, {all: yes}, ->
         sinon.assert.calledWith backend.query, 'flowers', {smell: 'nice'}, {all: yes}
-        backend.query.reset()
         done()
 
     it 'attaches results to emitter', (done)->

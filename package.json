@@ -18,14 +18,19 @@
   "dependencies": {
     "livedb": "^0.5.0",
     "ottypes": "~1",
+    "semver": "~2",
+    "express": "~3",
+    "connect": "*",
     "hat": "*",
     "async": "~0.2"
   },
   "devDependencies": {
+    "chai": "*",
     "coffee-script": "~1.6.3",
     "optimist": ">= 0.2.4",
     "browserchannel": "*",
-    "mocha": "~1",
+    "mocha": "*",
+    "sinon": "*",
     "uglify-js": "~2"
   },
   "optionalDependencies": {
@@ -35,6 +40,7 @@
   "main": "lib/index.js",
   "scripts": {
     "build": "make",
+    "test": "mocha test/server",
     "prepublish": "make webclient"
   },
   "licenses": [
