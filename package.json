@@ -31,6 +31,7 @@
     "coffee-script": "~1.7.x",
     "optimist": ">= 0.2.4",
     "browserchannel": "*",
+    "istanbul": "^0.3.13",
     "mocha": "*",
     "sinon": "*",
     "uglify-js": "~2"
@@ -43,7 +44,8 @@
   "scripts": {
     "build": "make",
     "test": "node_modules/mocha/bin/mocha test/server",
-    "prepublish": "make webclient"
+    "prepublish": "make webclient",
+    "coverage": "node node_modules/istanbul/lib/cli cover node_modules/mocha/bin/_mocha test/server"
   },
   "licenses": [
     {
