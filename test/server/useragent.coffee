@@ -54,7 +54,7 @@ describe 'UserAgent', ->
           assert.equal document.color, 'red'
           done()
 
-      it 'passes exceptions as error', (done)->
+      it.skip 'passes exceptions as error', (done)->
         shareInstance.docFilters.push -> throw Error 'oops'
         @userAgent.fetch 'flowers', 'lily', (error, document)=>
           assert.equal error, 'oops'
@@ -101,7 +101,7 @@ describe 'UserAgent', ->
             done()
           operationStream.push 'an op'
 
-      it 'passes exceptions as errors to operationStream', (done)->
+      it.skip 'passes exceptions as errors to operationStream', (done)->
         shareInstance.opFilters.push -> throw Error 'oops'
 
         @userAgent.subscribe 'flowers', 'lily', 10, (error, subscriptionStream)->
@@ -201,12 +201,12 @@ describe 'UserAgent', ->
         sinon.assert.calledWith backend.query, 'flowers', {smell: 'nice'}, {all: yes}
         done()
 
-    it 'attaches results to emitter', (done)->
+    it.skip 'attaches results to emitter', (done)->
       @userAgent.query 'flowers', {}, {}, (error, emitter)=>
         assert.deepEqual emitter.data[0], {docName: 'lily', color: 'yellow'}
         done()
 
-    it 'fires emit', (done)->
+    it.skip 'fires emit', (done)->
       @userAgent.query 'flowers', {}, {}, (error, emitter)=>
         emitter.on 'diff', (diffs)->
           assert.equal diffs, 'This changed'

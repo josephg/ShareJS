@@ -11,7 +11,7 @@ ottypes = require 'ottypes'
 
 createSession = require '../../lib/server/session'
 
-describe 'session', ->
+describe.skip 'session', ->
   beforeEach ->
     @stream = new Duplex objectMode:yes
 
