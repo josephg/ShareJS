@@ -28,7 +28,7 @@
   },
   "devDependencies": {
     "chai": "*",
-    "coffee-script": "~1.6.3",
+    "coffee-script": "~1.7.x",
     "optimist": ">= 0.2.4",
     "browserchannel": "*",
     "mocha": "*",
@@ -42,7 +42,7 @@
   "main": "lib/index.js",
   "scripts": {
     "build": "make",
-    "test": "mocha test/server",
+    "test": "node_modules/mocha/bin/mocha test/server",
     "prepublish": "make webclient"
   },
   "licenses": [
