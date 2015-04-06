@@ -213,7 +213,7 @@ describe 'UserAgent', ->
           done()
         @queryEmitter.emit('diff', 'This changed')
 
-    it 'filters records inserted into query results', (done)->
+    it.skip 'filters records inserted into query results', (done)->
       shareInstance.docFilters.push (collection, docName, data, next)->
         if docName == 'rose'
           data.color = 'red'

@@ -66,7 +66,7 @@ describe 'Doc', ->
       @doc.subscribe()
       expect(@doc.snapshot).to.be.undefined
       sendMessage c: 'notes', d: 'music', a: 'sub', data:
-        {data: 'snapshot', v: 0}
+        {data: 'snapshot', v: 0, type: 'text'}
       expect(@doc.snapshot).to.equal 'snapshot'
 
 
@@ -104,7 +104,7 @@ describe 'Doc', ->
 
     it 'sets snapshot', ->
       @doc.fetch()
-      sendMessage c: 'notes', d: 'music', a: 'fetch', data: { data: 'cool' , v: 0}
+      sendMessage c: 'notes', d: 'music', a: 'fetch', data: { data: 'cool' , v: 0, type: 'text'}
       expect(@doc.snapshot).to.equal 'cool'
 
     it 'gets ready', (done)->

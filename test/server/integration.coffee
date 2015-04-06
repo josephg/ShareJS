@@ -52,7 +52,7 @@ describe 'integration', ->
     @clientStream.readyState = 1 # Connected.
     @clientStream.onopen?()
 
-    @session = createSession @instance, @serverStream
+    @session = new createSession @instance, @serverStream
 
   describe 'connection maintenance', ->
     it 'connects', (done) ->
