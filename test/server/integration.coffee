@@ -9,7 +9,7 @@ ottypes = require 'ottypes'
 createSession = require '../../lib/server/session'
 {Connection} = require '../../lib/client'
 
-describe 'integration', ->
+describe.skip 'integration', ->
   beforeEach ->
     @serverStream = new Duplex objectMode:yes
 
@@ -33,7 +33,7 @@ describe 'integration', ->
 
     @clientStream =
       send: (data) =>
-        #console.log 'C->S', JSON.stringify data
+        console.log 'C->S', JSON.stringify data
         @serverStream.push data
       readyState: 0 # Connecting
       close: =>
@@ -42,7 +42,7 @@ describe 'integration', ->
         @serverStream.end()
 
     @serverStream._write = (chunk, encoding, callback) =>
-      #console.log 'S->C', JSON.stringify chunk
+      console.log 'S->C', JSON.stringify chunk
       @clientStream.onmessage? chunk
       callback()
     @serverStream._read = ->
