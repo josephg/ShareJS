@@ -16,13 +16,15 @@
     "email": "josephg@gmail.com"
   },
   "dependencies": {
+    "async": "~0.2",
+    "connect": "*",
+    "express": "~3",
+    "hat": "*",
     "livedb": "^0.5.0",
+    "livedb-mongo": "^0.4.1",
     "ottypes": "~1",
     "semver": "~2",
-    "express": "~3",
-    "connect": "*",
-    "hat": "*",
-    "async": "~0.2"
+    "serve-static": "^1.9.2"
   },
   "devDependencies": {
     "chai": "*",
