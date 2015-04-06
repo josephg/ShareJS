@@ -1,91 +1,92 @@
 createSocket = require '../helpers/socket.coffee'
+assert = require 'assert'
+{Connection} = require '../../lib/client'
+require '../../lib/types'
+ottypes = require 'ottypes'
+Server = require '../helpers/server.coffee'
+Fixtures = require '../helpers/fixtures.coffee'
 
 describe 'Subscribed Document', ->
-  assert = require 'assert'
-  {Connection} = require '../../lib/client'
-  require '../../lib/types'
-  ottypes = require 'ottypes'
-
-  connections = {}
 
   before ->
-    connections.alice = new Connection(createSocket())
-    connections.bob =   new Connection(createSocket())
+    @alice = new Connection(createSocket())
+    @bob = new Connection(createSocket())
 
-  after ->
-    for name, connection of connections
-      connection.socket.close()
-      delete connections[name]
+    @alice.on 'error', (e) -> throw e
+    @bob.on 'error', (e) -> throw e
+    @server = Server()
+    @fixtures = Fixtures()
 
-  fixtures = require('../helpers/fixtures.coffee')()
+  after (done) ->
+    @alice.socket.close()
+    delete @alice
+    @bob.socket.close()
+    delete @bob
+    @fixtures.close()
+    delete @fixtures
+    @server.close done
 
-  beforeEach (done)->
-    fixtures.reset(done)
-    for name, connection of connections
-      connection.collections = {}
+  # Reset documents
+  beforeEach (done) ->
+    @alice.collections = {}
+    @bob.collections = {}
 
-
-  beforeEach (done)->
     @docs = {}
-    for name, connection of connections
-      @docs[name] = connection.get('poems', 'lorelay')
+    @docs.alice = @alice.get 'poems', 'lorelay'
+    @docs.bob = @bob.get 'poems', 'lorelay'
+    @docs.alice.subscribe => @docs.bob.subscribe done
 
-    @docs.alice.subscribe =>
-      @docs.bob.subscribe(done)
-
-  afterEach (done)->
-    @docs.alice.unsubscribe =>
-      @docs.bob.unsubscribe(done)
-
+  afterEach (done) ->
+    @docs.alice.unsubscribe => @docs.bob.unsubscribe done
 
   describe 'shared create', ->
+    afterEach (done) -> @fixtures.reset done
 
-    it 'triggers create', (done)->
-      @docs.bob.on 'create', =>
-        done()
-      @docs.alice.create 'text', 'ich', =>
+    it 'triggers create', (done) ->
+      @docs.bob.on 'create', -> done()
+      @docs.alice.create 'text', 'ich'
 
-    it 'sets type', (done)->
+    it 'sets type', (done) ->
       @docs.alice.on 'create', =>
         assert.equal @docs.alice.type, ottypes['text']
         done()
-      @docs.bob.create('text', 'ich')
+      @docs.bob.create 'text', 'ich'
 
     it 'sets initial snapshot', (done)->
       @docs.bob.on 'create', =>
         assert.equal @docs.bob.snapshot, 'ich'
         done()
-      @docs.alice.create('text', 'ich')
+      @docs.alice.create 'text', 'ich'
 
   describe 'when created', ->
 
-    beforeEach (done)->
-      @docs.alice.create('text', 'ich')
+    beforeEach (done) ->
       @docs.bob.on 'create', -> done()
+      @docs.alice.create 'text', 'ich'
 
-    it 'shares del', (done)->
-      @docs.bob.on 'del', -> done()
+    it 'shares del', (done) ->
+      @docs.bob.on 'del', =>
+        @fixtures.reset done
       @docs.alice.del()
-
 
     describe 'editing context', ->
 
       beforeEach ->
-        @alice = @docs.alice.createContext()
-        @bob   = @docs.bob.createContext()
+        @aliceCtx = @docs.alice.createContext()
+        @bobCtx   = @docs.bob.createContext()
 
-      it 'shares insert', (done)->
-        @bob.onInsert = (pos, text)->
+      it 'shares insert', (done) ->
+        @bobCtx.onInsert = (pos, text) =>
           assert.equal pos, 3
           assert.equal text, ' weiss'
-          assert.equal @getSnapshot(), 'ich weiss'
-          done()
-        @alice.insert(3, ' weiss')
+          assert.equal @bobCtx.getSnapshot(), 'ich weiss'
+          @fixtures.reset done
+        @aliceCtx.insert(3, ' weiss')
 
-      it 'shares remove', (done)->
-        @alice.onRemove = (pos, length)->
+      it 'shares remove', (done) ->
+        @aliceCtx.onRemove = (pos, length) =>
           assert.equal pos, 1
           assert.equal length, 1
-          assert.equal @getSnapshot(), 'ih'
-          done()
-        @bob.remove(1, 1)
+          assert.equal @aliceCtx.getSnapshot(), 'ih'
+          @fixtures.reset done
+        @bobCtx.remove(1, 1)

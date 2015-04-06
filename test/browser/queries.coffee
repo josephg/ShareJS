@@ -1,27 +1,36 @@
 assert = require 'assert'
-createSocket = require '../helpers/socket.coffee'
 {Connection} = require '../../lib/client'
+
+createSocket = require '../helpers/socket.coffee'
+Server = require '../helpers/server.coffee'
+Fixtures = require '../helpers/fixtures.coffee'
 
 describe 'Queries', ->
 
-  before -> @connection = new Connection(createSocket())
-  after  -> @connection.socket.close()
+  before ->
+    @connection = new Connection(createSocket())
+    @server = Server()
+    @fixtures = Fixtures()
 
-  fixtures = require('../helpers/fixtures.coffee')()
+  after (done) ->
+    @fixtures.close()
+    delete @fixtures
+    @connection.socket.close()
+    delete @connection
+    @server.close done
 
-  beforeEach (done)->
-    fixtures.reset(done)
-    @connection.collections = {}
 
-  beforeEach (done)->
+  beforeEach (done) ->
     @connection.get('cars', 'porsche').create 'text', 'red', =>
       @connection.get('cars', 'jaguar').create 'text', 'green', =>
         @connection.collections = {}
         done()
 
+  afterEach (done) ->
+    @connection.collections = {}
+    @fixtures.reset done
 
   describe 'fetch', ->
-
     it 'returns documents', (done)->
       @connection.createFetchQuery 'cars', {}, {}, (error, documents)->
         assert.equal documents[0].name, 'porsche'
@@ -63,14 +72,14 @@ describe 'Queries', ->
 
     # FIXME as soon as upstream bug is fixed
     # https://github.com/share/livedb/pull/11
-    xit 'emits remove when deleting document', (done)->
+    it.skip 'emits remove when deleting document', (done)->
       query = @connection.createSubscribeQuery 'cars', {}, {}
       query.on 'remove', ([document])->
         assert.equal document.snapshot, 'black'
         done()
       @connection.get('cars', 'porsche').del()
 
-  
+
   describe 'docMode: sub', ->
     before -> @anotherConnection = new Connection(createSocket())
     after  -> @anotherConnection.socket.close()

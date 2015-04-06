@@ -33,6 +33,7 @@
     "browserchannel": "*",
     "istanbul": "^0.3.13",
     "mocha": "*",
+    "redis": "^0.12.1",
     "sinon": "*",
     "uglify-js": "~2"
   },
@@ -43,9 +44,9 @@
   "main": "lib/index.js",
   "scripts": {
     "build": "make",
-    "test": "node_modules/mocha/bin/mocha test/server",
+    "test": "node_modules/mocha/bin/mocha test/server test/browser",
     "prepublish": "make webclient",
-    "coverage": "node node_modules/istanbul/lib/cli cover node_modules/mocha/bin/_mocha test/server"
+    "coverage": "node node_modules/istanbul/lib/cli cover node_modules/mocha/bin/_mocha test/server test/browser"
   },
   "licenses": [
     {

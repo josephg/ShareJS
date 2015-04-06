@@ -1,15 +1,20 @@
 express = require 'express'
 {Duplex} = require 'stream'
+connect = require 'connect'
 
 # Creates a sharejs instance with a livedb backend
 createInstance = ->
-  redis = require('redis').createClient()
-  redis.flushdb()
+  Redis = require('redis')
+  #redis.flushdb()
+  
+  redisClient1 = Redis.createClient(6379, 'localhost');
+  redisClient2 = Redis.createClient(6379, 'localhost');
 
   livedbLib = require 'livedb'
   memorydb  = livedbLib.memory()
-  livedb    = livedbLib.client(db: memorydb, redis: redis)
-  livedb.redis = redis
+  driver = livedbLib.redisDriver(memorydb, redisClient1, redisClient2);
+  livedb    = livedbLib.client(db: memorydb, driver:driver)
+  livedb.redis = redisClient1
   livedb.db = memorydb
 
   shareServer = require '../../lib/server'
@@ -71,6 +76,6 @@ module.exports = (options = {})->
   .use(shareChannel)
   .use(fixturesChannel)
 
-  app.use(connect.logger('dev')) if log
+  #app.use(connect.logger('dev')) if log
 
-  app
+  app.listen 3000
