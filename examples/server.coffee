@@ -17,8 +17,8 @@ webserver = connect()
 webserver.use serveStatic "#{__dirname}/public"
 webserver.use serveStatic sharejs.scriptsDir
 
-#backend = livedb.client livedb.memory()
-backend = livedb.client livedbMongo('localhost:27017/test?auto_reconnect', safe:false)
+backend = livedb.client livedb.memory()
+#backend = livedb.client livedbMongo('localhost:27017/test?auto_reconnect', safe:false)
 
 backend.addProjection '_users', 'users', 'json0', {x:true}
 
