@@ -26,7 +26,11 @@
     "optimist": ">= 0.2.4",
     "browserchannel": "*",
     "mocha": "~1",
-    "uglify-js": "~2"
+    "chai": "*",
+    "sinon": "^1.12.2",
+    "uglify-js": "~2",
+    "sinon": "^1.4.0",
+    "connect": "^3.3.0"
   },
   "optionalDependencies": {
     "express": "~3"
