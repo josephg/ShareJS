@@ -1,6 +1,6 @@
 {
   "name": "share",
-  "version": "0.7.27",
+  "version": "0.7.28",
   "description": "A database for concurrent document editing",
   "keywords": [
     "operational transformation",
@@ -27,9 +27,8 @@
     "browserchannel": "*",
     "mocha": "~1",
     "chai": "*",
-    "sinon": "^1.12.2",
-    "uglify-js": "~2",
     "sinon": "^1.4.0",
+    "uglify-js": "~2",
     "connect": "^3.3.0"
   },
   "optionalDependencies": {
