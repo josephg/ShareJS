@@ -1,5 +1,5 @@
 <script src="channel/bcsocket.js"></script>
-<script src="share.uncompressed.js"></script>
+<script src="share.js"></script>
 <script>
 
 var s = new BCSocket(null, {reconnect: true});
@@ -46,7 +46,7 @@ function clientExample(context){
 return;
     // print out the "todo" subdoc
     console.log( todo.get() ); // => []
-    
+
     // Create event when something is inserted into the doc
     todo.on('insert', function (pos, item) {
       console.log('inserted',pos,item);

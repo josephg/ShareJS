@@ -1,8 +1,6 @@
 createSocket = require '../helpers/socket.coffee'
 assert = require 'assert'
 {Connection} = require '../../lib/client'
-require '../../lib/types'
-ottypes = require 'ottypes'
 createServer = require '../helpers/server.coffee'
 createFixtures = require '../helpers/fixtures.coffee'
 
@@ -45,7 +43,7 @@ describe 'Subscribed Document', ->
 
     it 'sets type', (done) ->
       @docs.alice.on 'create', =>
-        assert.equal @docs.alice.type, ottypes['text']
+        assert.equal @docs.alice.type, require('ot-text').type
         done()
       @docs.bob.create 'text', 'ich'
 

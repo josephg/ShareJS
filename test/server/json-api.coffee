@@ -1,7 +1,6 @@
 assert = require("assert")
-types = require("ottypes")
+json = require('ot-json0').type
 require("../../lib/types/json-api")
-json = types.json0
 MicroEvent = require("../../lib/client/microevent")
 
 # in the future, it would be less brittle to use the real Doc object instead of this fake one
@@ -22,7 +21,7 @@ Doc = (data) ->
   @createContext = ->
     type = @type
     throw new Error("Missing type")  unless type
-    
+
     doc = this
     context =
       getSnapshot: ->
@@ -34,9 +33,9 @@ Doc = (data) ->
       destroy: ->
         if @detach
           @detach()
-          
+
           delete @detach
-        
+
         delete @_onOp
 
         @remove = true
@@ -318,7 +317,7 @@ describe "JSON Client API", ->
       na: 1
     ]
     waitBriefly(done)
-    
+
 
   it "listener drops on od", (done) ->
     doc = new Doc(foo: "bar")
@@ -418,7 +417,7 @@ describe "JSON Client API", ->
     doc = new Doc({foo:'bar'})
     cxt = doc.createContext()
     sub = cxt.createContextAt 'foo'
-    
+
     assert.equal(cxt._subdocs.length,1)
     sub.destroy()
     assert.equal(cxt._subdocs.length,0)

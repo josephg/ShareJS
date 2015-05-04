@@ -18,20 +18,23 @@
     "async": "^0.9.0",
     "hat": "^0.0.3",
     "livedb": "^0.5.0",
-    "ottypes": "^1.0.3"
+    "ot-json0": "^1.0.0",
+    "ot-text": "^1.0.0",
+    "ot-text-tp2": "^1.0.0"
   },
   "devDependencies": {
     "browserchannel": "*",
+    "browserify": "^10.0.0",
     "chai": "*",
     "coffee-script": "~1.7.x",
     "connect": "^3.3.0",
     "istanbul": "^0.3.13",
-    "livedb-mongo": "^0.4.1",
     "mocha": "^2.2.4",
     "optimist": ">= 0.2.4",
+    "ot-fuzzer": "^1.0.0",
     "redis": "^0.12.1",
-    "sinon": "^1.14.1",
     "serve-static": "^1.9.2",
+    "sinon": "^1.14.1",
     "uglify-js": "^2.4.20"
   },
   "optionalDependencies": {

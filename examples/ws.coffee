@@ -3,7 +3,6 @@
 connect = require 'connect'
 argv = require('optimist').argv
 livedb = require 'livedb'
-livedbMongo = require 'livedb-mongo'
 http = require 'http'
 
 sharejs = require '../lib'

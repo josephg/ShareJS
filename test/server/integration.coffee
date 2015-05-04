@@ -4,7 +4,7 @@
 assert = require 'assert'
 {Duplex, Readable} = require 'stream'
 {EventEmitter} = require 'events'
-ottypes = require 'ottypes'
+textType = require('ot-text').type
 
 Session = require '../../lib/server/session'
 {Connection} = require '../../lib/client'
@@ -23,7 +23,7 @@ describe.skip 'integration', ->
 
         @opStream = new Readable objectMode:yes
         @opStream._read = ->
-        callback null, {v:100, type:ottypes.text, data:'hi there'}, @opStream
+        callback null, {v:100, type:textType, data:'hi there'}, @opStream
       trigger: (a, b, c, d, callback) -> callback()
 
     @instance =
@@ -84,7 +84,7 @@ describe.skip 'integration', ->
 
           assert.deepEqual doc.snapshot, 'hi there'
           assert.strictEqual doc.version, 100
-          assert.strictEqual doc.type, ottypes.text
+          assert.strictEqual doc.type, textType
 
           assert.strictEqual doc.name, @subscribedDoc
           assert.strictEqual doc.collection, @subscribedCollection
@@ -121,7 +121,7 @@ describe.skip 'integration', ->
           assert.deepEqual query, {a:5, b:6}
           assert.deepEqual opts, {docMode:'fetch', poll:true, backend:'abc123', versions:{}}
           emitter = new EventEmitter()
-          emitter.data = [{data:{x:10}, type:ottypes.text.uri, v:100, docName:'docname', c:'collection'}]
+          emitter.data = [{data:{x:10}, type:textType.uri, v:100, docName:'docname', c:'collection'}]
           emitter.extra = 'oh hi'
           callback null, emitter
 
@@ -141,7 +141,7 @@ describe.skip 'integration', ->
 
       it 'does not fetch query results when docMode is null', (done) ->
         @userAgent.queryFetch = (index, query, opts, callback) ->
-          callback null, [{data:{x:10}, type:ottypes.text.uri, v:100, docName:'docname', c:'collection'}], 'oh hi'
+          callback null, [{data:{x:10}, type:textType.uri, v:100, docName:'docname', c:'collection'}], 'oh hi'
 
         @connection.createFetchQuery 'index', {a:5, b:6}, {}, (err, results, extra) ->
           assert.ifError err
@@ -153,7 +153,7 @@ describe.skip 'integration', ->
 
       it 'fetches query results if docMode is fetch', (done) ->
         @userAgent.queryFetch = (index, query, opts, callback) ->
-          callback null, [{data:{x:10}, type:ottypes.text.uri, v:100, docName:'docname', c:'collection'}], 'oh hi'
+          callback null, [{data:{x:10}, type:textType.uri, v:100, docName:'docname', c:'collection'}], 'oh hi'
 
         @connection.createFetchQuery 'index', {a:5, b:6}, {docMode:'fetch'}, (err, results, extra) ->
           assert.ifError err
@@ -163,7 +163,7 @@ describe.skip 'integration', ->
 
       it 'subscribes to documents if docMode is subscribe', (done) ->
         @userAgent.queryFetch = (index, query, opts, callback) ->
-          callback null, [{data:'internet', type:ottypes.text.uri, v:100, docName:'docname', c:'collection'}], 'oh hi'
+          callback null, [{data:'internet', type:textType.uri, v:100, docName:'docname', c:'collection'}], 'oh hi'
 
         @userAgent.subscribe = (collection, doc, version, callback) =>
           assert.strictEqual collection, 'collection'
@@ -194,7 +194,7 @@ describe.skip 'integration', ->
         @userAgent.fetch = (collection, docName, callback) ->
           assert.strictEqual collection, 'collection'
           assert.strictEqual docName, 'docname'
-          callback null, {v:98, type:ottypes.text.uri, data:'old data'}
+          callback null, {v:98, type:textType.uri, data:'old data'}
 
         doc = @connection.get 'collection', 'docname'
 
@@ -202,7 +202,7 @@ describe.skip 'integration', ->
           throw new Error err if err
 
           @userAgent.queryFetch = (index, query, opts, callback) ->
-            callback null, [{data:'internet', type:ottypes.text.uri, v:100, docName:'docname', c:'collection'}], 'oh hi'
+            callback null, [{data:'internet', type:textType.uri, v:100, docName:'docname', c:'collection'}], 'oh hi'
 
           @userAgent.subscribe = (collection, doc, version, callback) =>
             assert.strictEqual collection, 'collection'
@@ -228,7 +228,7 @@ describe.skip 'integration', ->
         @userAgent.fetch = (collection, docName, callback) ->
           assert.strictEqual collection, 'collection'
           assert.strictEqual docName, 'docname'
-          callback null, {v:98, type:ottypes.text.uri, data:'old data'}
+          callback null, {v:98, type:textType.uri, data:'old data'}
 
         doc = @connection.get 'collection', 'docname'
 
@@ -242,7 +242,7 @@ describe.skip 'integration', ->
             callback null, [{v:98, op:[]},{v:99, op:[]}] # ops from 98 to 100
 
           @userAgent.queryFetch = (index, query, opts, callback) ->
-            callback null, [{data:'internet', type:ottypes.text.uri, v:100, docName:'docname', c:'collection'}]
+            callback null, [{data:'internet', type:textType.uri, v:100, docName:'docname', c:'collection'}]
 
           @connection.createFetchQuery 'index', {a:5, b:6}, {docMode:'fetch', knownDocs:[doc]}, (err, results, extra) =>
             throw new Error err if err

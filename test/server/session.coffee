@@ -7,7 +7,7 @@
 assert = require 'assert'
 {Duplex, Readable} = require 'stream'
 {EventEmitter} = require 'events'
-ottypes = require 'ottypes'
+textType = require('ot-text').type
 
 Session = require '../../lib/server/session'
 
@@ -25,7 +25,7 @@ describe.skip 'session', ->
 
         @opStream = new Readable objectMode:yes
         @opStream._read = ->
-        callback null, {v:100, type:ottypes.text, data:'hi there'}, @opStream
+        callback null, {v:100, type:textType, data:'hi there'}, @opStream
       trigger: (a, b, c, d, callback) -> callback()
 
     @instance =
