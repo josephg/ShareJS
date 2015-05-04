@@ -1,4 +1,4 @@
-{BCSocket} = require('browserchannel/dist/bcsocket')
+{BCSocket} = require 'browserchannel'
 
 # Control documents on the server
 #
@@ -12,3 +12,4 @@ module.exports = ->
       @socket.onmessage = undefined
       done()
     @socket.send('reset')
+  close: -> @socket.close()

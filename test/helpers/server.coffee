@@ -1,16 +1,20 @@
 express = require 'express'
-connect = require 'connect'
 {Duplex} = require 'stream'
+connect = require 'connect'
 
 # Creates a sharejs instance with a livedb backend
 createInstance = ->
-  redis = require('redis').createClient()
-  redis.flushdb()
+  redis = require('redis')
+  #redis.flushdb()
+
+  redisClient1 = redis.createClient(6379, 'localhost');
+  redisClient2 = redis.createClient(6379, 'localhost');
 
   livedbLib = require 'livedb'
   memorydb  = livedbLib.memory()
-  livedb    = livedbLib.client(db: memorydb, redis: redis)
-  livedb.redis = redis
+  driver = livedbLib.redisDriver(memorydb, redisClient1, redisClient2);
+  livedb = livedbLib.client(db: memorydb, driver:driver)
+  livedb.redis = redisClient1
   livedb.db = memorydb
 
   shareServer = require '../../lib/server'
@@ -18,7 +22,7 @@ createInstance = ->
 
 
 # Converts a socket to a Duplex stream
-socketToStream = (socket, log = true)->
+socketToStream = (socket, log)->
   stream = new Duplex objectMode: yes
   socket.on 'message', (data)->
     if log
@@ -47,7 +51,6 @@ socketToStream = (socket, log = true)->
 #   defaults to true
 module.exports = (options = {})->
 
-  log = true
   log = options.log if options.log?
 
   share = createInstance()
@@ -72,6 +75,6 @@ module.exports = (options = {})->
   .use(shareChannel)
   .use(fixturesChannel)
 
-  app.use(connect.logger('dev')) if log
+  #app.use(connect.logger('dev')) if log
 
-  app
+  app.listen 3000

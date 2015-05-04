@@ -1,10 +1,16 @@
 assert = require 'assert'
+createServer = require '../helpers/server.coffee'
 createSocket = require '../helpers/socket.coffee'
 
 
 describe 'Connection', ->
   share = require('../../lib/client')
   Connection = share.Connection
+
+  before ->
+    @server = createServer()
+  after (done) ->
+    @server.close done
 
   describe 'connecting', ->
     it 'connects socket', (done)->
@@ -32,7 +38,6 @@ describe 'Connection', ->
 
     after ->
       @connection.socket.close()
-      delete @connection
 
     it 'returns a document', ->
       Doc = share.Doc
