@@ -1,5 +1,5 @@
 # Communicate with phantom if available
-if window && window.callPhantom
+if window? && window.callPhantom
 
   Function.prototype.bind = (object)->
     => this.apply(object, arguments)

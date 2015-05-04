@@ -1,27 +1,32 @@
 assert = require 'assert'
-createSocket = require '../helpers/socket.coffee'
 {Connection} = require '../../lib/client'
+createSocket = require '../helpers/socket.coffee'
+createServer = require '../helpers/server.coffee'
+createFixtures = require '../helpers/fixtures.coffee'
 
 describe 'Queries', ->
 
-  before -> @connection = new Connection(createSocket())
-  after  -> @connection.socket.close()
+  before ->
+    @server = createServer()
+    @fixtures = createFixtures()
 
-  fixtures = require('../helpers/fixtures.coffee')()
+  after (done) ->
+    @fixtures.close()
+    @server.close done
 
-  beforeEach (done)->
-    fixtures.reset(done)
-    @connection.collections = {}
-
-  beforeEach (done)->
+  beforeEach (done) ->
+    @connection = new Connection(createSocket())
     @connection.get('cars', 'porsche').create 'text', 'red', =>
       @connection.get('cars', 'jaguar').create 'text', 'green', =>
-        @connection.collections = {}
+        @connection.socket.close()
+        @connection = new Connection(createSocket())
         done()
 
+  afterEach (done) ->
+    @connection.socket.close()
+    @fixtures.reset done
 
   describe 'fetch', ->
-
     it 'returns documents', (done)->
       @connection.createFetchQuery 'cars', {}, {}, (error, documents)->
         assert.equal documents[0].name, 'porsche'
@@ -55,30 +60,30 @@ describe 'Queries', ->
         done()
 
     it 'emits insert when creating document', (done)->
-      query = @connection.createSubscribeQuery 'cars', {}, {}
-      query.on 'insert', ([document])->
-        assert.equal document.snapshot, 'black'
-        done()
-      @connection.get('cars', 'panther').create 'text', 'black'
+      query = @connection.createSubscribeQuery 'cars', {}, {}, ->
+        query.on 'insert', ([document])->
+          assert.equal document.name, 'panther'
+          assert.equal document.snapshot, 'black'
+          done()
+        @connection.get('cars', 'panther').create 'text', 'black'
 
-    # FIXME as soon as upstream bug is fixed
-    # https://github.com/share/livedb/pull/11
-    xit 'emits remove when deleting document', (done)->
-      query = @connection.createSubscribeQuery 'cars', {}, {}
-      query.on 'remove', ([document])->
-        assert.equal document.snapshot, 'black'
-        done()
-      @connection.get('cars', 'porsche').del()
+    it 'emits remove when deleting document', (done)->
+      query = @connection.createSubscribeQuery 'cars', {}, {docMode: 'fetch'}, =>
+        query.on 'remove', ([document])->
+          assert.equal document.name, 'porsche'
+          assert.equal document.snapshot, undefined
+          done()
+        @connection.get('cars', 'porsche').del()
 
-  
+
   describe 'docMode: sub', ->
-    before -> @anotherConnection = new Connection(createSocket())
-    after  -> @anotherConnection.socket.close()
-    beforeEach -> @anotherConnection.collections = {}
+    beforeEach ->
+      @anotherConnection = new Connection(createSocket())
+    afterEach ->
+      @anotherConnection.socket.close()
 
     it 'subscribes all result documents', (done)->
-      @connection.createSubscribeQuery 'cars', {}, {docMode: 'sub'}
-      , (error, [document])=>
+      @connection.createSubscribeQuery 'cars', {}, {docMode: 'sub'}, (error, [document]) =>
         document.on 'op', (operation)->
           assert.deepEqual operation, [3, 'y']
           done()

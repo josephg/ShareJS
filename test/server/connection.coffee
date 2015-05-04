@@ -14,6 +14,7 @@ describe 'Connection', ->
     close: ->
       @readyState = 3
       @onclose?()
+    canSendWhileConnecting: true
   }
 
 
@@ -69,12 +70,12 @@ describe 'Connection', ->
 
     it 'calls handle message', ->
       handleMessage = sinon.spy @connection, 'handleMessage'
-      socket.onmessage('a message')
-      sinon.assert.calledWith handleMessage, 'a message'
+      socket.onmessage({key: 'value'})
+      sinon.assert.calledWith handleMessage, { c: null, d: null, key: 'value'}
 
     it 'pushes message buffer', ->
       assert @connection.messageBuffer.length == 0
-      socket.onmessage('a message')
+      socket.onmessage('"a message"')
       assert @connection.messageBuffer.length == 1
 
 
@@ -105,7 +106,11 @@ describe 'Connection', ->
       assert.equal first, second
 
     it 'injests data on creation', ->
-      doc = @connection.get('food', 'steak', data: 'content', v: 0)
+      # There is a very sublte bug, possibly in test itself, where if 'this' is console.logged
+      # in Doc.prototype.ingestData, the snapshot is actually equal to expected value.
+      doc = @connection.get('food', 'steak', {data: 'content', v: 0, type: 'text'})
       assert.equal doc.snapshot, 'content'
-      doc = @connection.get('food', 'steak', data: 'other content', v: 0)
+      doc = @connection.get('food', 'steak', {data: 'other content', v: 0, type: 'text'})
+      # TODO 
       assert.equal doc.snapshot, 'content'
+      #assert.equal doc.snapshot, 'other content'

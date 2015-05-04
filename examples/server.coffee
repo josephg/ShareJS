@@ -2,6 +2,7 @@
 {Duplex} = require 'stream'
 browserChannel = require('browserchannel').server
 connect = require 'connect'
+serveStatic = require 'serve-static'
 argv = require('optimist').argv
 livedb = require 'livedb'
 livedbMongo = require 'livedb-mongo'
@@ -11,14 +12,13 @@ try
 
 sharejs = require '../lib'
 
-webserver = connect(
-  #  connect.logger()
-  connect.static "#{__dirname}/public"
-  connect.static sharejs.scriptsDir
-)
+webserver = connect()
 
-#backend = livedb.client livedb.memory()
-backend = livedb.client livedbMongo('localhost:27017/test?auto_reconnect', safe:false)
+webserver.use serveStatic "#{__dirname}/public"
+webserver.use serveStatic sharejs.scriptsDir
+
+backend = livedb.client livedb.memory()
+#backend = livedb.client livedbMongo('localhost:27017/test?auto_reconnect', safe:false)
 
 backend.addProjection '_users', 'users', 'json0', {x:true}
 
