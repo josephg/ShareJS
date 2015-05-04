@@ -2,20 +2,9 @@
 # text type as well as text-tp2 (and any other text types we add). Rich text
 # should probably support this API too.
 assert = require 'assert'
-{randomInt, randomReal, randomWord} = require 'ottypes/randomizer'
+{randomInt, randomReal, randomWord} = require 'ot-fuzzer'
 
-types = require 'ottypes'
-
-# Mixin the random op generation functions
-require 'ottypes/randomizer'
-# & mixin the API methods
-require '../../lib/types'
-
-# Find all the types that claim to implement text.
-textTypes = {}
-textTypes[type.name] = type for name, type of types when type.api?.provides.text
-
-genTests = (type) -> describe "text api for '#{type.name}'", ->
+genTests = (type, genOp) -> describe "text api for '#{type.name}'", ->
   beforeEach ->
     # This is a little copy of the context structure created in client/doc.
     # It would probably be better to copy the code, but whatever.
@@ -89,10 +78,10 @@ genTests = (type) -> describe "text api for '#{type.name}'", ->
       contents = contents[...pos] + contents[(pos + len)...]
 
     for i in [1..1000]
-      [op, newDoc] = type.generateRandomOp @ctx._snapshot
+      [op, newDoc] = genOp @ctx._snapshot
 
       @apply op
       assert.strictEqual @ctx.get(), contents
 
-genTests(type) for name, type of textTypes
-
+genTests require('ot-text').type, require('ot-text/test/genOp')
+genTests require('ot-text-tp2').type, require('ot-text-tp2/test/genOp')

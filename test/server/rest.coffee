@@ -4,7 +4,7 @@ assert = require 'assert'
 http = require 'http'
 
 rest = require '../../lib/server/rest'
-ottypes = require 'ottypes'
+textType = require('ot-text').type
 connect = require 'connect'
 
 # Async fetch. Aggregates whole response and sends to callback.
@@ -75,7 +75,7 @@ describe 'rest', ->
         assert.strictEqual headers['x-ot-version'], '0'
         assert.equal headers['x-ot-type'], null
         done()
-        
+
     it 'return 404 and empty body when on HEAD on a nonexistant document', (done) ->
       fetch 'HEAD', @port, "/doc/#{@collection}/#{@name}", null, (res, data, headers) ->
         assert.strictEqual res.statusCode, 404
@@ -83,27 +83,27 @@ describe 'rest', ->
         assert.strictEqual headers['x-ot-version'], '0'
         assert.equal headers['x-ot-type'], null
         done()
-    
+
     it 'returns 200, empty body, version and type when on HEAD on a document', (done) ->
       @docs.c = {}
-      @docs.c.d = {v:1, type:ottypes.text.uri, data:'hi there'}
+      @docs.c.d = {v:1, type:textType.uri, data:'hi there'}
 
       fetch 'HEAD', @port, "/doc/c/d", null, (res, data, headers) ->
         assert.strictEqual res.statusCode, 200
         assert.strictEqual headers['x-ot-version'], '1'
-        assert.strictEqual headers['x-ot-type'], ottypes.text.uri
+        assert.strictEqual headers['x-ot-type'], textType.uri
         assert.ok headers['etag']
         assert.strictEqual data, ''
         done()
-            
+
     it 'document returns the document snapshot', (done) ->
       @docs.c = {}
-      @docs.c.d = {v:1, type:ottypes.simple.uri, data:{str:'Hi'}}
+      @docs.c.d = {v:1, type:textType.uri, data:{str:'Hi'}}
 
       fetch 'GET', @port, "/doc/c/d", null, (res, data, headers) ->
         assert.strictEqual res.statusCode, 200
         assert.strictEqual headers['x-ot-version'], '1'
-        assert.strictEqual headers['x-ot-type'], ottypes.simple.uri
+        assert.strictEqual headers['x-ot-type'], textType.uri
         assert.ok headers['etag']
         assert.strictEqual headers['content-type'], 'application/json'
         assert.deepEqual data, {str:'Hi'}
@@ -111,24 +111,24 @@ describe 'rest', ->
 
     it 'document returns the entire document structure when envelope=true', (done) ->
       @docs.c = {}
-      @docs.c.d = {v:1, type:ottypes.simple.uri, data:{str:'Hi'}}
+      @docs.c.d = {v:1, type:textType.uri, data:{str:'Hi'}}
 
       fetch 'GET', @port, "/doc/c/d?envelope=true", null, (res, data, headers) ->
         assert.strictEqual res.statusCode, 200
         assert.strictEqual headers['x-ot-version'], '1'
-        assert.strictEqual headers['x-ot-type'], ottypes.simple.uri
+        assert.strictEqual headers['x-ot-type'], textType.uri
         assert.strictEqual headers['content-type'], 'application/json'
-        assert.deepEqual data, {v:1, type:ottypes.simple.uri, data:{str:'Hi'}}
+        assert.deepEqual data, {v:1, type:textType.uri, data:{str:'Hi'}}
         done()
 
     it 'a plaintext document is returned as a string', (done) ->
       @docs.c = {}
-      @docs.c.d = {v:1, type:ottypes.text.uri, data:'hi'}
+      @docs.c.d = {v:1, type:textType.uri, data:'hi'}
 
       fetch 'GET', @port, "/doc/c/d", null, (res, data, headers) ->
         assert.strictEqual res.statusCode, 200
         assert.strictEqual headers['x-ot-version'], '1'
-        assert.strictEqual headers['x-ot-type'], ottypes.text.uri
+        assert.strictEqual headers['x-ot-type'], textType.uri
         assert.ok headers['etag']
         assert.strictEqual headers['content-type'], 'text/plain'
         assert.deepEqual data, 'hi'
@@ -136,7 +136,7 @@ describe 'rest', ->
 
     it 'ETag is the same between responses', (done) ->
       @docs.c = {}
-      @docs.c.d = {v:1, type:ottypes.text.uri, data:'hi'}
+      @docs.c.d = {v:1, type:textType.uri, data:'hi'}
 
       fetch 'GET', @port, "/doc/c/d", null, (res, data, headers) =>
         tag = headers['etag']
@@ -148,7 +148,7 @@ describe 'rest', ->
 
     it 'ETag changes when version changes', (done) ->
       @docs.c = {}
-      @docs.c.d = {v:1, type:ottypes.text.uri, data:'hi'}
+      @docs.c.d = {v:1, type:textType.uri, data:'hi'}
 
       fetch 'GET', @port, "/doc/c/d", null, (res, data, headers) =>
         tag = headers['etag']
@@ -161,7 +161,7 @@ describe 'rest', ->
   describe 'GET /ops', ->
     it 'returns ops', (done) ->
       @ops.c = {}
-      ops = @ops.c.d = [{v:0, create:{type:ottypes.text.uri}}, {v:1, op:[]}, {v:2, op:[]}]
+      ops = @ops.c.d = [{v:0, create:{type:textType.uri}}, {v:1, op:[]}, {v:2, op:[]}]
       fetch 'GET', @port, '/doc/c/d/ops', null, (res, data, headers) ->
         assert.strictEqual res.statusCode, 200
         assert.deepEqual data, ops
@@ -169,7 +169,7 @@ describe 'rest', ->
 
     it 'limits FROM based on query parameter', (done) ->
       @ops.c = {}
-      ops = @ops.c.d = [{v:0, create:{type:ottypes.text.uri}}, {v:1, op:[]}, {v:2, op:[]}]
+      ops = @ops.c.d = [{v:0, create:{type:textType.uri}}, {v:1, op:[]}, {v:2, op:[]}]
       fetch 'GET', @port, '/doc/c/d/ops?to=2', null, (res, data, headers) ->
         assert.strictEqual res.statusCode, 200
         assert.deepEqual data, [ops[0], ops[1]]
@@ -177,7 +177,7 @@ describe 'rest', ->
 
     it 'limits TO based on query parameter', (done) ->
       @ops.c = {}
-      ops = @ops.c.d = [{v:0, create:{type:ottypes.text.uri}}, {v:1, op:[]}, {v:2, op:[]}]
+      ops = @ops.c.d = [{v:0, create:{type:textType.uri}}, {v:1, op:[]}, {v:2, op:[]}]
       fetch 'GET', @port, '/doc/c/d/ops?from=1', null, (res, data, headers) ->
         assert.strictEqual res.statusCode, 200
         assert.deepEqual data, [ops[1], ops[2]]
@@ -209,7 +209,7 @@ describe 'rest', ->
       fetch 'POST', @port, "/doc/c/d", 'invalid>{json', (res, data) ->
         assert.strictEqual res.statusCode, 400
         done()
-    
+
   describe 'PUT', ->
     it 'PUT a document creates it', (done) ->
       called = false
@@ -242,7 +242,7 @@ describe 'rest', ->
         assert.strictEqual headers['x-ot-version'], '5'
         assert called
         done()
-    
+
 
   # Tests past this line haven't been rewritten yet for the new API.
 
@@ -285,7 +285,7 @@ describe 'rest', ->
     @model.create doc2, 'simple', =>
       @model.applyOp doc2, {v:0, op:{position: 0, text: 'Hi'}}, =>
         fetch 'GET', @port, "/doc/#{doc2}", null, checkResponse
-    
+
         # Create an existing document
         fetch 'PUT', @port, "/doc/#{doc2}", {type:'simple'}, checkResponse
 

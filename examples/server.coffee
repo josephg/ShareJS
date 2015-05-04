@@ -5,7 +5,6 @@ connect = require 'connect'
 serveStatic = require 'serve-static'
 argv = require('optimist').argv
 livedb = require 'livedb'
-livedbMongo = require 'livedb-mongo'
 
 try
   require 'heapdump'
@@ -18,7 +17,6 @@ webserver.use serveStatic "#{__dirname}/public"
 webserver.use serveStatic sharejs.scriptsDir
 
 backend = livedb.client livedb.memory()
-#backend = livedb.client livedbMongo('localhost:27017/test?auto_reconnect', safe:false)
 
 backend.addProjection '_users', 'users', 'json0', {x:true}
 

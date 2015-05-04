@@ -1,5 +1,4 @@
 assert = require 'assert'
-ottypes = require 'ottypes'
 sinon = require 'sinon'
 createSocket = require '../helpers/socket.coffee'
 createServer = require '../helpers/server.coffee'
