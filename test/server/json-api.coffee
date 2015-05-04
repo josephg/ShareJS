@@ -1,7 +1,7 @@
 assert = require("assert")
 json = require('ot-json0').type
 require("../../lib/types/json-api")
-MicroEvent = require("../../lib/client/microevent")
+emitter = require('../../lib/client/emitter');
 
 # in the future, it would be less brittle to use the real Doc object instead of this fake one
 Doc = (data) ->
@@ -52,7 +52,7 @@ Doc = (data) ->
 
   this
 
-MicroEvent.mixin Doc
+emitter.mixin Doc
 
 apply = (cxt,op) ->
     cxt._beforeOp? op
