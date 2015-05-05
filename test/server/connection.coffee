@@ -71,7 +71,7 @@ describe 'Connection', ->
     it 'calls handle message', ->
       handleMessage = sinon.spy @connection, 'handleMessage'
       socket.onmessage({key: 'value'})
-      sinon.assert.calledWith handleMessage, { c: null, d: null, key: 'value'}
+      sinon.assert.calledWith handleMessage, {key: 'value'}
 
     it 'pushes message buffer', ->
       assert @connection.messageBuffer.length == 0
@@ -111,6 +111,6 @@ describe 'Connection', ->
       doc = @connection.get('food', 'steak', {data: 'content', v: 0, type: 'text'})
       assert.equal doc.snapshot, 'content'
       doc = @connection.get('food', 'steak', {data: 'other content', v: 0, type: 'text'})
-      # TODO 
+      # TODO
       assert.equal doc.snapshot, 'content'
       #assert.equal doc.snapshot, 'other content'

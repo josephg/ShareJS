@@ -13,7 +13,7 @@ describe 'Doc', ->
     canSend: true
     send: (data)-> @sent.push(data)
     sendSubscribe: (collection, name, version)->
-      msg = a: 'sub', c:collection, d:name
+      msg = {a: 'sub', c: collection, d: name}
       msg.v = version if version?
       @send msg
     id: '42'
