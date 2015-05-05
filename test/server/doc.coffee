@@ -12,17 +12,13 @@ describe 'Doc', ->
     sent: []
     canSend: true
     send: (data)-> @sent.push(data)
-    sendOp: (msg)->
-      msg.src = @id
-      msg.seq = @seq
-      @send(msg)
+    sendOp: (msg)-> @send(msg)
     sendSubscribe: (collection, name, version)->
-      msg =  c:collection, d:name, src: @id, seq: @seq, a:'sub'
-      msg.v = version if version
+      msg = a: 'sub', c:collection, d:name
+      msg.v = version if version?
       @send msg
     id: '42'
-    seq: 0
-
+    seq: 1
 
   # Call this in a group to work with a created document
   beforeEachCreateDocument = ->
