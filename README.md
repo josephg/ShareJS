@@ -1,6 +1,9 @@
 ShareJS
 =======
 
+[![Build Status](https://secure.travis-ci.org/share/ShareJS.svg)](http://travis-ci.org/share/ShareJS) [![Code Climate](https://codeclimate.com/github/share/ShareJS/badges/gpa.svg)](https://codeclimate.com/github/share/ShareJS) [![Dependency Status](https://david-dm.org/share/sharejs.svg)](https://david-dm.org/share/sharejs) [![devDependency Status](https://david-dm.org/share/sharejs/dev-status.svg)](https://david-dm.org/share/sharejs#info=devDependencies)
+
+
 This is a little server & client library to allow concurrent editing of any
 kind of content via OT. The server runs on NodeJS and the client works in NodeJS or a
 web browser.
@@ -11,9 +14,7 @@ ShareJS currently supports operational transform on plain-text and arbitrary JSO
 
 **Check out the [live interactive demos](http://sharejs.org/).**
 
-**Immerse yourself in [API Documentation](https://github.com/josephg/ShareJS/wiki).**
-
-[![Build Status](https://secure.travis-ci.org/share/ShareJS.png)](http://travis-ci.org/share/ShareJS)
+**Immerse yourself in [API Documentation](https://github.com/share/ShareJS/wiki).**
 
 
 Browser support
@@ -424,7 +425,7 @@ doc.subscribe();
 // This will be called when we have a live copy of the server's data.
 doc.whenReady(function() {
   console.log('doc ready, data: ', doc.getSnapshot());
-  
+
   // Create a JSON document with value x:5
   if (!doc.type) doc.create('text');
   doc.attachTextarea(document.getElementById('pad'));
@@ -445,7 +446,7 @@ doc.subscribe();
 // This will be called when we have a live copy of the server's data.
 doc.whenReady(function() {
   console.log('doc ready, data: ', doc.getSnapshot());
-  
+
   // Create a JSON document with value x:5
   if (!doc.type) doc.create('json0', {x:5});
 });
@@ -462,4 +463,3 @@ See the [examples directory](https://github.com/share/ShareJS/tree/master/exampl
 # License
 
 ShareJS is proudly licensed under the [MIT license](LICENSE).
-
