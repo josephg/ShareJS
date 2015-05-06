@@ -28,6 +28,7 @@
     "chai": "*",
     "coffee-script": "~1.7.x",
     "connect": "^3.3.0",
+    "eslint": "^0.20.0",
     "istanbul": "^0.3.13",
     "mocha": "^2.2.4",
     "optimist": ">= 0.2.4",
@@ -46,7 +47,8 @@
     "build": "make",
     "test": "node_modules/mocha/bin/mocha test/server test/browser",
     "prepublish": "make webclient",
-    "coverage": "node node_modules/istanbul/lib/cli cover node_modules/mocha/bin/_mocha test/server test/browser"
+    "coverage": "node node_modules/istanbul/lib/cli cover node_modules/mocha/bin/_mocha test/server test/browser",
+    "lint": "node_modules/.bin/eslint lib/**/*.js"
   },
   "licenses": [
     {

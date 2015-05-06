@@ -138,19 +138,19 @@ describe 'UserAgent', ->
 
     it 'calls submit on backend', (done) ->
       sinon.spy backend, 'submit'
-      @userAgent.submit 'flowers', 'lily', 'pluck', {}, ->
-        sinon.assert.calledWith backend.submit, 'flowers', 'lily', 'pluck'
+      @userAgent.submit 'flowers', 'lily', {docName: 'pluck'}, {}, ->
+        sinon.assert.calledWith backend.submit, 'flowers', 'lily'
         done()
 
     it 'returns version and operations', (done) ->
-      @userAgent.submit 'flowers', 'lily', 'pluck', {}, (error, version, operations) ->
+      @userAgent.submit 'flowers', 'lily', {docName: 'pluck'}, {}, (error, version, operations) ->
         assert.equal version, 41
         assert.deepEqual operations, ['operation']
         done()
 
     it 'triggers after submit', (done) ->
       sinon.spy @userAgent, 'trigger'
-      @userAgent.submit 'flowers', 'lily', 'pluck', {}, =>
+      @userAgent.submit 'flowers', 'lily', {docName: 'pluck'}, {}, =>
         sinon.assert.calledWith @userAgent.trigger, 'after submit', 'flowers', 'lily'
         done()
 
