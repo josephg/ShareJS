@@ -18,6 +18,9 @@
     "async": "^0.9.0",
     "hat": "^0.0.3",
     "livedb": "^0.5.12",
+    "livedb-mongo": "^0.4.1",
+    "mongodb": "^1.4.38",
+    "mongoskin": "^1.4.13",
     "ot-json0": "^1.0.0",
     "ot-text": "^1.0.0",
     "ot-text-tp2": "^1.0.0"
