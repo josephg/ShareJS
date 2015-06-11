@@ -6,7 +6,7 @@ var s = new BCSocket(null, {reconnect: true});
 
 var sjs = new window.sharejs.Connection(s);
 
-var doc = sjs.getOrCreate('json_test', 'test_doc_1');
+var doc = window.doc = sjs.get('json_test', 'test_doc_1');
 
 console.log(doc);
 
@@ -14,8 +14,13 @@ doc.subscribe();
 
 doc.whenReady(function () {
   console.log(doc);
-  if (!doc.type) doc.create('json0');
+  if (!doc.type) doc.create('json0', []);
   if (doc.type && doc.type.name === 'json0'){
+    
+    doc.on('op', function() {
+
+      console.log("doc.on `op`", arguments);
+    });
     var context = doc.createContext();
     clientExample(context);
   }
@@ -26,14 +31,27 @@ function clientExample(context){
 
   console.log(
     'JSON Client API',
-    'https://github.com/share/ShareJS/wiki/JSON-Client-API');
+    '0.7');
 
   console.log('json client',context);
 
+
+
   // Create some JSON object
-  var myObject = [{ todo: [] },{completed: []}];
+  var myObject = doc.getSnapshot();
+
+  if(!myObject.length) {
+    myObject = [{ todo: [] },{completed: []}];  
+    context.submitOp({p:[0], li : myObject[0]});
+    context.submitOp({p:[1], li : myObject[1]});
+  }
+
+
+  
+
 
   // Set the structure of the document to the JSON object
+  /*
   context.set( myObject, function(){
 
     // Get the document's JSON object
@@ -42,7 +60,7 @@ function clientExample(context){
 
     // Get the "todo" subdoc
     todo = context.createContextAt([0,'todo']);
-    console.log('todo',todo);
+    console.log('todo',todo);    
 return;
     // print out the "todo" subdoc
     console.log( todo.get() ); // => []
@@ -74,9 +92,11 @@ return;
       // Get the document JSON object again
       console.log(doc.get()); // => [{completed: []},{todo:'some string value'}]
     })
+    
+
+  });*/
 
 
-  });
 }
 
 </script>
