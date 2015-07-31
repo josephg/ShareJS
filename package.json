@@ -45,7 +45,7 @@
   "scripts": {
     "build": "make",
     "test": "node_modules/mocha/bin/mocha test/server test/browser",
-    "prepublish": "make webclient",
+    "prepublish": "make",
     "coverage": "node node_modules/istanbul/lib/cli cover node_modules/mocha/bin/_mocha test/server test/browser"
   },
   "licenses": [
