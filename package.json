@@ -1,6 +1,6 @@
 {
   "name": "share",
-  "version": "0.7.39",
+  "version": "0.7.40",
   "description": "A database for concurrent document editing",
   "keywords": [
     "operational transformation",
