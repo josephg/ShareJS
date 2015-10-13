@@ -67,7 +67,7 @@ var livedb = require('livedb');
 var sharejs = require('share');
 
 var backend = livedb.client(livedb.memory());
-var share = require('share').server.createClient({backend: backend});
+var share = sharejs.server.createClient({backend: backend});
 ```
 
 The method is called `createClient` because its sort of a client of the
