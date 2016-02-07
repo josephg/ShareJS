@@ -254,14 +254,14 @@ The best documentation for these functions is in a [block comment in the code](h
 For debugging, connections have 2 additional properties:
 
 - Set **connection.debug = true** to console.log out all messages sent and
-recieved over the wire.
+received over the wire.
 - **connection.messageBuffer** contains the last 100 messages, for debugging
 error states.
 
 ### Documents
 
 Document objects store your actual data in the client. They can be modified
-syncronously and they can automatically sync their data with the server.
+synchronously and they can automatically sync their data with the server.
 Document objects can be modified offline - they will send data to the server
 when the client reconnects.
 
