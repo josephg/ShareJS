@@ -1,3 +1,11 @@
+> **NOTE**: ShareJS is now [ShareDB](https://github.com/share/sharedb). See [here](https://groups.google.com/forum/#!topic/sharejs/W2yuXwUQ818) and [here](https://groups.google.com/forum/#!topic/sharejs/XGkqVrQ7KfI) for more information.
+
+> .
+
+> .
+
+> .
+
 ShareJS
 =======
 
