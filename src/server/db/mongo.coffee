@@ -94,14 +94,14 @@ module.exports = MongoDb = (options) ->
           _id:
             $gte: start
         query._id.$lt = end if end
-        cursor = collection.find(query).sort('_id')
+        cursor = collection.find(query).sort({'_id': 1})
       else
         query = 
           '_id.doc': docName
           '_id.v':
             $gte: start
         query['_id.v'].$lt = end if end
-        cursor = collection.find(query).sort('_id.v')
+        cursor = collection.find(query).sort({'_id.v': 1})
       
       cursor.toArray (err, docs) ->
         console.warn "failed to get ops for #{docName}: #{err}" if err
